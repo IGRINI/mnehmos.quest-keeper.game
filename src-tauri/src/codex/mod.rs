@@ -9,7 +9,8 @@ mod oauth;
 const RESPONSES_ENDPOINT: &str = "https://chatgpt.com/backend-api/codex/responses";
 const CODEX_ORIGINATOR: &str = "codex_cli_rs";
 const CODEX_USER_AGENT: &str = "codex_cli_rs/0.133.0 (Quest Keeper AI)";
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(180);
+const SSE_IDLE_TIMEOUT: Duration = Duration::from_secs(45);
+const MAX_SSE_LINE_BYTES: usize = 1024 * 1024;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -112,7 +113,7 @@ pub async fn codex_send_message(
 
     let mut http_request = client
         .post(RESPONSES_ENDPOINT)
-        .timeout(REQUEST_TIMEOUT)
+        .header(reqwest::header::ACCEPT, "text/event-stream")
         .json(&body);
 
     for (name, value) in auth_headers(&credential) {
@@ -124,23 +125,17 @@ pub async fn codex_send_message(
         .await
         .map_err(|error| error.to_string())?;
     let status = response.status();
-    let text = response.text().await.map_err(|error| error.to_string())?;
     if !status.is_success() {
+        let text = response.text().await.map_err(|error| error.to_string())?;
         return Err(redacted_provider_error(status.as_u16(), &text));
     }
 
-    let payload: Value = serde_json::from_str(&text)
-        .map_err(|error| format!("Codex вернул некорректный JSON: {error}"))?;
-    let content = extract_output_text(&payload);
-    let tool_calls = extract_tool_calls(&payload);
-    if content.trim().is_empty() && tool_calls.is_empty() {
+    let chat_response = collect_response_stream(response).await?;
+    if chat_response.content.trim().is_empty() && chat_response.tool_calls.is_empty() {
         return Err("Codex вернул пустой ответ".to_string());
     }
 
-    Ok(CodexChatResponse {
-        content,
-        tool_calls,
-    })
+    Ok(chat_response)
 }
 
 fn http_client() -> Result<reqwest::Client, String> {
@@ -178,7 +173,7 @@ fn build_request(request: &CodexChatRequest) -> Value {
         "model": request.model,
         "instructions": instructions,
         "input": input,
-        "stream": false,
+        "stream": true,
         "store": false,
     });
 
@@ -274,6 +269,328 @@ fn function_call_input_item(tool_call: &CodexToolCall) -> Value {
         "name": tool_call.name,
         "arguments": arguments,
     })
+}
+
+async fn collect_response_stream(
+    mut response: reqwest::Response,
+) -> Result<CodexChatResponse, String> {
+    let mut decoder = SseDecoder::default();
+    let mut content = String::new();
+    let mut tool_calls = ToolCallAccumulator::default();
+    let mut completed_tool_calls = Vec::new();
+
+    loop {
+        let chunk = tokio::time::timeout(SSE_IDLE_TIMEOUT, response.chunk())
+            .await
+            .map_err(|_| format!("Codex SSE stream idle for more than {SSE_IDLE_TIMEOUT:?}"))?
+            .map_err(|error| error.to_string())?;
+
+        let Some(chunk) = chunk else {
+            break;
+        };
+
+        for payload in decoder.push(chunk.as_ref())? {
+            if payload == "[DONE]" {
+                return Ok(finish_stream_response(
+                    content,
+                    tool_calls,
+                    completed_tool_calls,
+                ));
+            }
+
+            let event = serde_json::from_str::<Value>(&payload)
+                .map_err(|error| format!("Codex вернул некорректное SSE событие: {error}"))?;
+
+            if !handle_stream_event(
+                &event,
+                &mut content,
+                &mut tool_calls,
+                &mut completed_tool_calls,
+            )? {
+                return Ok(finish_stream_response(
+                    content,
+                    tool_calls,
+                    completed_tool_calls,
+                ));
+            }
+        }
+    }
+
+    Ok(finish_stream_response(
+        content,
+        tool_calls,
+        completed_tool_calls,
+    ))
+}
+
+fn finish_stream_response(
+    content: String,
+    tool_calls: ToolCallAccumulator,
+    completed_tool_calls: Vec<CodexToolCall>,
+) -> CodexChatResponse {
+    let mut calls = tool_calls.finish();
+    if calls.is_empty() {
+        calls = completed_tool_calls;
+    }
+    CodexChatResponse {
+        content,
+        tool_calls: calls,
+    }
+}
+
+fn handle_stream_event(
+    event: &Value,
+    content: &mut String,
+    tool_calls: &mut ToolCallAccumulator,
+    completed_tool_calls: &mut Vec<CodexToolCall>,
+) -> Result<bool, String> {
+    match event
+        .get("type")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+    {
+        "response.output_text.delta" => {
+            if let Some(delta) = event.get("delta").and_then(Value::as_str) {
+                content.push_str(delta);
+            }
+        }
+        "response.output_item.added" => {
+            if let Some(item) = event.get("item") {
+                if item.get("type").and_then(Value::as_str) == Some("function_call") {
+                    tool_calls.merge_item(item, output_index(event));
+                }
+            }
+        }
+        "response.function_call_arguments.delta" => {
+            tool_calls.merge_arguments_delta(
+                output_index(event),
+                event.get("item_id").and_then(Value::as_str),
+                event
+                    .get("delta")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default(),
+            );
+        }
+        "response.function_call_arguments.done" => {
+            if let Some(item) = event.get("item") {
+                tool_calls.merge_item(item, output_index(event));
+            } else {
+                tool_calls.merge_top_level_done(event);
+            }
+        }
+        "response.output_item.done" => {
+            if let Some(item) = event.get("item") {
+                if item.get("type").and_then(Value::as_str) == Some("function_call") {
+                    tool_calls.merge_item(item, output_index(event));
+                }
+            }
+        }
+        "response.completed" => {
+            if let Some(response) = event.get("response") {
+                if content.is_empty() {
+                    content.push_str(&extract_output_text(response));
+                }
+                if completed_tool_calls.is_empty() {
+                    *completed_tool_calls = extract_tool_calls(response);
+                }
+            }
+            return Ok(false);
+        }
+        "response.failed" | "error" => {
+            return Err(response_error_message(event));
+        }
+        "response.reasoning_summary_text.delta"
+        | "response.reasoning_text.delta"
+        | "response.reasoning_summary.delta" => {}
+        _ => {}
+    }
+
+    Ok(true)
+}
+
+fn response_error_message(event: &Value) -> String {
+    event
+        .get("message")
+        .and_then(Value::as_str)
+        .or_else(|| {
+            event
+                .get("response")
+                .and_then(|response| response.get("error"))
+                .and_then(|error| error.get("message"))
+                .and_then(Value::as_str)
+        })
+        .or_else(|| {
+            event
+                .get("error")
+                .and_then(|error| error.get("message"))
+                .and_then(Value::as_str)
+        })
+        .unwrap_or("Codex stream failed")
+        .to_string()
+}
+
+fn output_index(value: &Value) -> usize {
+    value
+        .get("output_index")
+        .and_then(Value::as_u64)
+        .map(|index| index as usize)
+        .unwrap_or(0)
+}
+
+#[derive(Default)]
+struct SseDecoder {
+    buffer: Vec<u8>,
+}
+
+impl SseDecoder {
+    fn push(&mut self, chunk: &[u8]) -> Result<Vec<String>, String> {
+        self.buffer.extend_from_slice(chunk);
+        reject_oversized_pending_line(&self.buffer)?;
+
+        let mut payloads = Vec::new();
+        while let Some(newline) = self.buffer.iter().position(|byte| *byte == b'\n') {
+            if newline > MAX_SSE_LINE_BYTES {
+                return Err(format!(
+                    "Codex SSE line exceeded {MAX_SSE_LINE_BYTES} bytes"
+                ));
+            }
+
+            let line = self.buffer.drain(..=newline).collect::<Vec<_>>();
+            let line = String::from_utf8_lossy(&line[..line.len().saturating_sub(1)]);
+            let line = line.trim_end_matches('\r').trim();
+            if let Some(payload) = line.strip_prefix("data:") {
+                let payload = payload.trim();
+                if !payload.is_empty() {
+                    payloads.push(payload.to_string());
+                }
+            }
+        }
+
+        reject_oversized_pending_line(&self.buffer)?;
+        Ok(payloads)
+    }
+}
+
+fn reject_oversized_pending_line(buffer: &[u8]) -> Result<(), String> {
+    if buffer.len() > MAX_SSE_LINE_BYTES && !buffer.contains(&b'\n') {
+        return Err(format!(
+            "Codex SSE line exceeded {MAX_SSE_LINE_BYTES} bytes without newline"
+        ));
+    }
+    Ok(())
+}
+
+#[derive(Default)]
+struct ToolCallAccumulator {
+    calls: Vec<PartialToolCall>,
+}
+
+#[derive(Default)]
+struct PartialToolCall {
+    item_id: Option<String>,
+    output_index: usize,
+    call_id: Option<String>,
+    name: Option<String>,
+    arguments: String,
+}
+
+impl ToolCallAccumulator {
+    fn merge_item(&mut self, item: &Value, output_index: usize) {
+        let call = self.find_or_create(output_index, item.get("id").and_then(Value::as_str));
+        if let Some(item_id) = item.get("id").and_then(Value::as_str) {
+            if !item_id.is_empty() {
+                call.item_id = Some(item_id.to_string());
+            }
+        }
+        if let Some(call_id) = item.get("call_id").and_then(Value::as_str) {
+            if !call_id.is_empty() {
+                call.call_id = Some(call_id.to_string());
+            }
+        }
+        if let Some(name) = item.get("name").and_then(Value::as_str) {
+            if !name.is_empty() {
+                call.name = Some(name.to_string());
+            }
+        }
+        if let Some(arguments) = item.get("arguments").and_then(Value::as_str) {
+            call.arguments = arguments.to_string();
+        }
+    }
+
+    fn merge_top_level_done(&mut self, event: &Value) {
+        let call = self.find_or_create(
+            output_index(event),
+            event.get("item_id").and_then(Value::as_str),
+        );
+        if let Some(arguments) = event.get("arguments").and_then(Value::as_str) {
+            call.arguments = arguments.to_string();
+        }
+        if let Some(call_id) = event.get("call_id").and_then(Value::as_str) {
+            call.call_id = Some(call_id.to_string());
+        }
+        if let Some(name) = event.get("name").and_then(Value::as_str) {
+            call.name = Some(name.to_string());
+        }
+    }
+
+    fn merge_arguments_delta(&mut self, output_index: usize, item_id: Option<&str>, delta: &str) {
+        let call = self.find_or_create(output_index, item_id);
+        call.arguments.push_str(delta);
+    }
+
+    fn finish(mut self) -> Vec<CodexToolCall> {
+        self.calls.sort_by_key(|call| call.output_index);
+        self.calls
+            .into_iter()
+            .filter_map(|call| {
+                let name = call.name?;
+                if name.trim().is_empty() {
+                    return None;
+                }
+                let raw_arguments = call.arguments;
+                let arguments = serde_json::from_str(&raw_arguments).unwrap_or_else(|_| json!({}));
+                let id = call
+                    .call_id
+                    .or_else(|| Some(format!("responses_call_{}", call.output_index)));
+                Some(CodexToolCall {
+                    id,
+                    name,
+                    arguments,
+                })
+            })
+            .collect()
+    }
+
+    fn find_or_create(
+        &mut self,
+        output_index: usize,
+        item_id: Option<&str>,
+    ) -> &mut PartialToolCall {
+        if let Some(item_id) = item_id {
+            if let Some(position) = self
+                .calls
+                .iter()
+                .position(|call| call.item_id.as_deref() == Some(item_id))
+            {
+                return &mut self.calls[position];
+            }
+        }
+
+        if let Some(position) = self
+            .calls
+            .iter()
+            .position(|call| call.output_index == output_index)
+        {
+            return &mut self.calls[position];
+        }
+
+        self.calls.push(PartialToolCall {
+            output_index,
+            item_id: item_id.map(ToOwned::to_owned),
+            ..PartialToolCall::default()
+        });
+        self.calls.last_mut().expect("tool call was inserted")
+    }
 }
 
 fn extract_output_text(value: &Value) -> String {
