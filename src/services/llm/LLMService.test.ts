@@ -107,7 +107,14 @@ describe('LLMService.handleBatchToolSync — achievement sync (finding 3)', () =
   it('still triggers a gameState sync for a genuine game-state tool', async () => {
     await runSync(['update_character']);
     expect(syncState).toHaveBeenCalledTimes(1);
+    expect(syncState).toHaveBeenCalledWith(true);
     expect(syncAchievements).not.toHaveBeenCalled();
+  });
+
+  it('triggers a forced gameState sync after world map tools update or reveal world state', async () => {
+    await runSync(['get_world_map_overview']);
+    expect(syncState).toHaveBeenCalledTimes(1);
+    expect(syncState).toHaveBeenCalledWith(true);
   });
 
   it('syncs both game state and achievements when a mix of tools is used', async () => {
@@ -148,6 +155,7 @@ describe('LLMService.handleBatchToolSync — reputation sync', () => {
   it('still triggers a gameState sync for a genuine game-state tool', async () => {
     await runSync(['update_character']);
     expect(syncState).toHaveBeenCalledTimes(1);
+    expect(syncState).toHaveBeenCalledWith(true);
     expect(syncReputation).not.toHaveBeenCalled();
   });
 

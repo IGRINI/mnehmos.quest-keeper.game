@@ -86,6 +86,8 @@ export const WorldMapCanvas: React.FC = () => {
   const setActiveWorldId = useGameStateStore((state) => state.setActiveWorldId);
   const worlds = useGameStateStore((state) => state.worlds);
   const world = useGameStateStore((state) => state.world);
+  const isSyncing = useGameStateStore((state) => state.isSyncing);
+  const syncState = useGameStateStore((state) => state.syncState);
 
   // Party store for position tracking
   const activePartyId = usePartyStore((state) => state.activePartyId);
@@ -109,6 +111,7 @@ export const WorldMapCanvas: React.FC = () => {
   const loadingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fetchInProgressRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const initialWorldSyncRequestedRef = useRef(false);
   
   // Pan & Zoom state
   const [zoom, setZoom] = useState(1);
@@ -118,6 +121,8 @@ export const WorldMapCanvas: React.FC = () => {
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
 
   const activeWorld = worlds.find(w => w.id === activeWorldId);
+  const activeWorldWidth = activeWorld?.width ?? activeWorld?.dimensions?.width;
+  const activeWorldHeight = activeWorld?.height ?? activeWorld?.dimensions?.height;
 
   // Get party position - memoized to avoid unnecessary re-renders
   const partyPosition = getActivePartyPosition();
@@ -330,6 +335,21 @@ export const WorldMapCanvas: React.FC = () => {
       fetchTileData(activeWorldId);
     }
   }, [activeWorldId, fetchTileData]);
+
+  // The LLM can create/restore a world before the React store has seen it.
+  // When the map tab opens empty, do one forced sync against the MCP runtime DB
+  // before showing a permanent "no worlds" state.
+  useEffect(() => {
+    if (worlds.length > 0 || isSyncing || initialWorldSyncRequestedRef.current) {
+      return;
+    }
+
+    initialWorldSyncRequestedRef.current = true;
+    void syncState(true).catch((err) => {
+      console.warn('[WorldMapCanvas] Initial world sync failed:', err);
+      initialWorldSyncRequestedRef.current = false;
+    });
+  }, [isSyncing, syncState, worlds.length]);
 
   // Fit to view when tile data is loaded
   useEffect(() => {
@@ -650,14 +670,16 @@ export const WorldMapCanvas: React.FC = () => {
       <div className="h-full w-full flex items-center justify-center font-mono text-terminal-green">
         <div className="text-center max-w-md">
           <div className="text-6xl mb-4">🌍</div>
-          <div className="text-xl mb-4">No Worlds Available</div>
+          <div className="text-xl mb-4">{isSyncing ? 'Синхронизирую миры...' : 'Миры не найдены'}</div>
           <div className="text-sm text-terminal-green/70 mb-4">
-            Create a new world to explore!
+            {isSyncing ? 'Проверяю базу MCP и текущую сессию.' : 'Создай новый мир для исследования.'}
           </div>
-          <div className="text-xs text-terminal-green/50 space-y-2">
-            <p>Type <code className="bg-terminal-green/20 px-2 py-1 rounded">/new</code> in chat</p>
-            <p>to start the Campaign Setup wizard and generate a world.</p>
-          </div>
+          {!isSyncing && (
+            <div className="text-xs text-terminal-green/50 space-y-2">
+              <p>Напиши <code className="bg-terminal-green/20 px-2 py-1 rounded">/new</code> в чате</p>
+              <p>чтобы запустить мастер кампании и сгенерировать мир.</p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -668,22 +690,23 @@ export const WorldMapCanvas: React.FC = () => {
       <div className="h-full w-full flex items-center justify-center font-mono text-terminal-green">
         <div className="text-center max-w-md">
           <div className="text-4xl mb-4 animate-pulse">🌍</div>
-          <div className="text-xl mb-2">Generating World Map...</div>
+          <div className="text-xl mb-2">Загружаю карту мира...</div>
           {activeWorld && (
             <div className="text-sm text-terminal-green/70 mb-4">
-              {activeWorld.name} ({activeWorld.width}×{activeWorld.height} tiles)
+              {activeWorld.name}
+              {activeWorldWidth && activeWorldHeight ? ` (${activeWorldWidth}×${activeWorldHeight} тайлов)` : ''}
             </div>
           )}
           <div className="text-lg text-terminal-green-bright mb-2">
             {loadingTime}s elapsed
           </div>
           <div className="text-xs text-terminal-green/50 space-y-1">
-            <p>Generating terrain, rivers, and lakes...</p>
+            <p>Готовлю рельеф, реки и озера...</p>
             {loadingTime > 10 && (
-              <p className="text-yellow-500/70">Large worlds may take 30-60 seconds</p>
+              <p className="text-yellow-500/70">Большие миры могут грузиться 30-60 секунд</p>
             )}
             {loadingTime > 30 && (
-              <p className="text-orange-500/70">Still working... Complex terrain takes time</p>
+              <p className="text-orange-500/70">Еще работаю... сложный рельеф требует времени</p>
             )}
           </div>
           <div className="mt-4 w-64 mx-auto h-2 bg-terminal-green/20 rounded overflow-hidden">
@@ -705,13 +728,13 @@ export const WorldMapCanvas: React.FC = () => {
       <div className="h-full w-full flex items-center justify-center font-mono text-terminal-green">
         <div className="text-center max-w-md">
           <div className="text-4xl mb-4">⚠️</div>
-          <div className="text-xl mb-4 text-red-500">Map Loading Failed</div>
+          <div className="text-xl mb-4 text-red-500">Карта не загрузилась</div>
           <div className="text-sm text-terminal-green/70 mb-4 whitespace-pre-wrap">{error}</div>
           <button
             onClick={() => activeWorldId && fetchTileData(activeWorldId)}
             className="px-4 py-2 bg-terminal-green text-terminal-black font-bold uppercase hover:bg-terminal-green-bright transition-colors"
           >
-            🔄 Try Again
+            🔄 Повторить
           </button>
         </div>
       </div>
@@ -728,27 +751,29 @@ export const WorldMapCanvas: React.FC = () => {
           <div className="text-6xl mb-4">🌍</div>
           {noWorlds ? (
             <>
-              <div className="text-xl mb-4">No Worlds Available</div>
+              <div className="text-xl mb-4">{isSyncing ? 'Синхронизирую миры...' : 'Миры не найдены'}</div>
               <div className="text-sm text-terminal-green/70 mb-4">
-                Create a new world to explore!
+                {isSyncing ? 'Проверяю базу MCP и текущую сессию.' : 'Создай новый мир для исследования.'}
               </div>
-              <div className="text-xs text-terminal-green/50 space-y-2">
-                <p>Type <code className="bg-terminal-green/20 px-2 py-1 rounded">/new</code> in chat</p>
-                <p>to start the Campaign Setup wizard and generate a world.</p>
-              </div>
+              {!isSyncing && (
+                <div className="text-xs text-terminal-green/50 space-y-2">
+                  <p>Напиши <code className="bg-terminal-green/20 px-2 py-1 rounded">/new</code> в чате</p>
+                  <p>чтобы запустить мастер кампании и сгенерировать мир.</p>
+                </div>
+              )}
             </>
           ) : (
             <>
-              <div className="text-xl mb-4">No World Map Data</div>
+              <div className="text-xl mb-4">Нет данных карты</div>
               <div className="text-sm text-terminal-green/70 mb-4">
-                Select a world from the dropdown or generate new map data.
+                Выбери мир из списка или сгенерируй данные карты.
               </div>
               {activeWorldId && (
                 <button
                   onClick={() => fetchTileData(activeWorldId)}
                   className="px-4 py-2 bg-terminal-green text-terminal-black font-bold uppercase hover:bg-terminal-green-bright transition-colors"
                 >
-                  🗺️ Load Map
+                  🗺️ Загрузить карту
                 </button>
               )}
             </>

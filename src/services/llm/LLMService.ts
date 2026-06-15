@@ -33,13 +33,27 @@ const GAME_STATE_TOOLS = new Set([
     'create_character',
     'update_character',
     'delete_character',
+    'character_manage',
     'give_item',
     'remove_item',
     'equip_item',
     'unequip_item',
+    'inventory_manage',
     'assign_quest',
     'complete_quest',
     'update_objective',
+    'world_manage',
+    'world_map',
+    'create_world',
+    'generate_world',
+    'get_world',
+    'get_world_state',
+    'get_world_map_overview',
+    'get_region_map',
+    'get_world_tiles',
+    'apply_map_patch',
+    'preview_map_patch',
+    'list_worlds',
     'skill_manage',
     // quest_manage chain mutations (set_chain / select_branch) change quest
     // unlock state, so a resync is needed after the LLM calls it.
@@ -204,7 +218,7 @@ class LLMService {
             console.log('[LLMService] Game state tools used - syncing game state');
             syncPromises.push(
                 gameStatePromise!
-                    .then(({ useGameStateStore }) => useGameStateStore.getState().syncState())
+                    .then(({ useGameStateStore }) => useGameStateStore.getState().syncState(true))
                     .catch(e => console.warn('[LLMService] Game state sync failed:', e))
             );
         }
