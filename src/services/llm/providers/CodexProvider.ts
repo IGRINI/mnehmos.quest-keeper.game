@@ -52,9 +52,28 @@ export class CodexProvider implements LLMProviderInterface {
                 onToolCalls(response.toolCalls);
             }
             await onComplete();
-        } catch (error: any) {
-            onError(error?.message || 'Codex request failed');
+        } catch (error: unknown) {
+            onError(this.formatError(error));
         }
+    }
+
+    private formatError(error: unknown): string {
+        if (typeof error === 'string') {
+            return error;
+        }
+
+        if (error instanceof Error && error.message) {
+            return error.message;
+        }
+
+        if (error && typeof error === 'object' && 'message' in error) {
+            const message = (error as { message?: unknown }).message;
+            if (typeof message === 'string' && message.trim().length > 0) {
+                return message;
+            }
+        }
+
+        return 'Запрос Codex не выполнен';
     }
 
     private toCodexTool(tool: any): CodexWireTool {

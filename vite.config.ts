@@ -12,10 +12,11 @@ export default defineConfig(async () => ({
   //
   // 1. prevent Vite from obscuring rust errors
   clearScreen: false,
-  // 2. Allow Vite to find an available port starting from 1420
+  // 2. Tauri loads the fixed devUrl from tauri.conf.json, so fail loudly when
+  //    the port is already occupied instead of serving a different app port.
   server: {
     port: 1420,
-    strictPort: false, // Allow Vite to try next available ports if 1420 is busy
+    strictPort: true,
     host: host || false,
     hmr: host
       ? {
