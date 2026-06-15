@@ -7,54 +7,43 @@ interface StreamingMessageProps {
   renderMarkdown: (text: string) => React.ReactNode;
 }
 
-// Lightweight streaming text display - no markdown parsing during stream
-const StreamingText = memo(({ content }: { content: string }) => {
-  return (
-    <div className="streaming-text whitespace-pre-wrap">
-      {content}
-      <span className="streaming-cursor">▌</span>
-    </div>
-  );
-});
-
-StreamingText.displayName = 'StreamingText';
-
-// Full markdown rendering - only used when stream is complete
-const CompleteMarkdown = memo(({ 
-  content, 
-  renderMarkdown 
-}: { 
-  content: string; 
+const MarkdownMessage = memo(({
+  content,
+  isStreaming,
+  renderMarkdown
+}: {
+  content: string;
+  isStreaming: boolean;
   renderMarkdown: (text: string) => React.ReactNode;
 }) => {
   return (
-    <div className="markdown-content prose prose-invert prose-sm max-w-none">
+    <div className="markdown-content streaming-markdown prose prose-invert prose-sm max-w-none">
       <SpoilerRenderer content={content} renderMarkdown={renderMarkdown} />
+      {isStreaming && <span className="streaming-cursor" aria-hidden="true">▌</span>}
     </div>
   );
 });
 
-CompleteMarkdown.displayName = 'CompleteMarkdown';
+MarkdownMessage.displayName = 'MarkdownMessage';
 
 /**
  * Optimized streaming message component.
- * 
- * During streaming: Shows raw text with cursor (no markdown parsing)
- * After complete: Renders full markdown with syntax highlighting
- * 
- * This prevents expensive markdown re-parsing on every character update.
+ *
+ * Streams use the same markdown pipeline as completed messages so formatting
+ * appears as soon as enough syntax has arrived.
  */
 export const StreamingMessage = memo(({ 
-  content, 
-  isStreaming, 
-  renderMarkdown 
+  content,
+  isStreaming,
+  renderMarkdown
 }: StreamingMessageProps) => {
-  // Only compute markdown when streaming is complete
-  if (isStreaming) {
-    return <StreamingText content={content} />;
-  }
-  
-  return <CompleteMarkdown content={content} renderMarkdown={renderMarkdown} />;
+  return (
+    <MarkdownMessage
+      content={content}
+      isStreaming={isStreaming}
+      renderMarkdown={renderMarkdown}
+    />
+  );
 });
 
 StreamingMessage.displayName = 'StreamingMessage';
@@ -71,12 +60,16 @@ export const streamingStyles = `
     51%, 100% { opacity: 0; }
   }
   
-  .streaming-text {
+  .streaming-markdown {
     font-family: inherit;
     line-height: 1.6;
     /* Prevent layout shifts during streaming */
     contain: content;
     /* Smooth text appearance */
     will-change: contents;
+  }
+
+  .streaming-markdown > :last-child {
+    margin-bottom: 0;
   }
 `;
