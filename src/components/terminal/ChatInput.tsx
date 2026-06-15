@@ -5,7 +5,7 @@ import { useGameStateStore } from '../../stores/gameStateStore';
 import { useCombatStore } from '../../stores/combatStore';
 import { useUIStore, ActiveTab, ALL_TABS } from '../../stores/uiStore';
 import { setPlaytestMode, isPlaytestModeEnabled } from '../../services/llm/contextBuilder';
-import { extractEmbeddedJson } from '../../utils/mcpUtils';
+import { extractEmbeddedJson, extractMcpJsonPayload } from '../../utils/mcpUtils';
 import type { CampaignSession } from '../../stores/sessionStore';
 
 // Slash command result interface
@@ -597,11 +597,21 @@ export const ChatInput: React.FC = () => {
       // === CHARACTER COMMANDS ===
       case 'characters': {
         try {
-          const result = await mcpManager.gameStateClient.callTool('character_manage', { action: 'list' });
-          const text = result?.content?.[0]?.text || '';
+          let result: any;
+          try {
+            result = await mcpManager.gameStateClient.callTool('character_manage', { action: 'list' });
+          } catch {
+            result = await mcpManager.gameStateClient.callTool('list_characters', {});
+          }
 
-          // character_manage/list embeds { characters: [...] } under CHARACTER_MANAGE_JSON
-          const parsed = extractEmbeddedJson<any>(text, 'CHARACTER_MANAGE_JSON');
+          // Newer character_manage embeds JSON; current legacy MCP returns plain JSON text.
+          let parsed = extractMcpJsonPayload<any>(result, 'CHARACTER_MANAGE_JSON');
+          let text = result?.content?.[0]?.text || '';
+          if (!parsed && text.includes('Tool character_manage not found')) {
+            result = await mcpManager.gameStateClient.callTool('list_characters', {});
+            parsed = extractMcpJsonPayload<any>(result);
+            text = result?.content?.[0]?.text || '';
+          }
           if (!parsed) {
             return { content: text || `*Персонажи не найдены*` };
           }
@@ -632,11 +642,21 @@ export const ChatInput: React.FC = () => {
             return { content: `Не указан ID персонажа и нет активного персонажа.\n\nИспользование: \`/character <id>\` или сначала выбери активного персонажа.`, type: 'error' };
           }
   
-          const result = await mcpManager.gameStateClient.callTool('character_manage', { action: 'get', characterId: charId });
-          const text = result?.content?.[0]?.text || '';
+          let result: any;
+          try {
+            result = await mcpManager.gameStateClient.callTool('character_manage', { action: 'get', characterId: charId });
+          } catch {
+            result = await mcpManager.gameStateClient.callTool('get_character', { id: charId });
+          }
           
-          // character_manage/get embeds the character object directly under CHARACTER_MANAGE_JSON
-          const char = extractEmbeddedJson<any>(text, 'CHARACTER_MANAGE_JSON');
+          // Newer character_manage embeds the character; legacy get_character returns it flat.
+          let charData = extractMcpJsonPayload<any>(result, 'CHARACTER_MANAGE_JSON');
+          const text = result?.content?.[0]?.text || '';
+          if (!charData && text.includes('Tool character_manage not found')) {
+            const legacyResult = await mcpManager.gameStateClient.callTool('get_character', { id: charId });
+            charData = extractMcpJsonPayload<any>(legacyResult);
+          }
+          const char = charData?.character ?? charData;
 
           if (!char || char.error) {
             return { content: `Персонаж не найден: ${charId}`, type: 'error' };
@@ -723,12 +743,21 @@ export const ChatInput: React.FC = () => {
             return { content: `Нет активного персонажа. Сначала выбери персонажа.`, type: 'error' };
           }
   
-          // Use inventory_manage/get_detailed for full item names
-          const result = await mcpManager.gameStateClient.callTool('inventory_manage', { action: 'get_detailed', characterId: charId });
-          const text = result?.content?.[0]?.text || '';
-          
-          // inventory_manage/get_detailed embeds { inventory: [{item, quantity, equipped}], totalWeight, capacity }
-          const data = extractEmbeddedJson<any>(text, 'INVENTORY_MANAGE_JSON');
+          let result: any;
+          try {
+            result = await mcpManager.gameStateClient.callTool('inventory_manage', { action: 'get_detailed', characterId: charId });
+          } catch {
+            result = await mcpManager.gameStateClient.callTool('get_inventory_detailed', { characterId: charId });
+          }
+
+          // Newer inventory_manage embeds JSON; legacy get_inventory_detailed returns plain JSON.
+          let data = extractMcpJsonPayload<any>(result, 'INVENTORY_MANAGE_JSON');
+          let text = result?.content?.[0]?.text || '';
+          if (!data && text.includes('Tool inventory_manage not found')) {
+            result = await mcpManager.gameStateClient.callTool('get_inventory_detailed', { characterId: charId });
+            data = extractMcpJsonPayload<any>(result);
+            text = result?.content?.[0]?.text || '';
+          }
           if (!data) {
             return { content: text || `*Инвентарь пуст*` };
           }
@@ -771,11 +800,21 @@ export const ChatInput: React.FC = () => {
             return { content: `Нет активного персонажа. Сначала выбери персонажа.`, type: 'error' };
           }
   
-          const result = await mcpManager.gameStateClient.callTool('quest_manage', { action: 'get_log', characterId: charId });
-          const text = result?.content?.[0]?.text || '';
-          
-          // quest_manage/get_log embeds { quests: [...] } under QUEST_MANAGE_JSON
-          const logData = extractEmbeddedJson<any>(text, 'QUEST_MANAGE_JSON');
+          let result: any;
+          try {
+            result = await mcpManager.gameStateClient.callTool('quest_manage', { action: 'get_log', characterId: charId });
+          } catch {
+            result = await mcpManager.gameStateClient.callTool('get_quest_log', { characterId: charId });
+          }
+
+          // Newer quest_manage embeds JSON; legacy get_quest_log returns plain JSON.
+          let logData = extractMcpJsonPayload<any>(result, 'QUEST_MANAGE_JSON');
+          let text = result?.content?.[0]?.text || '';
+          if (!logData && text.includes('Tool quest_manage not found')) {
+            result = await mcpManager.gameStateClient.callTool('get_quest_log', { characterId: charId });
+            logData = extractMcpJsonPayload<any>(result);
+            text = result?.content?.[0]?.text || '';
+          }
           if (!logData || logData.error) {
             return { content: text || `*Активных квестов нет*` };
           }
@@ -870,11 +909,23 @@ export const ChatInput: React.FC = () => {
   
       case 'worlds': {
         try {
-          const result = await mcpManager.gameStateClient.callTool('world_manage', { action: 'list' });
+          let result: any;
+          try {
+            result = await mcpManager.gameStateClient.callTool('world_manage', { action: 'list' });
+          } catch {
+            result = await mcpManager.gameStateClient.callTool('list_worlds', {});
+          }
           const text = result?.content?.[0]?.text || '';
 
-          // world_manage/list embeds { worlds: [{ id, name, seed, dimensions:{width,height} }] }
-          const listData = extractEmbeddedJson<any>(text, 'WORLD_MANAGE_JSON');
+          // world_manage/list embeds JSON; legacy list_worlds returns plain JSON text.
+          let listData = extractEmbeddedJson<any>(text, 'WORLD_MANAGE_JSON');
+          if (!listData) {
+            try { listData = JSON.parse(text); } catch { /* keep null */ }
+          }
+          if (!listData && text.includes('Tool world_manage not found')) {
+            const legacyResult = await mcpManager.gameStateClient.callTool('list_worlds', {});
+            try { listData = JSON.parse(legacyResult?.content?.[0]?.text || ''); } catch { /* keep null */ }
+          }
           if (!listData || listData.error) {
             return { content: text || `*Миры еще не созданы*` };
           }
@@ -906,11 +957,29 @@ export const ChatInput: React.FC = () => {
         }
   
         try {
-          const result = await mcpManager.gameStateClient.callTool('world_manage', { action: 'get', id: worldId });
+          let result: any;
+          try {
+            result = await mcpManager.gameStateClient.callTool('world_manage', { action: 'get', id: worldId });
+          } catch {
+            result = await mcpManager.gameStateClient.callTool('get_world', { id: worldId });
+          }
           const text = result?.content?.[0]?.text || '';
 
-          // world_manage/get embeds { world: {...} } under WORLD_MANAGE_JSON
-          const getData = extractEmbeddedJson<any>(text, 'WORLD_MANAGE_JSON');
+          // world_manage/get embeds { world }; legacy get_world returns the world flat.
+          let getData = extractEmbeddedJson<any>(text, 'WORLD_MANAGE_JSON');
+          if (!getData) {
+            try {
+              const legacyWorld = JSON.parse(text);
+              getData = legacyWorld?.id ? { world: legacyWorld } : legacyWorld;
+            } catch { /* keep null */ }
+          }
+          if (!getData && text.includes('Tool world_manage not found')) {
+            const legacyResult = await mcpManager.gameStateClient.callTool('get_world', { id: worldId });
+            try {
+              const legacyWorld = JSON.parse(legacyResult?.content?.[0]?.text || '');
+              getData = legacyWorld?.id ? { world: legacyWorld } : legacyWorld;
+            } catch { /* keep null */ }
+          }
           const world = getData?.world;
 
           if (!getData || getData.error || !world) {

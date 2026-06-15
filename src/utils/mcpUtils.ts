@@ -277,6 +277,34 @@ export function extractEmbeddedJson<T = any>(text: string, tag: string): T | nul
 }
 
 /**
+ * Extract structured JSON from either consolidated rich-text envelopes or legacy
+ * MCP tools that return plain JSON as their text payload.
+ */
+export function extractMcpJsonPayload<T = any>(result: any, tag?: string): T | null {
+  if (!result) return null;
+
+  if (typeof result === 'object' && !Array.isArray(result) && !('content' in result)) {
+    return result as T;
+  }
+
+  const textContent = result?.content?.find?.((item: any) => item?.type === 'text') ?? result?.content?.[0];
+  const text = typeof textContent?.text === 'string' ? textContent.text : '';
+
+  if (!text) return null;
+
+  if (tag) {
+    const embedded = extractEmbeddedJson<T>(text, tag);
+    if (embedded) return embedded;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Extract embedded STATE_JSON from tool response text.
  * Back-compat wrapper around the generalized extractEmbeddedJson() — preserves
  * the original STATE_JSON behavior for existing combat/LLM consumers.

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useGameStateStore } from '../../stores/gameStateStore';
 import { usePartyStore } from '../../stores/partyStore';
 import { mcpManager } from '../../services/mcpClient';
-import { extractEmbeddedJson } from '../../utils/mcpUtils';
+import { extractMcpJsonPayload } from '../../utils/mcpUtils';
 import { WorldEnvironmentOverlay } from './WorldEnvironmentOverlay';
 import { POIDetailPanel } from './POIDetailPanel';
 
@@ -274,7 +274,13 @@ export const WorldMapCanvas: React.FC = () => {
       }
 
       console.log('[WorldMapCanvas] Fetching tiles for world:', worldId);
-      const result = await mcpManager.gameStateClient.callTool('world_map', { action: 'tiles', worldId });
+      let result: any;
+      try {
+        result = await mcpManager.gameStateClient.callTool('world_map', { action: 'tiles', worldId });
+      } catch (err) {
+        console.warn('[WorldMapCanvas] world_map/tiles failed, trying legacy get_world_tiles:', err);
+        result = await mcpManager.gameStateClient.callTool('get_world_tiles', { worldId });
+      }
 
       // Check if aborted
       if (abortControllerRef.current?.signal.aborted) {
@@ -284,8 +290,13 @@ export const WorldMapCanvas: React.FC = () => {
 
       const content = result.content?.[0];
       if (content?.type === 'text') {
-        // Engine wraps the payload in a <!-- WORLD_MAP_JSON ... --> envelope.
-        const data = extractEmbeddedJson<any>(content.text, 'WORLD_MAP_JSON');
+        // Newer consolidated tools wrap the payload in WORLD_MAP_JSON; legacy
+        // get_world_tiles returns plain JSON in the text payload.
+        let data = extractMcpJsonPayload<any>(result, 'WORLD_MAP_JSON');
+        if (!data && content.text?.includes('Tool world_map not found')) {
+          const legacyResult = await mcpManager.gameStateClient.callTool('get_world_tiles', { worldId });
+          data = extractMcpJsonPayload<any>(legacyResult);
+        }
         if (!data) {
           throw new Error('Could not parse world_map tiles response');
         }

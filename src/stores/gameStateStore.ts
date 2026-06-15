@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { dnd5eItems } from '../data/dnd5eItems';
 import { getNextLevelXp } from '../data/xpTable';
-import { executeBatchToolCalls, debounce, extractEmbeddedJson } from '../utils/mcpUtils';
+import { executeBatchToolCalls, debounce, extractMcpJsonPayload } from '../utils/mcpUtils';
 
 export interface InventoryItem {
   id: string;
@@ -594,24 +594,29 @@ export const useGameStateStore = create<GameState>()(
           try {
             console.log('[GameStateStore] Listing characters...');
 
-            const listResult = await mcpManager.gameStateClient.callTool('character_manage', { action: 'list' });
-            console.log('[GameStateStore] Raw character_manage/list result:', listResult);
-
-            // character_manage embeds its payload in a <!-- CHARACTER_MANAGE_JSON --> envelope.
-            // A null parse means the envelope was absent/malformed (plain-text or error
-            // payload) — NOT a legitimately empty roster. Treat null as a FAILURE: preserve
-            // existing party/activeCharacter/activeCharacterId instead of clobbering them with
-            // empty data, and skip the rest of the character-sync block.
-            const listData = extractEmbeddedJson<{ characters: any[]; count: number }>(
-              listResult?.content?.[0]?.text ?? '',
-              'CHARACTER_MANAGE_JSON'
-            );
+            let listData: { characters: any[]; count: number } | null = null;
+            try {
+              const listResult = await mcpManager.gameStateClient.callTool('character_manage', { action: 'list' });
+              console.log('[GameStateStore] Raw character_manage/list result:', listResult);
+              listData = extractMcpJsonPayload<{ characters: any[]; count: number }>(
+                listResult,
+                'CHARACTER_MANAGE_JSON'
+              );
+            } catch (err) {
+              console.warn('[GameStateStore] character_manage/list failed, trying legacy list_characters:', err);
+            }
 
             if (!listData) {
-              console.warn('[GameStateStore] character_manage/list returned no parseable envelope — preserving existing party state');
+              const legacyListResult = await mcpManager.gameStateClient.callTool('list_characters', {});
+              console.log('[GameStateStore] Raw list_characters result:', legacyListResult);
+              listData = extractMcpJsonPayload<{ characters: any[]; count: number }>(legacyListResult);
+            }
+
+            if (!listData) {
+              console.warn('[GameStateStore] character list returned no parseable payload — preserving existing party state');
               // Keep activeCharId pointing at the stored selection so the detail
               // sync below can still refresh the previously-known character.
-              throw new Error('character_manage/list returned no CHARACTER_MANAGE_JSON envelope');
+              throw new Error('character list returned no parseable payload');
             }
 
             console.log('[GameStateStore] Parsed characters data:', listData);
@@ -696,11 +701,20 @@ export const useGameStateStore = create<GameState>()(
 
             // Process full character data (includes spellSlots, pactMagicSlots, etc.)
             // character_manage/get embeds the flat character object in CHARACTER_MANAGE_JSON
-            const characterResult = batchResults.find(r => r.name === 'character_manage');
+            let characterResult = batchResults.find(r => r.name === 'character_manage');
+            if (!characterResult || characterResult.error) {
+              try {
+                const legacyCharacterResult = await mcpManager.gameStateClient.callTool('get_character', { id: activeCharId });
+                characterResult = { name: 'character_manage', args: { id: activeCharId }, result: legacyCharacterResult, duration: 0 };
+              } catch (err) {
+                console.warn('[GameStateStore] get_character fallback failed:', err);
+              }
+            }
+
             let fullCharacterData: any = null;
             if (characterResult && !characterResult.error) {
-              fullCharacterData = extractEmbeddedJson<any>(
-                characterResult.result?.content?.[0]?.text ?? '',
+              fullCharacterData = extractMcpJsonPayload<any>(
+                characterResult.result,
                 'CHARACTER_MANAGE_JSON'
               );
               if (fullCharacterData) {
@@ -738,10 +752,19 @@ export const useGameStateStore = create<GameState>()(
             // The consolidated shape exposes the item array under `inventory` (not `items`),
             // so remap it to `items` for parseInventoryFromJson; there is no top-level
             // `equipment` field, so the equipped-items fallback below derives gear.
-            const inventoryResult = batchResults.find(r => r.name === 'inventory_manage');
+            let inventoryResult = batchResults.find(r => r.name === 'inventory_manage');
+            if (!inventoryResult || inventoryResult.error) {
+              try {
+                const legacyInventoryResult = await mcpManager.gameStateClient.callTool('get_inventory_detailed', { characterId: activeCharId });
+                inventoryResult = { name: 'inventory_manage', args: { characterId: activeCharId }, result: legacyInventoryResult, duration: 0 };
+              } catch (err) {
+                console.warn('[GameStateStore] get_inventory_detailed fallback failed:', err);
+              }
+            }
+
             if (inventoryResult && !inventoryResult.error) {
-              const inventoryRaw = extractEmbeddedJson<any>(
-                inventoryResult.result?.content?.[0]?.text ?? '',
+              const inventoryRaw = extractMcpJsonPayload<any>(
+                inventoryResult.result,
                 'INVENTORY_MANAGE_JSON'
               );
               const inventoryData = inventoryRaw
@@ -853,10 +876,19 @@ export const useGameStateStore = create<GameState>()(
 
             // Process quest result - NOTE: Player notes now live in notesStore
             // quest_manage/get_log embeds { quests: [...] } in QUEST_MANAGE_JSON
-            const questResult = batchResults.find(r => r.name === 'quest_manage');
+            let questResult = batchResults.find(r => r.name === 'quest_manage');
+            if (!questResult || questResult.error) {
+              try {
+                const legacyQuestResult = await mcpManager.gameStateClient.callTool('get_quest_log', { characterId: activeCharId });
+                questResult = { name: 'quest_manage', args: { characterId: activeCharId }, result: legacyQuestResult, duration: 0 };
+              } catch (err) {
+                console.warn('[GameStateStore] get_quest_log fallback failed:', err);
+              }
+            }
+
             if (questResult && !questResult.error) {
-              const questData = extractEmbeddedJson<any>(
-                questResult.result?.content?.[0]?.text ?? '',
+              const questData = extractMcpJsonPayload<any>(
+                questResult.result,
                 'QUEST_MANAGE_JSON'
               );
 
@@ -880,19 +912,26 @@ export const useGameStateStore = create<GameState>()(
           // 3. Fetch Worlds and active world state
           // ============================================
           try {
-            const worldsResult = await mcpManager.gameStateClient.callTool('world_manage', { action: 'list' });
-            // A null parse means the WORLD_MANAGE_JSON envelope was absent/malformed
-            // (plain-text or error payload) — NOT a legitimately empty world list. Treat
-            // null as a FAILURE: preserve existing worlds/world/activeWorldId rather than
-            // clobbering them with empty data, and skip the world-sync block.
-            const worldsData = extractEmbeddedJson<any>(
-              worldsResult?.content?.[0]?.text ?? '',
-              'WORLD_MANAGE_JSON'
-            );
-            if (!worldsData) {
-              console.warn('[GameStateStore] world_manage/list returned no parseable envelope — preserving existing world state');
-              throw new Error('world_manage/list returned no WORLD_MANAGE_JSON envelope');
+            let worldsData: any = null;
+            try {
+              const worldsResult = await mcpManager.gameStateClient.callTool('world_manage', { action: 'list' });
+              // Supports both the consolidated rich-text envelope and any direct
+              // JSON payload returned by compatible MCP builds.
+              worldsData = extractMcpJsonPayload<any>(worldsResult, 'WORLD_MANAGE_JSON');
+            } catch (err) {
+              console.warn('[GameStateStore] world_manage/list failed, trying legacy list_worlds:', err);
             }
+
+            if (!worldsData) {
+              const legacyWorldsResult = await mcpManager.gameStateClient.callTool('list_worlds', {});
+              worldsData = extractMcpJsonPayload<any>(legacyWorldsResult);
+            }
+
+            if (!worldsData || worldsData.error) {
+              console.warn('[GameStateStore] world list returned no parseable payload — preserving existing world state');
+              throw new Error('world list returned no parseable payload');
+            }
+
             const worlds = worldsData.worlds || [];
             set({ worlds });
 
@@ -921,23 +960,32 @@ export const useGameStateStore = create<GameState>()(
               let worldDetails: any = null;
               try {
                 const getResult = await mcpManager.gameStateClient.callTool('world_manage', { action: 'get', id: chosenWorld.id });
-                const getData = extractEmbeddedJson<any>(getResult?.content?.[0]?.text ?? '', 'WORLD_MANAGE_JSON');
+                const getData = extractMcpJsonPayload<any>(getResult, 'WORLD_MANAGE_JSON');
                 if (!getData || getData.error || !getData.world) {
                   throw new Error('world_manage/get returned no world');
                 }
                 worldDetails = getData.world;
               } catch (err) {
-                console.warn('[GameStateStore] world_manage/get failed, trying world_manage/get_state', err);
+                console.warn('[GameStateStore] world_manage/get failed, trying legacy get_world', err);
                 try {
-                  const stateResult = await mcpManager.gameStateClient.callTool('world_manage', { action: 'get_state', worldId: chosenWorld.id });
-                  const stateData = extractEmbeddedJson<any>(stateResult?.content?.[0]?.text ?? '', 'WORLD_MANAGE_JSON');
-                  if (!stateData || stateData.error) {
-                    throw new Error('world_manage/get_state returned no state');
+                  const legacyGetResult = await mcpManager.gameStateClient.callTool('get_world', { id: chosenWorld.id });
+                  const legacyWorld = extractMcpJsonPayload<any>(legacyGetResult);
+                  if (!legacyWorld || legacyWorld.error) {
+                    throw new Error('get_world returned no world');
                   }
-                  // get_state is flat: parseWorldFromResponse reads name/environment directly.
-                  worldDetails = stateData;
+                  worldDetails = legacyWorld;
                 } catch (err2) {
-                  console.warn('[GameStateStore] world_manage/get_state failed:', err2);
+                  console.warn('[GameStateStore] legacy get_world failed, trying world state fallback:', err2);
+                  try {
+                    const stateResult = await mcpManager.gameStateClient.callTool('get_world_state', { worldId: chosenWorld.id });
+                    const stateData = extractMcpJsonPayload<any>(stateResult);
+                    if (!stateData || stateData.error) {
+                      throw new Error('get_world_state returned no state');
+                    }
+                    worldDetails = { ...chosenWorld, ...stateData };
+                  } catch (err3) {
+                    console.warn('[GameStateStore] world state fallback failed:', err3);
+                  }
                 }
               }
 
