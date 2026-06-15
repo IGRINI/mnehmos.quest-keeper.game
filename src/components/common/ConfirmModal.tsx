@@ -3,7 +3,7 @@ import React from 'react';
 interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title: string;
   message: string;
   confirmText?: string;
@@ -52,6 +52,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         {/* Actions */}
         <div className="px-6 py-4 border-t border-terminal-green/20 flex justify-end gap-3">
           <button
+            type="button"
             onClick={onClose}
             disabled={isLoading}
             className="px-4 py-2 text-sm border border-terminal-green/50 text-terminal-green/70 rounded hover:bg-terminal-green/10 hover:text-terminal-green transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -59,6 +60,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             {cancelText}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             disabled={isLoading}
             className={`px-4 py-2 text-sm font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${

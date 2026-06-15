@@ -1,13 +1,17 @@
 import React from 'react';
 import { useCombatStore } from '../../stores/combatStore';
+import { ConfirmModal } from '../common/ConfirmModal';
 
 export const VisualizationControls: React.FC = () => {
+  const [showClearConfirm, setShowClearConfirm] = React.useState(false);
+
   const showLineOfSight = useCombatStore(state => state.showLineOfSight);
   const measureMode = useCombatStore(state => state.measureMode);
   const setShowLineOfSight = useCombatStore(state => state.setShowLineOfSight);
   const setMeasureMode = useCombatStore(state => state.setMeasureMode);
 
   return (
+    <>
     <div className="absolute top-24 right-4 flex flex-col gap-2 z-30 pointer-events-auto">
        {/* Tool Label */}
        <div className="text-[10px] uppercase text-green-500/50 font-mono tracking-widest text-right mb-1">
@@ -42,11 +46,7 @@ export const VisualizationControls: React.FC = () => {
         <div className="h-px bg-green-900/30 my-1" />
 
         <button
-          onClick={() => {
-              if (window.confirm('Очистить локальную сцену? Визуализация будет сброшена, затем приложение попробует синхронизироваться с активной сценой при следующем обновлении.')) {
-                  useCombatStore.getState().clearCombat(true);
-              }
-          }}
+          onClick={() => setShowClearConfirm(true)}
           className="flex items-center gap-2 px-3 py-2 text-xs font-mono uppercase tracking-wider transition-colors border border-transparent text-red-700 hover:text-red-500 hover:bg-red-900/10 rounded-sm"
           title="Очистить локальную визуализацию"
         >
@@ -60,5 +60,18 @@ export const VisualizationControls: React.FC = () => {
         )}
       </div>
     </div>
+    <ConfirmModal
+      isOpen={showClearConfirm}
+      onClose={() => setShowClearConfirm(false)}
+      onConfirm={() => {
+        useCombatStore.getState().clearCombat(true);
+        setShowClearConfirm(false);
+      }}
+      title="Очистить сцену"
+      message="Очистить локальную сцену? Визуализация будет сброшена, затем приложение попробует синхронизироваться с активной сценой при следующем обновлении."
+      confirmText="Очистить сцену"
+      isDanger={true}
+    />
+    </>
   );
 };

@@ -7,7 +7,7 @@
  * are not aspirational. If one fails, the bridge contract changed.
  *
  * The load-bearing contracts pinned here:
- *   1. Spawn strategy fallback (sidecar -> direct -> cmd wrapper).
+ *   1. Spawn strategy fallback (sidecar -> direct -> cmd wrapper on Windows).
  *   2. JSON-RPC framing in `handleOutput`: newline-delimited assembly, id-routing,
  *      and partial/multi-line chunk reassembly via the messageBuffer.
  *   3. `callTool` RESOLVES on a success response and REJECTS when the engine
@@ -40,7 +40,7 @@ import { createMockSidecarProcess, type MockSidecarProcess } from '../test/mocks
 // --- Command factory state ---------------------------------------------------
 // A single mutable "command" object models whichever strategy is exercised. The
 // `behavior` switch lets a test force sidecar.spawn() to reject so we can assert
-// the fallback to Command.create('rpg-mcp-server-direct').
+// the Windows fallback to Command.create('rpg-mcp-server-direct').
 
 interface MockCommand extends MockSidecarProcess {
   on: ReturnType<typeof vi.fn>;
@@ -83,6 +83,7 @@ vi.mock('@tauri-apps/plugin-shell', () => ({
 // Lazy-imported in connect()/logToFile() — resolve to no-op so no disk/CWD work.
 vi.mock('@tauri-apps/api/path', () => ({
   appDataDir: vi.fn(async () => '/mock/app/data'),
+  join: vi.fn(async (...parts: string[]) => parts.join('/')),
   resolveResource: vi.fn(async (p: string) => `/mock/resource/${p}`),
 }));
 
@@ -137,6 +138,10 @@ function lastWrittenRequest(cmd: MockCommand): { id: string; method: string; par
 }
 
 beforeEach(() => {
+  Object.defineProperty(window.navigator, 'platform', {
+    value: 'Win32',
+    configurable: true,
+  });
   spawnedCommands.length = 0;
   sidecarImpl.mockClear();
   createImpl.mockClear();

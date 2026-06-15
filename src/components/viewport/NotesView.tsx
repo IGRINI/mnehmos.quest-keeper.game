@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useGameStateStore } from '../../stores/gameStateStore';
 import { useNotesStore, getSortedNotes, CATEGORY_INFO, Note, NoteCategory } from '../../stores/notesStore';
+import { ConfirmModal } from '../common/ConfirmModal';
 
 const NOTE_CATEGORY_LABELS: Record<NoteCategory, string> = {
   general: 'Общее',
@@ -40,6 +41,7 @@ export const NotesView: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<NoteCategory | 'all'>('all');
+  const [pendingDeleteNoteId, setPendingDeleteNoteId] = useState<string | null>(null);
 
   // Form state for new/edit note
   const [noteTitle, setNoteTitle] = useState('');
@@ -130,15 +132,24 @@ export const NotesView: React.FC = () => {
   };
 
   const handleDeleteNote = (id: string) => {
-    if (confirm('Удалить эту заметку без возможности восстановления?')) {
-      deleteNote(id);
-      if (editingId === id) {
-        resetForm();
-      }
-    }
+    setPendingDeleteNoteId(id);
   };
 
+  const handleConfirmDeleteNote = () => {
+    if (!pendingDeleteNoteId) return;
+    deleteNote(pendingDeleteNoteId);
+    if (editingId === pendingDeleteNoteId) {
+      resetForm();
+    }
+    setPendingDeleteNoteId(null);
+  };
+
+  const pendingDeleteNote = pendingDeleteNoteId
+    ? notes.find((note) => note.id === pendingDeleteNoteId)
+    : null;
+
   return (
+    <>
     <div className="h-full flex flex-col p-4 font-mono text-terminal-green overflow-hidden">
       {/* Tab Header */}
       <div className="flex gap-4 mb-4 border-b border-terminal-green-dim pb-2">
@@ -459,5 +470,15 @@ export const NotesView: React.FC = () => {
         </div>
       )}
     </div>
+    <ConfirmModal
+      isOpen={pendingDeleteNoteId !== null}
+      onClose={() => setPendingDeleteNoteId(null)}
+      onConfirm={handleConfirmDeleteNote}
+      title="Delete Note"
+      message={`Delete "${pendingDeleteNote?.title || 'this note'}" permanently?`}
+      confirmText="Delete"
+      isDanger={true}
+    />
+    </>
   );
 };

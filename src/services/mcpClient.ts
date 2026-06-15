@@ -1,6 +1,7 @@
 import { Command, Child } from '@tauri-apps/plugin-shell';
 import { v4 as uuidv4 } from 'uuid';
 import { eventBus } from '../utils/eventBus';
+import { errorToMessage, getRuntimePlatform, isWindowsRuntime } from './runtimePlatform';
 
 interface JsonRpcRequest {
     jsonrpc: '2.0';
@@ -85,7 +86,7 @@ export class McpClient {
             // Prepare CWD (AppData) to ensure server can write database/logs
             let cwd = '';
             try {
-                const { appDataDir } = await import('@tauri-apps/api/path');
+                const { appDataDir, join } = await import('@tauri-apps/api/path');
                 const { mkdir } = await import('@tauri-apps/plugin-fs');
                 cwd = await appDataDir();
                 // Ensure directory exists
@@ -101,7 +102,7 @@ export class McpClient {
                     const { copyFile } = await import('@tauri-apps/plugin-fs');
                     const resourcePath = await resolveResource('binaries/better_sqlite3.node');
                     console.log(`[McpClient] Found native module at: ${resourcePath}`);
-                    const destPath = `${cwd}/better_sqlite3.node`;
+                    const destPath = await join(cwd, 'better_sqlite3.node');
                     await copyFile(resourcePath, destPath);
                     console.log(`[McpClient] Copied native module to CWD`);
                 } catch (e) {
@@ -144,7 +145,8 @@ export class McpClient {
                 });
             };
 
-            const spawnOptions = cwd ? { cwd } : undefined;
+            const spawnOptions: { cwd: string } | undefined = cwd ? { cwd } : undefined;
+            const isWindows = isWindowsRuntime();
 
             // Strategy 1: Try sidecar (Standard Dev Mode)
             try {
@@ -163,6 +165,12 @@ export class McpClient {
                 await this.logToFile(`Strategy 1 (Sidecar) failed: ${sidecarError}`);
             }
 
+            if (!isWindows) {
+                const message = `Sidecar failed on non-Windows platform. Windows-only fallbacks (.exe/cmd.exe) were skipped. Runtime platform: ${getRuntimePlatform() || 'unknown'}`;
+                await this.logToFile(`[Connect] ${message}`);
+                throw new Error(message);
+            }
+
             // Strategy 2: Direct Execution (Production Fallback)
             try {
                 await this.logToFile(`[Connect] Attempting Strategy 2: Direct Execution`);
@@ -177,8 +185,9 @@ export class McpClient {
                 return;
 
             } catch (directError) {
-                console.warn(`[McpClient] Strategy 2 failed: ${directError}`);
-                await this.logToFile(`Strategy 2 (Direct) failed: ${directError}`);
+                const directMessage = errorToMessage(directError);
+                console.warn(`[McpClient] Strategy 2 failed: ${directMessage}`);
+                await this.logToFile(`Strategy 2 (Direct) failed: ${directMessage}`);
             }
 
              // Strategy 3: CMD wrapper (Last Resort)
@@ -194,8 +203,9 @@ export class McpClient {
                 console.log(`[McpClient] CMD wrapper spawned successfully. PID: ${this.process.pid}`);
                 return;
              } catch (cmdError) {
-                 console.error(`[McpClient] Strategy 3 failed: ${cmdError}`);
-                 await this.logToFile(`Strategy 3 (CMD) failed: ${cmdError}`);
+                 const cmdMessage = errorToMessage(cmdError);
+                 console.error(`[McpClient] Strategy 3 failed: ${cmdMessage}`);
+                 await this.logToFile(`Strategy 3 (CMD) failed: ${cmdMessage}`);
                  throw cmdError; // Rethrow last error
              }
 
@@ -208,30 +218,22 @@ export class McpClient {
 
     private async logToFile(message: string) {
         try {
-            const { appDataDir } = await import('@tauri-apps/api/path');
+            const { appDataDir, join } = await import('@tauri-apps/api/path');
             const { mkdir, writeTextFile, readTextFile } = await import('@tauri-apps/plugin-fs');
             
             const dir = await appDataDir();
-            
-            // Ensure directory exists
             try {
                 await mkdir(dir, { recursive: true });
-            } catch (e) {
-                // Ignore if exists, or verify with exists() check if preferred
-                // But mkdir recursive usually succeeds if dir exists
+            } catch {
+                // Ignore when the app-data directory already exists.
             }
-
-            const logPath = `${dir}/mcp-debug.log`;
-            
-            // Simple append simulation
+            const logPath = await join(dir, 'mcp-debug.log');
             let content = '';
             try {
                 content = await readTextFile(logPath);
             } catch {}
-            
             const timestamp = new Date().toISOString();
             const newContent = `${content}\n[${timestamp}] ${message}`;
-            
             await writeTextFile(logPath, newContent);
         } catch (e) {
             console.error('Failed to write to log file:', e);

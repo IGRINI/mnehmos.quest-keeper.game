@@ -3,12 +3,17 @@ import { useHudStore } from '../../stores/hudStore';
 import { useCombatStore } from '../../stores/combatStore';
 import { mcpManager } from '../../services/mcpClient';
 import { extractEmbeddedJson } from '../../utils/mcpUtils';
+import { ConfirmModal } from '../common/ConfirmModal';
 
 /**
  * Bottom action bar for map visualization tools.
  * Theme-aware styling.
  */
 export const QuickActionBar: React.FC = () => {
+    const [pendingAction, setPendingAction] = React.useState<'clear-scene' | 'end-combat' | null>(null);
+    const [isEndingCombat, setIsEndingCombat] = React.useState(false);
+    const [actionError, setActionError] = React.useState<string | null>(null);
+
     const toggleInventory = useHudStore(s => s.toggleInventory);
     const toggleSpellbook = useHudStore(s => s.toggleSpellbook);
     const toggleCombatLog = useHudStore(s => s.toggleCombatLog);
@@ -25,19 +30,36 @@ export const QuickActionBar: React.FC = () => {
     const clearCombat = useCombatStore(s => s.clearCombat);
     
     const handleClearScene = () => {
-        if (window.confirm('Полностью очистить сцену? Это сбросит все боевые визуализации и активную схватку.')) {
-            clearCombat(false); // Full reset including encounter ID
-        }
+        setActionError(null);
+        setPendingAction('clear-scene');
     };
 
     // End encounter handler - calls backend and clears local state
     const handleEndEncounter = async () => {
         if (!activeEncounterId) {
-            alert('Нет активной схватки для завершения.');
+            setActionError('Нет активной схватки для завершения.');
             return;
         }
-        
-        if (window.confirm('Завершить эту схватку? Бой будет закрыт, а поле боя очищено.')) {
+
+        setActionError(null);
+        setPendingAction('end-combat');
+    };
+
+    const handleConfirmAction = async () => {
+        if (pendingAction === 'clear-scene') {
+            clearCombat(false); // Full reset including encounter ID
+            setPendingAction(null);
+            return;
+        }
+
+        if (pendingAction === 'end-combat') {
+            if (!activeEncounterId) {
+                setActionError('Нет активной схватки для завершения.');
+                setPendingAction(null);
+                return;
+            }
+
+            setIsEndingCombat(true);
             try {
                 const result = await mcpManager.gameStateClient.callTool('combat_manage', {
                     action: 'end',
@@ -55,20 +77,24 @@ export const QuickActionBar: React.FC = () => {
 
                 if (!parsed || parsed.error) {
                     console.error('[QuickActionBar] Failed to end encounter (no success envelope):', parsed?.error ?? result);
-                    alert('Не удалось завершить схватку. Бой все еще активен. Подробности в консоли.');
+                    setActionError('Не удалось завершить схватку. Бой все еще активен. Подробности в консоли.');
                     return; // Preserve the encounter — do NOT clear local combat state.
                 }
 
                 clearCombat(false); // Full clear including encounter ID — only after explicit success.
+                setPendingAction(null);
                 console.log('[QuickActionBar] Encounter ended:', activeEncounterId);
             } catch (e) {
                 console.error('[QuickActionBar] Failed to end encounter:', e);
-                alert('Не удалось завершить схватку. Подробности в консоли.');
+                setActionError('Не удалось завершить схватку. Подробности в консоли.');
+            } finally {
+                setIsEndingCombat(false);
             }
         }
     };
 
     return (
+        <>
         <div className="flex gap-2 p-2 bg-terminal-dim/95 rounded-sm border border-terminal-green-dim shadow-2xl animate-fade-in-up">
             <ActionButton
                 label="Инвентарь"
@@ -110,6 +136,26 @@ export const QuickActionBar: React.FC = () => {
                 disabled={!activeEncounterId}
             />
         </div>
+        {actionError && (
+            <div className="mt-2 max-w-sm rounded border border-terminal-red/50 bg-terminal-red/10 px-3 py-2 text-xs text-terminal-red">
+                {actionError}
+            </div>
+        )}
+        <ConfirmModal
+            isOpen={pendingAction !== null}
+            onClose={() => setPendingAction(null)}
+            onConfirm={handleConfirmAction}
+            title={pendingAction === 'end-combat' ? 'Завершить бой' : 'Очистить сцену'}
+            message={
+                pendingAction === 'end-combat'
+                    ? 'Завершить эту схватку? Бой будет закрыт, а поле боя очищено.'
+                    : 'Полностью очистить сцену? Это сбросит все боевые визуализации и активную схватку.'
+            }
+            confirmText={pendingAction === 'end-combat' ? 'Завершить бой' : 'Очистить сцену'}
+            isDanger={true}
+            isLoading={isEndingCombat}
+        />
+        </>
     );
 };
 

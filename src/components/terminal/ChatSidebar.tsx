@@ -1,5 +1,6 @@
 import React from 'react';
 import { useChatStore } from '../../stores/chatStore';
+import { ConfirmModal } from '../common/ConfirmModal';
 
 export const ChatSidebar: React.FC = () => {
   const sessions = useChatStore((state) => state.sessions);
@@ -13,6 +14,7 @@ export const ChatSidebar: React.FC = () => {
     y: number;
     sessionId: string;
   } | null>(null);
+  const [pendingDeleteSessionId, setPendingDeleteSessionId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);
@@ -35,11 +37,19 @@ export const ChatSidebar: React.FC = () => {
 
   const handleDeleteSession = (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation(); // Prevent triggering session switch
-    if (confirm('Удалить этот чат?')) {
-      deleteSession(sessionId);
-      setContextMenu(null); // Close the context menu
-    }
+    setPendingDeleteSessionId(sessionId);
+    setContextMenu(null); // Close the context menu
   };
+
+  const handleConfirmDeleteSession = () => {
+    if (!pendingDeleteSessionId) return;
+    deleteSession(pendingDeleteSessionId);
+    setPendingDeleteSessionId(null);
+  };
+
+  const pendingDeleteSession = pendingDeleteSessionId
+    ? sessions.find((session) => session.id === pendingDeleteSessionId)
+    : null;
 
   return (
     <div className="w-64 bg-terminal-black border-r border-terminal-green-dim flex flex-col h-full relative">
@@ -107,6 +117,16 @@ export const ChatSidebar: React.FC = () => {
           </button>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={pendingDeleteSessionId !== null}
+        onClose={() => setPendingDeleteSessionId(null)}
+        onConfirm={handleConfirmDeleteSession}
+        title="Удалить чат"
+        message={`Удалить "${pendingDeleteSession?.title || 'этот чат'}"?`}
+        confirmText="Удалить"
+        isDanger={true}
+      />
     </div>
   );
 };

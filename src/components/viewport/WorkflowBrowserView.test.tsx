@@ -45,6 +45,11 @@ function sampleDetail() {
   };
 }
 
+function fillRequiredParams() {
+  fireEvent.change(screen.getByTestId('workflow-param-partyName'), { target: { value: 'The Brave' } });
+  fireEvent.change(screen.getByTestId('workflow-param-leaderName'), { target: { value: 'Aria' } });
+}
+
 let workflowState: any;
 
 vi.mock('../../stores/workflowStore', () => ({
@@ -124,11 +129,27 @@ describe('WorkflowBrowserView', () => {
     expect(screen.getByTestId('workflow-param-leaderName')).toBeInTheDocument();
     // The Run button exists.
     expect(screen.getByTestId('workflow-run-button')).toBeInTheDocument();
+    expect(screen.getByText(/Fill required parameters: partyName, leaderName/i)).toBeInTheDocument();
+  });
+
+  it('blocks Preview and Run while required params are empty', () => {
+    workflowState = { ...workflowState, selectedTemplateId: 'onboard-party', detail: sampleDetail() };
+    render(<WorkflowBrowserView />);
+
+    expect(screen.getByTestId('workflow-preview-button')).toBeDisabled();
+    expect(screen.getByTestId('workflow-run-button')).toBeDisabled();
+
+    fireEvent.click(screen.getByTestId('workflow-preview-button'));
+    fireEvent.click(screen.getByTestId('workflow-run-button'));
+
+    expect(runWorkflow).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('workflow-run-confirm')).not.toBeInTheDocument();
   });
 
   it('SAFETY: a single Run click ARMS a confirm and does NOT call runWorkflow', () => {
     workflowState = { ...workflowState, selectedTemplateId: 'onboard-party', detail: sampleDetail() };
     render(<WorkflowBrowserView />);
+    fillRequiredParams();
 
     fireEvent.click(screen.getByTestId('workflow-run-button'));
 
@@ -141,6 +162,7 @@ describe('WorkflowBrowserView', () => {
   it('SAFETY: runWorkflow(autoExecute:true) fires ONLY after the explicit confirm step', () => {
     workflowState = { ...workflowState, selectedTemplateId: 'onboard-party', detail: sampleDetail() };
     render(<WorkflowBrowserView />);
+    fillRequiredParams();
 
     // Arm, then confirm.
     fireEvent.click(screen.getByTestId('workflow-run-button'));
@@ -156,8 +178,8 @@ describe('WorkflowBrowserView', () => {
     workflowState = { ...workflowState, selectedTemplateId: 'onboard-party', detail: sampleDetail() };
     render(<WorkflowBrowserView />);
 
-    fireEvent.change(screen.getByTestId('workflow-param-partyName'), { target: { value: 'The Brave' } });
-    fireEvent.change(screen.getByTestId('workflow-param-leaderName'), { target: { value: 'Aria' } });
+    fireEvent.change(screen.getByTestId('workflow-param-partyName'), { target: { value: '  The Brave  ' } });
+    fireEvent.change(screen.getByTestId('workflow-param-leaderName'), { target: { value: '  Aria  ' } });
 
     fireEvent.click(screen.getByTestId('workflow-run-button'));
     fireEvent.click(screen.getByTestId('workflow-run-confirm'));
@@ -169,6 +191,7 @@ describe('WorkflowBrowserView', () => {
   it('cancelling the confirm step aborts the run without calling runWorkflow', () => {
     workflowState = { ...workflowState, selectedTemplateId: 'onboard-party', detail: sampleDetail() };
     render(<WorkflowBrowserView />);
+    fillRequiredParams();
 
     fireEvent.click(screen.getByTestId('workflow-run-button'));
     fireEvent.click(screen.getByTestId('workflow-run-cancel'));
@@ -181,6 +204,7 @@ describe('WorkflowBrowserView', () => {
   it('Preview steps calls runWorkflow with autoExecute:false WITHOUT a confirm step', () => {
     workflowState = { ...workflowState, selectedTemplateId: 'onboard-party', detail: sampleDetail() };
     render(<WorkflowBrowserView />);
+    fillRequiredParams();
 
     fireEvent.click(screen.getByTestId('workflow-preview-button'));
 
@@ -309,6 +333,7 @@ describe('WorkflowBrowserView', () => {
     // Keep the run "in flight" so the in-flight guard stays armed across both clicks.
     runWorkflow.mockReturnValue(new Promise(() => {}));
     render(<WorkflowBrowserView />);
+    fillRequiredParams();
 
     fireEvent.click(screen.getByTestId('workflow-run-button')); // arm the confirm
     const execBtn = screen.getByTestId('workflow-run-confirm');
@@ -329,6 +354,7 @@ describe('WorkflowBrowserView', () => {
     workflowState = { ...workflowState, selectedTemplateId: 'onboard-party', detail: sampleDetail() };
     runWorkflow.mockReturnValue(new Promise(() => {})); // keep the dry-run in flight
     render(<WorkflowBrowserView />);
+    fillRequiredParams();
     const previewBtn = screen.getByTestId('workflow-preview-button');
     // Two clicks in ONE act(): only a synchronous in-flight guard stops the second.
     act(() => {
@@ -359,20 +385,17 @@ describe('WorkflowBrowserView', () => {
     expect(within(panel).queryAllByText('✓')).toHaveLength(1);
   });
 
-  it('drops empty/whitespace-only params and trims the rest before forwarding', () => {
+  it('does not run when any required param is empty or whitespace-only', () => {
     workflowState = { ...workflowState, selectedTemplateId: 'onboard-party', detail: sampleDetail() };
     render(<WorkflowBrowserView />);
 
-    // Whitespace-only → dropped, so the engine can apply its own default/validation.
     fireEvent.change(screen.getByTestId('workflow-param-partyName'), { target: { value: '   ' } });
-    // Surrounding whitespace → trimmed, not forwarded raw.
     fireEvent.change(screen.getByTestId('workflow-param-leaderName'), { target: { value: '  Aria  ' } });
 
     fireEvent.click(screen.getByTestId('workflow-run-button'));
-    fireEvent.click(screen.getByTestId('workflow-run-confirm'));
 
-    const [, params] = runWorkflow.mock.calls[0];
-    expect(params).toEqual({ leaderName: 'Aria' });
-    expect(params).not.toHaveProperty('partyName');
+    expect(runWorkflow).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('workflow-run-confirm')).not.toBeInTheDocument();
+    expect(screen.getByText(/Fill required parameter: partyName/i)).toBeInTheDocument();
   });
 });

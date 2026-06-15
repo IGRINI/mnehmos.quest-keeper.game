@@ -6,6 +6,8 @@ import { usePartyStore } from '../../stores/partyStore';
 import { CharacterCreationModal } from './CharacterCreationModal';
 import { PartySelector, PartyPanel, PartyCreatorModal, CharacterPickerModal } from '../party';
 import { getClassLabel, getRaceLabel } from '../character/displayLabels';
+import { ConfirmModal } from '../common/ConfirmModal';
+import { extractMcpJsonPayload } from '../../utils/mcpUtils';
 
 const QuickStats = () => {
     const worlds = useGameStateStore((state) => state.worlds || []);
@@ -25,6 +27,9 @@ const QuickStats = () => {
     const [isCreatingCharacter, setIsCreatingCharacter] = useState(false);
     const [isCreatingParty, setIsCreatingParty] = useState(false);
     const [isAddingMember, setIsAddingMember] = useState(false);
+    const [worldDeleteCandidate, setWorldDeleteCandidate] = useState<{ id: string; name: string } | null>(null);
+    const [isDeletingWorld, setIsDeletingWorld] = useState(false);
+    const [worldDeleteError, setWorldDeleteError] = useState<string | null>(null);
 
     // Sync party details when initialized and we have an active party but no details
     useEffect(() => {
@@ -37,6 +42,35 @@ const QuickStats = () => {
     const activeParty = activePartyId ? partyDetails[activePartyId] : null;
     // *** Use unified activeCharacterId instead of member.isActive ***
     const activeChar = activeParty?.members?.find((m) => m.characterId === activeCharacterId);
+
+    const handleDeleteWorld = async () => {
+        if (!worldDeleteCandidate) return;
+
+        setIsDeletingWorld(true);
+        setWorldDeleteError(null);
+
+        try {
+            const { mcpManager } = await import('../../services/mcpClient');
+            const result = await mcpManager.gameStateClient.callTool('world_manage', {
+                action: 'delete',
+                id: worldDeleteCandidate.id,
+            });
+            const payload = extractMcpJsonPayload<{ success?: boolean; error?: boolean; message?: string }>(
+                result,
+                'WORLD_MANAGE_JSON'
+            );
+            if (payload?.error || payload?.success === false) {
+                throw new Error(payload.message || 'Не удалось удалить мир');
+            }
+            await useGameStateStore.getState().syncState(true);
+            setWorldDeleteCandidate(null);
+        } catch (error) {
+            console.error('Failed to delete world:', error);
+            setWorldDeleteError(error instanceof Error ? error.message : 'Не удалось удалить мир');
+        } finally {
+            setIsDeletingWorld(false);
+        }
+    };
 
     return (
         <>
@@ -135,17 +169,14 @@ const QuickStats = () => {
                                         ))}
                                     </select>
                                     <button
-                                        onClick={async () => {
+                                        onClick={() => {
                                             const selectedWorld = worlds.find((w: any) => w.id === activeWorldId);
-                                            if (selectedWorld && confirm(`Удалить мир "${selectedWorld.name}"? Это действие нельзя отменить.`)) {
-                                                try {
-                                                    const { mcpManager } = await import('../../services/mcpClient');
-                                                    await mcpManager.gameStateClient.callTool('world_manage', { action: 'delete', id: activeWorldId });
-                                                    await useGameStateStore.getState().syncState(true);
-                                                } catch (e) {
-                                                    console.error('Failed to delete world:', e);
-                                                    alert('Не удалось удалить мир');
-                                                }
+                                            if (selectedWorld && activeWorldId) {
+                                                setWorldDeleteError(null);
+                                                setWorldDeleteCandidate({
+                                                    id: activeWorldId,
+                                                    name: selectedWorld.name || 'Безымянный мир',
+                                                });
                                             }
                                         }}
                                         className="shrink-0 px-2 py-1 bg-red-900/30 border border-red-500/50 text-red-400 text-xs rounded hover:bg-red-900/50 transition-colors"
@@ -160,6 +191,11 @@ const QuickStats = () => {
                                     <div className="text-terminal-green/50">
                                         Введи <code className="bg-terminal-green/20 px-1 rounded">/new</code> в чате, чтобы создать кампанию с новым миром.
                                     </div>
+                                </div>
+                            )}
+                            {worldDeleteError && (
+                                <div className="mt-2 text-xs text-red-400">
+                                    {worldDeleteError}
                                 </div>
                             )}
                         </div>
@@ -189,6 +225,16 @@ const QuickStats = () => {
             <CharacterPickerModal
                 isOpen={isAddingMember}
                 onClose={() => setIsAddingMember(false)}
+            />
+            <ConfirmModal
+                isOpen={worldDeleteCandidate !== null}
+                onClose={() => setWorldDeleteCandidate(null)}
+                onConfirm={handleDeleteWorld}
+                title="Удалить мир"
+                message={`Удалить мир "${worldDeleteCandidate?.name || 'Безымянный мир'}"? Это действие нельзя отменить.`}
+                confirmText="Удалить мир"
+                isDanger={true}
+                isLoading={isDeletingWorld}
             />
         </>
     );

@@ -29,6 +29,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
   const [showFormation, setShowFormation] = useState(false);
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [showDeletePartyConfirm, setShowDeletePartyConfirm] = useState(false);
+  const [pendingRemoveMemberId, setPendingRemoveMemberId] = useState<string | null>(null);
 
   const activePartyId = usePartyStore((state) => state.activePartyId);
   const partyDetails = usePartyStore((state) => state.partyDetails);
@@ -94,9 +95,16 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
     }
   };
 
-  const handleRemoveMember = async (characterId: string) => {
-    if (activePartyId && confirm('Убрать этого персонажа из группы?')) {
-      await removeMember(activePartyId, characterId);
+  const handleRemoveMember = (characterId: string) => {
+    setPendingRemoveMemberId(characterId);
+  };
+
+  const handleConfirmRemoveMember = async () => {
+    if (activePartyId && pendingRemoveMemberId) {
+      const success = await removeMember(activePartyId, pendingRemoveMemberId);
+      if (success) {
+        setPendingRemoveMemberId(null);
+      }
     }
   };
 
@@ -149,6 +157,10 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
         return null;
     }
   };
+
+  const pendingRemoveMember = pendingRemoveMemberId
+    ? activeParty.members.find((member) => member.characterId === pendingRemoveMemberId)
+    : null;
 
   const renderMemberCard = (member: PartyMemberWithCharacter) => {
     const { character } = member;
@@ -381,6 +393,17 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
     </div>
 
       {/* Delete Party Confirmation Modal */}
+      <ConfirmModal
+        isOpen={pendingRemoveMemberId !== null}
+        onClose={() => setPendingRemoveMemberId(null)}
+        onConfirm={handleConfirmRemoveMember}
+        title="Убрать персонажа"
+        message={`Убрать "${pendingRemoveMember?.character.name || 'этого персонажа'}" из группы?`}
+        confirmText="Убрать"
+        isDanger={true}
+        isLoading={isLoading}
+      />
+
       <ConfirmModal
         isOpen={showDeletePartyConfirm}
         onClose={() => setShowDeletePartyConfirm(false)}

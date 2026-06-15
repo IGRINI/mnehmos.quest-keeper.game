@@ -145,6 +145,11 @@ export const WorkflowBrowserView: React.FC = () => {
   const template: WorkflowTemplateDetail | null =
     detail?.template && detail.template.id === selectedTemplateId ? detail.template : null;
   const requiredParams = template?.requiredParams ?? [];
+  const missingRequiredParams = React.useMemo(
+    () => requiredParams.filter((key) => (paramValues[key] ?? '').trim().length === 0),
+    [requiredParams, paramValues]
+  );
+  const hasMissingRequiredParams = missingRequiredParams.length > 0;
 
   const handleSelect = React.useCallback(
     (id: string) => {
@@ -155,9 +160,8 @@ export const WorkflowBrowserView: React.FC = () => {
   );
 
   const buildParams = React.useCallback((): Record<string, unknown> => {
-    // Forward only the required-param inputs the engine asked for, trimmed of
-    // empties so the engine can apply its own defaults/validation. A whitespace-only
-    // entry is DROPPED (not forwarded as '') so it can't clobber an engine default.
+    // Forward only the required-param inputs the engine asked for, trimmed. The
+    // run handlers separately block missing required params before this is used.
     const out: Record<string, unknown> = {};
     for (const key of requiredParams) {
       const raw = paramValues[key];
@@ -171,7 +175,7 @@ export const WorkflowBrowserView: React.FC = () => {
 
   // Dry-run preview: mutates NOTHING server-side, so it needs no confirm gate.
   const handlePreview = React.useCallback(() => {
-    if (!selectedTemplateId || isPreviewingRef.current) return;
+    if (!selectedTemplateId || hasMissingRequiredParams || isPreviewingRef.current) return;
     isPreviewingRef.current = true;
     void Promise.resolve(
       runWorkflow(selectedTemplateId, buildParams(), { autoExecute: false })
@@ -180,14 +184,15 @@ export const WorkflowBrowserView: React.FC = () => {
       .finally(() => {
         isPreviewingRef.current = false;
       });
-  }, [selectedTemplateId, runWorkflow, buildParams]);
+  }, [selectedTemplateId, hasMissingRequiredParams, runWorkflow, buildParams]);
 
   // SAFETY: a workflow run mass-mutates game state, so the destructive
   // autoExecute:true call is two-step. The first Run click only ARMS the
   // confirm; the run fires ONLY from the explicit Execute (confirm) click.
   const handleArmRun = React.useCallback(() => {
+    if (hasMissingRequiredParams) return;
     setConfirmingRun(true);
-  }, []);
+  }, [hasMissingRequiredParams]);
 
   const handleCancelRun = React.useCallback(() => {
     setConfirmingRun(false);
@@ -195,7 +200,7 @@ export const WorkflowBrowserView: React.FC = () => {
 
   const handleConfirmRun = React.useCallback(() => {
     // Guard the destructive run against same-tick double clicks (see isExecutingRef).
-    if (!selectedTemplateId || isExecutingRef.current) return;
+    if (!selectedTemplateId || hasMissingRequiredParams || isExecutingRef.current) return;
     isExecutingRef.current = true;
     setConfirmingRun(false);
     void Promise.resolve(
@@ -205,7 +210,7 @@ export const WorkflowBrowserView: React.FC = () => {
       .finally(() => {
         isExecutingRef.current = false;
       });
-  }, [selectedTemplateId, runWorkflow, buildParams]);
+  }, [selectedTemplateId, hasMissingRequiredParams, runWorkflow, buildParams]);
 
   return (
     <div className="h-full w-full flex overflow-hidden">
@@ -325,10 +330,17 @@ export const WorkflowBrowserView: React.FC = () => {
                           setParamValues((prev) => ({ ...prev, [key]: e.target.value }))
                         }
                         className="mt-1 w-full bg-terminal-black border border-terminal-green/40 rounded px-2 py-1 text-sm text-terminal-green focus:outline-none focus:border-terminal-green"
+                        aria-required="true"
                       />
                     </label>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {hasMissingRequiredParams && (
+              <div className="mb-4 border border-terminal-green/30 bg-terminal-green/5 rounded px-3 py-2 text-xs text-terminal-green/70">
+                Fill required parameter{missingRequiredParams.length > 1 ? 's' : ''}: {missingRequiredParams.join(', ')}
               </div>
             )}
 
@@ -337,8 +349,8 @@ export const WorkflowBrowserView: React.FC = () => {
               <button
                 data-testid="workflow-preview-button"
                 onClick={handlePreview}
-                disabled={isLoading}
-                className="text-sm border border-terminal-green/60 px-4 py-2 text-terminal-green hover:bg-terminal-green/10 transition-colors rounded disabled:opacity-40"
+                disabled={isLoading || hasMissingRequiredParams}
+                className="text-sm border border-terminal-green/60 px-4 py-2 text-terminal-green hover:bg-terminal-green/10 transition-colors rounded disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Предпросмотр шагов
               </button>
@@ -347,8 +359,8 @@ export const WorkflowBrowserView: React.FC = () => {
                 <button
                   data-testid="workflow-run-button"
                   onClick={handleArmRun}
-                  disabled={isLoading}
-                  className="text-sm border border-terminal-green bg-terminal-green/10 px-4 py-2 text-terminal-green font-bold hover:bg-terminal-green/20 transition-colors rounded disabled:opacity-40"
+                  disabled={isLoading || hasMissingRequiredParams}
+                  className="text-sm border border-terminal-green bg-terminal-green/10 px-4 py-2 text-terminal-green font-bold hover:bg-terminal-green/20 transition-colors rounded disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Запустить сценарий
                 </button>
@@ -365,8 +377,8 @@ export const WorkflowBrowserView: React.FC = () => {
                   <button
                     data-testid="workflow-run-confirm"
                     onClick={handleConfirmRun}
-                    disabled={isLoading}
-                    className="text-sm border border-terminal-red bg-terminal-red/20 px-4 py-2 text-terminal-red font-bold hover:bg-terminal-red/30 transition-colors rounded disabled:opacity-40"
+                    disabled={isLoading || hasMissingRequiredParams}
+                    className="text-sm border border-terminal-red bg-terminal-red/20 px-4 py-2 text-terminal-red font-bold hover:bg-terminal-red/30 transition-colors rounded disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Выполнить
                   </button>

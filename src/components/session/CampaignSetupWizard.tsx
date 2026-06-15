@@ -9,6 +9,8 @@ import { CharacterCreationModal } from '../party/CharacterCreationModal';
 import { PartyCreatorModal } from '../party/PartyCreatorModal';
 import { getClassLabel } from '../character/displayLabels';
 import { getPartyStatusLabel } from '../party/displayLabels';
+import { ConfirmModal } from '../common/ConfirmModal';
+import { extractMcpJsonPayload } from '../../utils/mcpUtils';
 
 // ============================================
 // Types
@@ -33,6 +35,54 @@ interface CampaignSetupWizardProps {
   onComplete: (sessionId: string, initialPrompt: string) => void;
 }
 
+type DestructiveAction =
+  | { type: 'session'; id: string; name: string }
+  | { type: 'world'; id: string; name: string }
+  | { type: 'party'; id: string; name: string }
+  | { type: 'member'; partyId: string; characterId: string; name: string };
+
+function errorMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.length > 0) return message;
+  }
+  if (typeof error === 'string' && error.length > 0) return error;
+  return fallback;
+}
+
+function describeDestructiveAction(action: DestructiveAction | null) {
+  if (!action) {
+    return { title: '', message: '', confirmText: 'Удалить' };
+  }
+
+  switch (action.type) {
+    case 'session':
+      return {
+        title: 'Удалить кампанию',
+        message: `Удалить "${action.name}"? Это удалит данные кампании.`,
+        confirmText: 'Удалить кампанию',
+      };
+    case 'world':
+      return {
+        title: 'Удалить мир',
+        message: `Удалить мир "${action.name}"? Это действие нельзя отменить.`,
+        confirmText: 'Удалить мир',
+      };
+    case 'party':
+      return {
+        title: 'Удалить группу',
+        message: `Удалить группу "${action.name}"? Участники станут свободными.`,
+        confirmText: 'Удалить группу',
+      };
+    case 'member':
+      return {
+        title: 'Убрать персонажа',
+        message: `Убрать "${action.name}" из группы?`,
+        confirmText: 'Убрать',
+      };
+  }
+}
+
 // ============================================
 // Main Component
 // ============================================
@@ -49,6 +99,9 @@ export const CampaignSetupWizard: React.FC<CampaignSetupWizardProps> = ({
   const [newWorldName, setNewWorldName] = useState('');
   const [worldGenSeed, setWorldGenSeed] = useState('');
   const [isGeneratingContext, setIsGeneratingContext] = useState(false);
+  const [pendingDestructiveAction, setPendingDestructiveAction] = useState<DestructiveAction | null>(null);
+  const [destructiveError, setDestructiveError] = useState<string | null>(null);
+  const [isDestructiveBusy, setIsDestructiveBusy] = useState(false);
   const [wizardState, setWizardState] = useState<WizardState>({
     campaignName: '',
     description: '',
@@ -67,6 +120,8 @@ export const CampaignSetupWizard: React.FC<CampaignSetupWizardProps> = ({
   const unassignedCharacters = usePartyStore((state) => state.unassignedCharacters);
   const syncUnassignedCharacters = usePartyStore((state) => state.syncUnassignedCharacters);
   const syncParties = usePartyStore((state) => state.syncParties);
+  const deleteParty = usePartyStore((state) => state.deleteParty);
+  const removeMember = usePartyStore((state) => state.removeMember);
   const createSession = useSessionStore((state) => state.createSession);
   const sessions = useSessionStore((state) => state.sessions);
   const switchSession = useSessionStore((state) => state.switchSession);
@@ -109,6 +164,69 @@ export const CampaignSetupWizard: React.FC<CampaignSetupWizardProps> = ({
   // Update field helper
   const updateField = <K extends keyof WizardState>(key: K, value: WizardState[K]) => {
     setWizardState(prev => ({ ...prev, [key]: value }));
+  };
+
+  const requestDestructiveAction = (action: DestructiveAction) => {
+    setDestructiveError(null);
+    setPendingDestructiveAction(action);
+  };
+
+  const closeDestructiveConfirm = () => {
+    if (isDestructiveBusy) return;
+    setPendingDestructiveAction(null);
+  };
+
+  const confirmDestructiveAction = async () => {
+    const action = pendingDestructiveAction;
+    if (!action) return;
+
+    setIsDestructiveBusy(true);
+    setDestructiveError(null);
+
+    try {
+      if (action.type === 'session') {
+        deleteSession(action.id);
+      } else if (action.type === 'world') {
+        const result = await mcpManager.gameStateClient.callTool('world_manage', {
+          action: 'delete',
+          id: action.id,
+        });
+        const payload = extractMcpJsonPayload<{ success?: boolean; error?: boolean; message?: string }>(
+          result,
+          'WORLD_MANAGE_JSON'
+        );
+        if (payload?.error || payload?.success === false) {
+          throw new Error(payload.message || 'Не удалось удалить мир');
+        }
+        await useGameStateStore.getState().syncState(true);
+        if (wizardState.worldId === action.id) {
+          updateField('worldId', null);
+        }
+      } else if (action.type === 'party') {
+        const success = await deleteParty(action.id);
+        if (!success) {
+          throw new Error(usePartyStore.getState().error || 'Не удалось удалить группу');
+        }
+        if (wizardState.partyId === action.id) {
+          updateField('partyId', null);
+        }
+      } else if (action.type === 'member') {
+        const success = await removeMember(action.partyId, action.characterId);
+        if (!success) {
+          throw new Error(usePartyStore.getState().error || 'Не удалось убрать персонажа из группы');
+        }
+        if (wizardState.activeCharacterId === action.characterId) {
+          updateField('activeCharacterId', null);
+        }
+      }
+
+      setPendingDestructiveAction(null);
+    } catch (error) {
+      console.error('[CampaignWizard] Destructive action failed:', error);
+      setDestructiveError(errorMessage(error, 'Не удалось выполнить действие'));
+    } finally {
+      setIsDestructiveBusy(false);
+    }
   };
 
   // Navigation
@@ -182,6 +300,7 @@ Generate an immersive opening scene in Russian. Describe the environment, atmosp
 
   // Get selected party members
   const selectedParty = wizardState.partyId ? partyDetails[wizardState.partyId] : null;
+  const destructiveConfirmCopy = describeDestructiveAction(pendingDestructiveAction);
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
@@ -226,6 +345,12 @@ Generate an immersive opening scene in Russian. Describe the environment, atmosp
 
         {/* Content */}
         <div className="p-6 min-h-[300px]">
+          {destructiveError && (
+            <div className="mb-4 border border-red-500/50 bg-red-900/20 text-red-300 px-3 py-2 rounded text-sm">
+              {destructiveError}
+            </div>
+          )}
+
           {/* Step 0: Selection */}
           {currentStep === 'selection' && (
             <div className="space-y-6">
@@ -278,11 +403,11 @@ Generate an immersive opening scene in Russian. Describe the environment, atmosp
                                         Продолжить
                                     </button>
                                     <button 
-                                        onClick={() => {
-                                            if (confirm(`Удалить "${session.name}"? Это удалит все данные кампании.`)) {
-                                                deleteSession(session.id);
-                                            }
-                                        }}
+                                        onClick={() => requestDestructiveAction({
+                                            type: 'session',
+                                            id: session.id,
+                                            name: session.name,
+                                        })}
                                         className="px-4 py-1 bg-red-900/10 border border-red-500/30 text-red-400 rounded hover:bg-red-900/30 transition-colors text-xs"
                                     >
                                         Удалить
@@ -415,22 +540,11 @@ Generate an immersive opening scene in Russian. Describe the environment, atmosp
                             Загрузить
                           </button>
                           <button
-                            onClick={async () => {
-                              if (confirm(`Удалить мир "${world.name}"? Это действие нельзя отменить.`)) {
-                                try {
-                                  await mcpManager.gameStateClient.callTool('world_manage', { action: 'delete', id: world.id });
-                                  // Refresh worlds list
-                                  await useGameStateStore.getState().syncState(true);
-                                  // Clear selection if deleted world was selected
-                                  if (wizardState.worldId === world.id) {
-                                    updateField('worldId', null);
-                                  }
-                                } catch (e) {
-                                  console.error('Failed to delete world:', e);
-                                  alert('Не удалось удалить мир');
-                                }
-                              }
-                            }}
+                            onClick={() => requestDestructiveAction({
+                              type: 'world',
+                              id: world.id,
+                              name: world.name || 'Безымянный мир',
+                            })}
                             className="px-3 py-1 bg-red-900/30 border border-red-500/50 text-red-400 text-xs rounded hover:bg-red-900/50 transition-colors"
                             title="Удалить этот мир"
                           >
@@ -551,20 +665,11 @@ Generate an immersive opening scene in Russian. Describe the environment, atmosp
                           </div>
                         </div>
                         <button
-                          onClick={async () => {
-                            if (confirm(`Удалить группу "${party.name}"? Это действие нельзя отменить.`)) {
-                              try {
-                                await mcpManager.gameStateClient.callTool('party_manage', { action: 'delete', partyId: party.id });
-                                await usePartyStore.getState().syncParties();
-                                if (wizardState.partyId === party.id) {
-                                  updateField('partyId', null);
-                                }
-                              } catch (e) {
-                                console.error('Failed to delete party:', e);
-                                alert('Не удалось удалить группу');
-                              }
-                            }
-                          }}
+                          onClick={() => requestDestructiveAction({
+                            type: 'party',
+                            id: party.id,
+                            name: party.name,
+                          })}
                           className="px-2 py-1 bg-red-900/30 border border-red-500/50 text-red-400 text-xs rounded hover:bg-red-900/50 transition-colors ml-2"
                           title="Удалить группу"
                         >
@@ -597,24 +702,12 @@ Generate an immersive opening scene in Russian. Describe the environment, atmosp
                               {member.character?.name || 'неизвестно'} - ур. {member.character?.level || '?'} {getClassLabel(member.character?.class || '')}
                             </div>
                             <button
-                              onClick={async () => {
-                                if (confirm(`Убрать "${member.character?.name}" из группы?`)) {
-                                  try {
-                                    await mcpManager.gameStateClient.callTool('party_manage', {
-                                      action: 'remove_member',
-                                      partyId: selectedParty.id,
-                                      characterId: member.characterId
-                                    });
-                                    await usePartyStore.getState().syncPartyDetails(selectedParty.id);
-                                    if (wizardState.activeCharacterId === member.characterId) {
-                                      updateField('activeCharacterId', null);
-                                    }
-                                  } catch (e) {
-                                    console.error('Failed to remove member:', e);
-                                    alert('Не удалось убрать персонажа из группы');
-                                  }
-                                }
-                              }}
+                              onClick={() => requestDestructiveAction({
+                                type: 'member',
+                                partyId: selectedParty.id,
+                                characterId: member.characterId,
+                                name: member.character?.name || 'персонажа',
+                              })}
                               className="px-2 py-1 bg-red-900/30 border border-red-500/50 text-red-400 text-xs rounded hover:bg-red-900/50 transition-colors ml-2"
                               title="Убрать из группы"
                             >
@@ -787,6 +880,17 @@ Be evocative and concise.`;
       </div>
 
       {/* World Generation Modal */}
+      <ConfirmModal
+        isOpen={pendingDestructiveAction !== null}
+        onClose={closeDestructiveConfirm}
+        onConfirm={confirmDestructiveAction}
+        title={destructiveConfirmCopy.title}
+        message={destructiveConfirmCopy.message}
+        confirmText={destructiveConfirmCopy.confirmText}
+        isDanger={true}
+        isLoading={isDestructiveBusy}
+      />
+
       <WorldGenerationModal
         isOpen={showWorldGenModal}
         seed={worldGenSeed}
