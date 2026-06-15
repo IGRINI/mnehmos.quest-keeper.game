@@ -6,6 +6,7 @@ import { useCombatStore } from '../../stores/combatStore';
 import { useUIStore, ActiveTab, ALL_TABS } from '../../stores/uiStore';
 import { setPlaytestMode, isPlaytestModeEnabled } from '../../services/llm/contextBuilder';
 import { extractEmbeddedJson } from '../../utils/mcpUtils';
+import type { CampaignSession } from '../../stores/sessionStore';
 
 // Slash command result interface
 interface CommandResult {
@@ -79,6 +80,31 @@ function formatToolsOutput(tools: any[]): string {
 
   output += `---\n*Сервер: rpg-mcp | Протокол: MCP v2024-11-05*`;
   return output;
+}
+
+function isPlayableCampaignSession(session: CampaignSession): boolean {
+  const snapshot = session.snapshot;
+  const hasLinkedGameState = Boolean(
+    session.worldId || session.partyId || session.activeCharacterId
+  );
+  const hasSnapshotState = Boolean(
+    snapshot.memberCount > 0 ||
+    (snapshot.partyName && snapshot.partyName !== 'No Party') ||
+    (snapshot.locationName && snapshot.locationName !== 'Unknown')
+  );
+
+  return hasLinkedGameState || hasSnapshotState;
+}
+
+function selectMostRecentPlayableSession(sessions: CampaignSession[]): CampaignSession | null {
+  return sessions
+    .filter(isPlayableCampaignSession)
+    .reduce<CampaignSession | null>((latest, session) => {
+      if (!latest || session.lastPlayedAt > latest.lastPlayedAt) {
+        return session;
+      }
+      return latest;
+    }, null);
 }
 
 export const ChatInput: React.FC = () => {
@@ -324,11 +350,10 @@ export const ChatInput: React.FC = () => {
         const sessionStore = (await import('../../stores/sessionStore')).useSessionStore.getState();
         const sessions = sessionStore.sessions;
         
-        if (sessions.length > 0) {
+        const lastSession = selectMostRecentPlayableSession(sessions);
+
+        if (lastSession) {
           // Resume the most recently played session
-          const lastSession = sessions.reduce((a, b) => 
-            a.lastPlayedAt > b.lastPlayedAt ? a : b
-          );
           await sessionStore.switchSession(lastSession.id);
           return { 
             content: `🎮 **Продолжаем кампанию:** ${lastSession.name}\n\n📍 ${lastSession.snapshot.locationName}\n👥 ${lastSession.snapshot.partyName} (ур. ${lastSession.snapshot.level})\n\nНапиши любое действие, чтобы продолжить приключение.`
@@ -340,7 +365,11 @@ export const ChatInput: React.FC = () => {
               submitToLLM(initialPrompt);
             }, 100);
           });
-          return { content: `🎭 Кампаний пока нет. Открываю мастер настройки...` };
+          return {
+            content: sessions.length > 0
+              ? `🎭 Найден только пустой черновик кампании. Открываю мастер настройки...`
+              : `🎭 Кампаний пока нет. Открываю мастер настройки...`
+          };
         }
       }
       

@@ -1,6 +1,9 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { LLMProviderInterface, ChatMessage, LLMResponse } from '../types';
 import { LLMProvider } from '../../../stores/settingsStore';
+
+const CODEX_STREAM_DELTA_EVENT = 'codex-response-delta';
 
 interface CodexWireMessage {
     role: ChatMessage['role'];
@@ -23,6 +26,11 @@ interface CodexWireTool {
     strict: boolean;
 }
 
+interface CodexStreamDeltaPayload {
+    streamId: string;
+    delta: string;
+}
+
 export class CodexProvider implements LLMProviderInterface {
     provider: LLMProvider = 'codex';
 
@@ -30,13 +38,15 @@ export class CodexProvider implements LLMProviderInterface {
         messages: ChatMessage[],
         _apiKey: string,
         model: string,
-        tools?: any[]
+        tools?: any[],
+        streamEventId?: string
     ): Promise<LLMResponse> {
         const response = await invoke<LLMResponse>('codex_send_message', {
             request: {
                 model,
                 messages: this.toCodexMessages(messages),
                 tools: (tools || []).map(this.toCodexTool),
+                ...(streamEventId ? { streamEventId } : {}),
             },
         });
 
@@ -56,10 +66,29 @@ export class CodexProvider implements LLMProviderInterface {
         onComplete: () => void | Promise<void>,
         onError: (error: string) => void
     ): Promise<void> {
+        const streamEventId = this.createStreamEventId();
+        let unlisten: UnlistenFn | null = null;
+        let streamedContent = '';
+
         try {
-            const response = await this.sendMessage(messages, apiKey, model, tools);
+            unlisten = await listen<CodexStreamDeltaPayload>(
+                CODEX_STREAM_DELTA_EVENT,
+                (event) => {
+                    if (event.payload.streamId !== streamEventId) {
+                        return;
+                    }
+
+                    streamedContent += event.payload.delta;
+                    onChunk(event.payload.delta);
+                }
+            );
+
+            const response = await this.sendMessage(messages, apiKey, model, tools, streamEventId);
             if (response.content) {
-                onChunk(response.content);
+                const missingSuffix = this.getMissingSuffix(streamedContent, response.content);
+                if (missingSuffix) {
+                    onChunk(missingSuffix);
+                }
             }
             if (response.toolCalls && response.toolCalls.length > 0) {
                 onToolCalls(response.toolCalls);
@@ -67,6 +96,8 @@ export class CodexProvider implements LLMProviderInterface {
             await onComplete();
         } catch (error: unknown) {
             onError(this.formatError(error));
+        } finally {
+            unlisten?.();
         }
     }
 
@@ -133,5 +164,29 @@ export class CodexProvider implements LLMProviderInterface {
             name,
             arguments: toolCall.arguments ?? toolCall.function?.arguments ?? {},
         };
+    }
+
+    private createStreamEventId(): string {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+            return crypto.randomUUID();
+        }
+
+        return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+
+    private getMissingSuffix(streamedContent: string, finalContent: string): string {
+        if (!finalContent) {
+            return '';
+        }
+
+        if (!streamedContent) {
+            return finalContent;
+        }
+
+        if (finalContent.startsWith(streamedContent)) {
+            return finalContent.slice(streamedContent.length);
+        }
+
+        return '';
     }
 }

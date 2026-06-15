@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 mod oauth;
 
@@ -11,6 +11,7 @@ const CODEX_ORIGINATOR: &str = "codex_cli_rs";
 const CODEX_USER_AGENT: &str = "codex_cli_rs/0.133.0 (Quest Keeper AI)";
 const SSE_IDLE_TIMEOUT: Duration = Duration::from_secs(45);
 const MAX_SSE_LINE_BYTES: usize = 1024 * 1024;
+const STREAM_DELTA_EVENT: &str = "codex-response-delta";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -48,6 +49,8 @@ pub struct CodexChatRequest {
     messages: Vec<CodexChatMessage>,
     #[serde(default)]
     tools: Vec<Value>,
+    #[serde(default, rename = "streamEventId")]
+    stream_event_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -117,6 +120,13 @@ pub struct CodexChatResponse {
     tool_calls: Vec<CodexToolCall>,
 }
 
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CodexStreamDeltaPayload<'a> {
+    stream_id: &'a str,
+    delta: &'a str,
+}
+
 #[tauri::command]
 pub async fn codex_auth_status(app: AppHandle) -> Result<CodexAuthStatus, String> {
     let credential = oauth::load_credential(&app)?;
@@ -172,7 +182,8 @@ pub async fn codex_send_message(
         return Err(redacted_provider_error(status.as_u16(), &text));
     }
 
-    let chat_response = collect_response_stream(response).await?;
+    let chat_response =
+        collect_response_stream(response, &app, request.stream_event_id.as_deref()).await?;
     if chat_response.content.trim().is_empty() && chat_response.tool_calls.is_empty() {
         return Err("Codex вернул пустой ответ".to_string());
     }
@@ -322,6 +333,8 @@ fn function_call_input_item(tool_call: &CodexToolCall) -> Option<Value> {
 
 async fn collect_response_stream(
     mut response: reqwest::Response,
+    app: &AppHandle,
+    stream_event_id: Option<&str>,
 ) -> Result<CodexChatResponse, String> {
     let mut decoder = SseDecoder::default();
     let mut content = String::new();
@@ -355,6 +368,8 @@ async fn collect_response_stream(
                 &mut content,
                 &mut tool_calls,
                 &mut completed_tool_calls,
+                app,
+                stream_event_id,
             )? {
                 return Ok(finish_stream_response(
                     content,
@@ -392,6 +407,8 @@ fn handle_stream_event(
     content: &mut String,
     tool_calls: &mut ToolCallAccumulator,
     completed_tool_calls: &mut Vec<CodexToolCall>,
+    app: &AppHandle,
+    stream_event_id: Option<&str>,
 ) -> Result<bool, String> {
     match event
         .get("type")
@@ -401,6 +418,7 @@ fn handle_stream_event(
         "response.output_text.delta" => {
             if let Some(delta) = event.get("delta").and_then(Value::as_str) {
                 content.push_str(delta);
+                emit_stream_delta(app, stream_event_id, delta);
             }
         }
         "response.output_item.added" => {
@@ -455,6 +473,20 @@ fn handle_stream_event(
     }
 
     Ok(true)
+}
+
+fn emit_stream_delta(app: &AppHandle, stream_event_id: Option<&str>, delta: &str) {
+    let Some(stream_id) = stream_event_id else {
+        return;
+    };
+    if delta.is_empty() {
+        return;
+    }
+
+    let _ = app.emit(
+        STREAM_DELTA_EVENT,
+        CodexStreamDeltaPayload { stream_id, delta },
+    );
 }
 
 fn response_error_message(event: &Value) -> String {
