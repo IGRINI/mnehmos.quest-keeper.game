@@ -2,6 +2,19 @@ import { invoke } from '@tauri-apps/api/core';
 import { LLMProviderInterface, ChatMessage, LLMResponse } from '../types';
 import { LLMProvider } from '../../../stores/settingsStore';
 
+interface CodexWireMessage {
+    role: ChatMessage['role'];
+    content: string;
+    toolCalls?: CodexWireToolCall[];
+    toolCallId?: string;
+}
+
+interface CodexWireToolCall {
+    id?: string;
+    name: string;
+    arguments: any;
+}
+
 interface CodexWireTool {
     type: 'function';
     name: string;
@@ -22,7 +35,7 @@ export class CodexProvider implements LLMProviderInterface {
         const response = await invoke<LLMResponse>('codex_send_message', {
             request: {
                 model,
-                messages,
+                messages: this.toCodexMessages(messages),
                 tools: (tools || []).map(this.toCodexTool),
             },
         });
@@ -83,6 +96,42 @@ export class CodexProvider implements LLMProviderInterface {
             description: tool.description,
             parameters: tool.inputSchema || tool.parameters || {},
             strict: false,
+        };
+    }
+
+    private toCodexMessages(messages: ChatMessage[]): CodexWireMessage[] {
+        return messages.map((message) => {
+            const wireMessage: CodexWireMessage = {
+                role: message.role,
+                content: message.content || '',
+            };
+
+            if (message.toolCallId) {
+                wireMessage.toolCallId = message.toolCallId;
+            }
+
+            const toolCalls = (message.toolCalls || [])
+                .map((toolCall) => this.toCodexToolCall(toolCall))
+                .filter((toolCall): toolCall is CodexWireToolCall => toolCall !== null);
+
+            if (toolCalls.length > 0) {
+                wireMessage.toolCalls = toolCalls;
+            }
+
+            return wireMessage;
+        });
+    }
+
+    private toCodexToolCall(toolCall: any): CodexWireToolCall | null {
+        const name = toolCall.name || toolCall.function?.name;
+        if (typeof name !== 'string' || name.trim().length === 0) {
+            return null;
+        }
+
+        return {
+            id: typeof toolCall.id === 'string' ? toolCall.id : undefined,
+            name,
+            arguments: toolCall.arguments ?? toolCall.function?.arguments ?? {},
         };
     }
 }

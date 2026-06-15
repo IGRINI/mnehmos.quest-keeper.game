@@ -60,12 +60,54 @@ pub struct CodexChatMessage {
     tool_call_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct CodexToolCall {
     #[serde(default)]
     id: Option<String>,
     name: String,
     arguments: Value,
+}
+
+#[derive(Debug, Deserialize)]
+struct CodexToolCallWire {
+    #[serde(default)]
+    id: Option<String>,
+    #[serde(default)]
+    name: Option<String>,
+    #[serde(default)]
+    arguments: Option<Value>,
+    #[serde(default)]
+    function: Option<CodexToolCallFunctionWire>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CodexToolCallFunctionWire {
+    #[serde(default)]
+    name: Option<String>,
+    #[serde(default)]
+    arguments: Option<Value>,
+}
+
+impl<'de> Deserialize<'de> for CodexToolCall {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let wire = CodexToolCallWire::deserialize(deserializer)?;
+        let (function_name, function_arguments) = wire
+            .function
+            .map(|function| (function.name, function.arguments))
+            .unwrap_or((None, None));
+
+        Ok(Self {
+            id: wire.id,
+            name: wire.name.or(function_name).unwrap_or_default(),
+            arguments: wire
+                .arguments
+                .or(function_arguments)
+                .unwrap_or_else(|| json!({})),
+        })
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -227,7 +269,9 @@ fn input_from_messages(messages: &[CodexChatMessage]) -> Vec<Value> {
                     ));
                 }
                 for tool_call in &message.tool_calls {
-                    input.push(function_call_input_item(tool_call));
+                    if let Some(item) = function_call_input_item(tool_call) {
+                        input.push(item);
+                    }
                 }
             }
             "user" => {
@@ -253,22 +297,27 @@ fn chat_message_input_item(role: &str, kind: &str, content: &str) -> Value {
     })
 }
 
-fn function_call_input_item(tool_call: &CodexToolCall) -> Value {
+fn function_call_input_item(tool_call: &CodexToolCall) -> Option<Value> {
+    let name = tool_call.name.trim();
+    if name.is_empty() {
+        return None;
+    }
+
     let arguments = if tool_call.arguments.is_string() {
         tool_call.arguments.as_str().unwrap_or_default().to_string()
     } else {
         tool_call.arguments.to_string()
     };
 
-    json!({
+    Some(json!({
         "type": "function_call",
         "call_id": tool_call
             .id
             .clone()
-            .unwrap_or_else(|| format!("call_{}", tool_call.name)),
-        "name": tool_call.name,
+            .unwrap_or_else(|| format!("call_{name}")),
+        "name": name,
         "arguments": arguments,
-    })
+    }))
 }
 
 async fn collect_response_stream(
