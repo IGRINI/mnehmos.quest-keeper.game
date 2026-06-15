@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useChatStore } from '../../stores/chatStore';
 import { mcpManager } from '../../services/mcpClient';
 import { useGameStateStore } from '../../stores/gameStateStore';
@@ -110,6 +110,7 @@ function selectMostRecentPlayableSession(sessions: CampaignSession[]): CampaignS
 export const ChatInput: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const addMessage = useChatStore((state) => state.addMessage);
   const getMessages = useChatStore((state) => state.getMessages);
   const startStreamingMessage = useChatStore((state) => state.startStreamingMessage);
@@ -166,6 +167,12 @@ export const ChatInput: React.FC = () => {
   ];
 
   const [hintIndex, setHintIndex] = useState(0);
+
+  const focusChatInput = useCallback(() => {
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  }, []);
 
   useEffect(() => {
     // Only rotate if input is empty
@@ -290,6 +297,7 @@ export const ChatInput: React.FC = () => {
           onComplete: () => {
             finalizeStreamingMessage(currentStreamId);
             setIsLoading(false);
+            focusChatInput();
           },
           onError: (error: string) => {
             addMessage({
@@ -301,6 +309,7 @@ export const ChatInput: React.FC = () => {
             });
             finalizeStreamingMessage(currentStreamId);
             setIsLoading(false);
+            focusChatInput();
           }
         }
       );
@@ -314,8 +323,9 @@ export const ChatInput: React.FC = () => {
         type: 'error',
       });
       setIsLoading(false);
+      focusChatInput();
     }
-  }, [addMessage, getMessages, startStreamingMessage, updateStreamingMessage, updateToolStatus, finalizeStreamingMessage]);
+  }, [addMessage, focusChatInput, getMessages, startStreamingMessage, updateStreamingMessage, updateToolStatus, finalizeStreamingMessage]);
 
   // Integrated Slash Command Handler (can now access submitToLLM)
   const handleSlashCommand = async (command: string, args: string): Promise<CommandResult | null> => {
@@ -1189,6 +1199,7 @@ export const ChatInput: React.FC = () => {
     const currentInput = input;
     setInput('');
     setIsLoading(true);
+    focusChatInput();
 
     addMessage({
       id: Date.now().toString(),
@@ -1236,6 +1247,7 @@ export const ChatInput: React.FC = () => {
       }
 
       setIsLoading(false);
+      focusChatInput();
       return;
     }
 
@@ -1249,18 +1261,19 @@ export const ChatInput: React.FC = () => {
         <div className="flex-grow flex items-start bg-terminal-black border border-terminal-green-dim p-2">
           <span className="text-terminal-green mr-2 font-bold mt-1">{'>'}</span>
           <textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               // Enter submits, Shift+Enter adds newline
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
+                if (isLoading) return;
                 handleSubmit(e as unknown as React.FormEvent);
               }
             }}
-            disabled={isLoading}
             placeholder={placeholderText}
-            className="flex-grow bg-transparent focus:outline-none text-terminal-green placeholder-terminal-green/30 font-mono disabled:opacity-50 resize-none min-h-[24px] max-h-[200px]"
+            className="flex-grow bg-transparent focus:outline-none text-terminal-green placeholder-terminal-green/30 font-mono resize-none min-h-[24px] max-h-[200px]"
             rows={1}
             style={{ height: 'auto', overflow: 'hidden' }}
             onInput={(e) => {
