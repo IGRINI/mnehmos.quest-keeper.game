@@ -68,6 +68,20 @@ interface ChatState {
 let pendingUpdate: { id: string; content: string } | null = null;
 let rafId: number | null = null;
 
+function createChatSession(title = 'New Chat'): ChatSession {
+  return {
+    id: Date.now().toString(),
+    title,
+    messages: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+}
+
+function hasSession(sessions: ChatSession[], sessionId: string | null): sessionId is string {
+  return Boolean(sessionId && sessions.some((s) => s.id === sessionId));
+}
+
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
@@ -78,13 +92,7 @@ export const useChatStore = create<ChatState>()(
       prefillInput: null,
 
       createSession: () => {
-        const newSession: ChatSession = {
-          id: Date.now().toString(),
-          title: 'New Chat',
-          messages: [],
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        };
+        const newSession = createChatSession();
         set((state) => ({
           sessions: [newSession, ...state.sessions],
           currentSessionId: newSession.id,
@@ -93,7 +101,13 @@ export const useChatStore = create<ChatState>()(
       },
 
       switchSession: (sessionId) => {
-        set({ currentSessionId: sessionId });
+        set((state) => {
+          if (!state.sessions.some((s) => s.id === sessionId)) {
+            console.warn(`[ChatStore] Ignoring switch to missing session: ${sessionId}`);
+            return state;
+          }
+          return { currentSessionId: sessionId };
+        });
       },
 
       deleteSession: (sessionId) => {
@@ -135,14 +149,8 @@ export const useChatStore = create<ChatState>()(
           let sessions = state.sessions;
           let currentSessionId = state.currentSessionId;
 
-          if (!currentSessionId || sessions.length === 0) {
-            const newSession: ChatSession = {
-              id: Date.now().toString(),
-              title: 'New Chat',
-              messages: [],
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-            };
+          if (!hasSession(sessions, currentSessionId)) {
+            const newSession = createChatSession();
             sessions = [newSession, ...sessions];
             currentSessionId = newSession.id;
           }
@@ -184,9 +192,10 @@ export const useChatStore = create<ChatState>()(
           let sessions = state.sessions;
           let currentSessionId = state.currentSessionId;
           
-          if (!currentSessionId || sessions.length === 0) {
-            // Should have been created by user message, but just in case
-            return state; 
+          if (!hasSession(sessions, currentSessionId)) {
+            const newSession = createChatSession();
+            sessions = [newSession, ...sessions];
+            currentSessionId = newSession.id;
           }
 
           // Clear any pending batched updates
