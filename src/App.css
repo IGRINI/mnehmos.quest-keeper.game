@@ -246,8 +246,19 @@
     @apply text-terminal-cyan underline hover:text-terminal-amber transition-colors;
   }
 
+  .markdown-content strong {
+    @apply font-bold text-terminal-amber;
+  }
+
+  .markdown-content em {
+    @apply italic text-terminal-cyan;
+  }
+
   .markdown-content hr {
-    @apply border-terminal-green-dim my-4;
+    @apply my-4;
+    height: 0;
+    border: 0;
+    border-top: 1px solid rgb(var(--text-secondary) / 0.65);
   }
 
   /* Theme-aware glow shadows - adapt to theme colors */

@@ -693,26 +693,37 @@ class LLMService {
     }
 
     /**
-     * Ensure the message history has a system message at the start
+     * Merge all system blocks into one because some providers only read the first
+     * system message.
      */
     private ensureSystemMessage(history: ChatMessage[], systemPrompt: string): ChatMessage[] {
-        if (!systemPrompt) {
+        const systemSections: string[] = [];
+        const nonSystemHistory: ChatMessage[] = [];
+
+        const dynamicSystemPrompt = systemPrompt.trim();
+        if (dynamicSystemPrompt) {
+            systemSections.push(dynamicSystemPrompt);
+        }
+
+        for (const message of history) {
+            if (message.role !== 'system') {
+                nonSystemHistory.push(message);
+                continue;
+            }
+
+            const content = message.content.trim();
+            if (content) {
+                systemSections.push(content);
+            }
+        }
+
+        if (systemSections.length === 0) {
             return [...history];
         }
 
-        // Check if first message is already a system message
-        if (history.length > 0 && history[0].role === 'system') {
-            // Replace with our dynamic system prompt
-            return [
-                { role: 'system', content: systemPrompt },
-                ...history.slice(1)
-            ];
-        }
-
-        // Prepend system message
         return [
-            { role: 'system', content: systemPrompt },
-            ...history
+            { role: 'system', content: systemSections.join('\n\n---\n\n') },
+            ...nonSystemHistory,
         ];
     }
 

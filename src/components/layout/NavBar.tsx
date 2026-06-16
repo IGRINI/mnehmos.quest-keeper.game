@@ -29,7 +29,7 @@ export const NavBar: React.FC = () => {
         <button
             onClick={() => setActiveTab(tab)}
             className={`
-        w-full flex items-center gap-3 px-4 py-3 transition-all duration-200
+        w-full flex items-center gap-3 px-4 py-2 transition-all duration-200
         ${activeTab === tab
                     ? 'bg-terminal-green/10 text-terminal-green border-r-2 border-terminal-green'
                     : 'text-terminal-green/60 hover:text-terminal-green hover:bg-terminal-green/5 border-r-2 border-transparent'}

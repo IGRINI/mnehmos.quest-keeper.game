@@ -81,6 +81,9 @@ const markdownComponents = {
   em: ({ children }: any) => (
     <em className="italic text-terminal-cyan">{children}</em>
   ),
+  hr: () => (
+    <hr className="my-4 border-0 border-t border-terminal-green-dim" />
+  ),
 };
 
 // Memoized message component to prevent unnecessary re-renders
