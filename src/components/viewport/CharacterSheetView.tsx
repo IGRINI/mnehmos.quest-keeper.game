@@ -9,6 +9,7 @@ import CustomEffectsDisplay from '../character/CustomEffectsDisplay';
 import { ConcentrationIndicator } from '../character/ConcentrationIndicator';
 import { XPBar } from '../common/XPBar';
 import { LevelUpModal } from '../character/LevelUpModal';
+import { CharacterEditModal } from './CharacterEditModal';
 import { getClassLabel, getItemLabel, getRaceLabel } from '../character/displayLabels';
 import { getMemberRoleLabel } from '../party/displayLabels';
 
@@ -19,6 +20,15 @@ interface ArmorInfo {
   category: ArmorCategory;
   baseAC: number;
   name: string;
+}
+
+interface CharacterSelectorOption {
+  id: string;
+  name: string;
+  class?: string;
+  role?: string;
+  isActive: boolean;
+  inActiveParty: boolean;
 }
 
 const NO_EQUIPMENT_LABEL = 'Нет';
@@ -145,13 +155,16 @@ function calculateAC(
 
 export const CharacterSheetView: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showCharacterDropdown, setShowCharacterDropdown] = useState(false);
   const [showLevelUpModal, setShowLevelUpModal] = useState(false);
   const [viewTab, setViewTab] = useState<'stats' | 'spells' | 'effects'>('stats');
 
   const activeCharacter = useGameStateStore(state => state.activeCharacter);
   const activeCharacterId = useGameStateStore(state => state.activeCharacterId);
+  const allCharacters = useGameStateStore(state => state.party);
   const inventory = useGameStateStore(state => state.inventory);
+  const setActiveGameCharacterId = useGameStateStore(state => state.setActiveCharacterId);
   const syncState = useGameStateStore(state => state.syncState);
 
   const deleteCharacter = usePartyStore(state => state.deleteCharacter);
@@ -161,10 +174,53 @@ export const CharacterSheetView: React.FC = () => {
   // Get party members for character selector
   const activePartyId = usePartyStore(state => state.activePartyId);
   const partyDetails = usePartyStore(state => state.partyDetails);
-  const setActiveCharacter = usePartyStore(state => state.setActiveCharacter);
+  const setActivePartyCharacter = usePartyStore(state => state.setActiveCharacter);
   
   const activeParty = activePartyId ? partyDetails[activePartyId] : null;
   const partyMembers = activeParty?.members || [];
+
+  const characterOptions = React.useMemo(() => {
+    const options = new Map<string, CharacterSelectorOption>();
+
+    for (const member of partyMembers) {
+      options.set(member.characterId, {
+        id: member.characterId,
+        name: member.character?.name || member.characterId,
+        class: member.character?.class,
+        role: member.role,
+        isActive: member.isActive || member.characterId === activeCharacterId,
+        inActiveParty: true,
+      });
+    }
+
+    for (const character of allCharacters) {
+      if (!character.id || options.has(character.id)) continue;
+      options.set(character.id, {
+        id: character.id,
+        name: character.name,
+        class: character.class,
+        isActive: character.id === activeCharacterId,
+        inActiveParty: false,
+      });
+    }
+
+    const currentId = activeCharacter?.id || activeCharacterId;
+    if (currentId && !options.has(currentId)) {
+      options.set(currentId, {
+        id: currentId,
+        name: activeCharacter?.name || currentId,
+        class: activeCharacter?.class,
+        isActive: true,
+        inActiveParty: false,
+      });
+    }
+
+    return Array.from(options.values()).sort((a, b) => {
+      if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+      if (a.inActiveParty !== b.inActiveParty) return a.inActiveParty ? -1 : 1;
+      return a.name.localeCompare(b.name, 'ru');
+    });
+  }, [activeCharacter, activeCharacterId, allCharacters, partyMembers]);
 
   // Get character type badge colors
   const getTypeBadge = (type?: string) => {
@@ -187,8 +243,26 @@ export const CharacterSheetView: React.FC = () => {
       const success = await deleteCharacter(activeCharacterId);
       if (success) {
         setShowDeleteConfirm(false);
+        await syncState(true);
       }
     }
+  };
+
+  const handleSelectCharacter = async (characterId: string) => {
+    if (characterId === activeCharacterId) {
+      setShowCharacterDropdown(false);
+      return;
+    }
+
+    const isPartyMember = partyMembers.some((member) => member.characterId === characterId);
+    if (activePartyId && isPartyMember) {
+      await setActivePartyCharacter(activePartyId, characterId);
+    } else {
+      setActiveGameCharacterId(characterId, true);
+      await syncState(true);
+    }
+
+    setShowCharacterDropdown(false);
   };
 
   React.useEffect(() => {
@@ -229,6 +303,7 @@ export const CharacterSheetView: React.FC = () => {
   const acCalc = activeCharacter.armorClass
     ? { total: activeCharacter.armorClass, breakdown: 'Задано вручную' }
     : calculateAC(armorInfo, dexMod, hasShield);
+  const characterBehavior = activeCharacter.behavior?.trim();
 
   // Saving throws calculation
   const savingThrows = [
@@ -268,27 +343,26 @@ export const CharacterSheetView: React.FC = () => {
                   {name}
                   <span className="text-lg">▼</span>
                 </button>
-                {showCharacterDropdown && partyMembers.length > 0 && (
-                  <div className="absolute left-0 top-full mt-1 bg-terminal-black border border-terminal-green rounded shadow-lg z-20 min-w-[200px] max-h-[300px] overflow-y-auto">
-                    {partyMembers.map((member) => (
+                {showCharacterDropdown && (
+                  <div className="absolute left-0 top-full mt-1 bg-terminal-black border border-terminal-green rounded shadow-lg z-50 min-w-[240px] max-h-[300px] overflow-y-auto">
+                    {characterOptions.length > 0 ? characterOptions.map((option) => (
                       <button
-                        key={member.characterId}
-                        onClick={() => {
-                          if (activePartyId) {
-                            setActiveCharacter(activePartyId, member.characterId);
-                          }
-                          setShowCharacterDropdown(false);
-                        }}
+                        key={option.id}
+                        onClick={() => handleSelectCharacter(option.id)}
                         className={`block w-full px-3 py-2 text-left hover:bg-terminal-green/10 transition-colors ${
-                          member.isActive ? 'bg-terminal-green/20 text-terminal-green-bright' : 'text-terminal-green'
+                          option.isActive ? 'bg-terminal-green/20 text-terminal-green-bright' : 'text-terminal-green'
                         }`}
                       >
-                        <div className="font-semibold">{member.character?.name || member.characterId}</div>
+                        <div className="font-semibold">{option.name}</div>
                         <div className="text-xs opacity-60">
-                          {getClassLabel(member.character?.class)} • {getMemberRoleLabel(member.role)}
+                          {getClassLabel(option.class)} • {option.role ? getMemberRoleLabel(option.role) : 'без партии'}
                         </div>
                       </button>
-                    ))}
+                    )) : (
+                      <div className="px-3 py-2 text-terminal-green/60 text-sm">
+                        Персонажи не найдены
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -297,6 +371,14 @@ export const CharacterSheetView: React.FC = () => {
               <span className={`text-xs px-2 py-1 border rounded font-bold ${getTypeBadge(activeCharacter.characterType).color}`}>
                 {getTypeBadge(activeCharacter.characterType).label}
               </span>
+
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="px-2 py-1 text-xs bg-terminal-green/10 border border-terminal-green/50 text-terminal-green rounded hover:bg-terminal-green/20 transition-colors"
+                title="Редактировать персонажа"
+              >
+                ✎
+              </button>
               
               {/* Delete Button */}
               <button
@@ -483,6 +565,23 @@ export const CharacterSheetView: React.FC = () => {
             </div>
           </div>
 
+          <div className="border border-terminal-green/30 p-4 mb-6">
+            <div className="flex items-center justify-between border-b border-terminal-green/30 pb-2 mb-4">
+              <h3 className="text-lg font-bold">ПРЕДЫСТОРИЯ И ДЕТАЛИ</h3>
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="text-xs border border-terminal-green px-2 py-1 text-terminal-green hover:bg-terminal-green/10 transition-colors"
+              >
+                Редактировать
+              </button>
+            </div>
+            {characterBehavior ? (
+              <p className="text-terminal-green/80 whitespace-pre-wrap leading-relaxed">{characterBehavior}</p>
+            ) : (
+              <p className="text-terminal-green/40 italic">Предыстория и детали персонажа не заполнены.</p>
+            )}
+          </div>
+
           {/* Currencies + Equipment */}
           <div className="grid grid-cols-2 gap-6 mb-6">
             {/* Currencies */}
@@ -630,6 +729,14 @@ export const CharacterSheetView: React.FC = () => {
         isDanger={true}
         isLoading={isLoading}
       />
+
+      {activeCharacterId && (
+        <CharacterEditModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          characterId={activeCharacterId}
+        />
+      )}
       
       {activeCharacterId && (
         <LevelUpModal

@@ -63,6 +63,7 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
     hp: 1,
     maxHp: 1,
     ac: 10,
+    behavior: '',
     stats: {
       str: 10,
       dex: 10,
@@ -84,6 +85,7 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
         hp: activeCharacter.hp?.current || 1,
         maxHp: activeCharacter.hp?.max || 1,
         ac: activeCharacter.armorClass || 10,
+        behavior: activeCharacter.behavior || '',
         stats: {
           str: activeCharacter.stats?.str || 10,
           dex: activeCharacter.stats?.dex || 10,
@@ -125,6 +127,7 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
       hp: formData.hp,
       maxHp: formData.maxHp,
       ac: formData.ac,
+      behavior: formData.behavior,
       stats: formData.stats,
     };
 
@@ -294,6 +297,19 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
               <StatInput label="МДР" stat="wis" />
               <StatInput label="ХАР" stat="cha" />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-terminal-green/60 uppercase mb-1">
+              Предыстория и детали
+            </label>
+            <textarea
+              value={formData.behavior}
+              onChange={(e) => handleInputChange('behavior', e.target.value)}
+              rows={6}
+              placeholder="Предыстория, особенности характера, заметки о происхождении..."
+              className="w-full resize-y bg-terminal-black border border-terminal-green/40 text-terminal-green rounded px-3 py-2 focus:outline-none focus:border-terminal-green"
+            />
           </div>
         </div>
 

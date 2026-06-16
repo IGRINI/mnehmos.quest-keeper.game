@@ -91,6 +91,7 @@ export interface CharacterSummary {
   spellcastingAbility?: string;
   spellSaveDC?: number;
   spellAttackBonus?: number;
+  behavior?: string;
 }
 
 export interface PartyMemberWithCharacter extends PartyMember {
@@ -145,6 +146,7 @@ export interface CharacterUpdates {
   conditions?: CharacterCondition[];
   addConditions?: CharacterCondition[];
   removeConditions?: string[];
+  behavior?: string;
 }
 
 // ============================================
@@ -325,6 +327,7 @@ function parseCharacterSummary(data: any): CharacterSummary | null {
     spellcastingAbility: data.spellcastingAbility,
     spellSaveDC: data.spellSaveDC,
     spellAttackBonus: data.spellAttackBonus,
+    behavior: data.behavior ?? data.backstory ?? data.background ?? data.description,
   };
 }
 

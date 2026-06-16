@@ -176,6 +176,7 @@ export interface CharacterStats {
   speed?: number;
   armorClass?: number; // Calculated or overridden AC
   characterType?: CharacterType; // pc, npc, enemy, neutral
+  behavior?: string;
   
   // Spellcasting
   spellSlots?: SpellSlots;
@@ -301,6 +302,7 @@ function parseCharacterFromJson(char: any): CharacterStats | null {
       speed: char.speed ?? 30,
       armorClass: char.armorClass ?? char.ac,
       characterType: char.characterType || char.character_type || 'pc',
+      behavior: char.behavior ?? char.backstory ?? char.background ?? char.description,
       
       // Spellcasting
       spellSlots: char.spellSlots,
@@ -827,6 +829,12 @@ export const useGameStateStore = create<GameState>()(
                       newActiveCharacter.spellcastingAbility = fullCharacterData.spellcastingAbility || newActiveCharacter.spellcastingAbility;
                       newActiveCharacter.spellSaveDC = fullCharacterData.spellSaveDC ?? newActiveCharacter.spellSaveDC;
                       newActiveCharacter.spellAttackBonus = fullCharacterData.spellAttackBonus ?? newActiveCharacter.spellAttackBonus;
+                      newActiveCharacter.behavior =
+                        fullCharacterData.behavior ??
+                        fullCharacterData.backstory ??
+                        fullCharacterData.background ??
+                        fullCharacterData.description ??
+                        newActiveCharacter.behavior;
                     }
                     
                     // Merge concentration state
