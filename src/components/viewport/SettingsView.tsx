@@ -89,17 +89,17 @@ export const SettingsView: React.FC = () => {
                                 <option value="">▼</option>
                                 {selectedProvider === 'openai' && (
                                     <>
-                                        <optgroup label="GPT-5 Series">
+                                        <optgroup label="Серия GPT-5">
                                             <option value="gpt-5.1">GPT-5.1</option>
                                             <option value="gpt-5-pro">GPT-5 Pro</option>
                                             <option value="gpt-5-mini">GPT-5 Mini</option>
                                             <option value="gpt-5-nano">GPT-5 Nano</option>
                                         </optgroup>
-                                        <optgroup label="Reasoning">
+                                        <optgroup label="Рассуждение">
                                             <option value="o4-mini">o4-mini</option>
                                             <option value="o3-mini">o3-mini</option>
                                         </optgroup>
-                                        <optgroup label="Legacy">
+                                        <optgroup label="Архивные">
                                             <option value="gpt-4o">GPT-4o</option>
                                         </optgroup>
                                     </>
@@ -113,13 +113,13 @@ export const SettingsView: React.FC = () => {
                                 )}
                                 {selectedProvider === 'openrouter' && (
                                     <>
-                                        <optgroup label="Free / Free Tier">
-                                            <option value="meta-llama/llama-3.2-3b-instruct:free">Llama 3.2 3B (Free)</option>
-                                            <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash Exp (Free)</option>
-                                            <option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free)</option>
-                                            <option value="qwen/qwen3-coder:free">Qwen3 Coder (Free)</option>
+                                        <optgroup label="Бесплатные">
+                                            <option value="meta-llama/llama-3.2-3b-instruct:free">Llama 3.2 3B (бесплатно)</option>
+                                            <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash Exp (бесплатно)</option>
+                                            <option value="deepseek/deepseek-r1:free">DeepSeek R1 (бесплатно)</option>
+                                            <option value="qwen/qwen3-coder:free">Qwen3 Coder (бесплатно)</option>
                                         </optgroup>
-                                        <optgroup label="Premium">
+                                        <optgroup label="Платные">
                                             <option value="anthropic/claude-opus-4.5">Claude Opus 4.5</option>
                                             <option value="anthropic/claude-haiku-4.5">Claude Haiku 4.5</option>
                                             <option value="anthropic/claude-sonnet-4.5">Claude Sonnet 4.5</option>

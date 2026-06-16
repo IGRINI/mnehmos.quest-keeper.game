@@ -24,7 +24,7 @@ export const Spoiler: React.FC<SpoilerProps> = ({ title, children }) => {
         <span className="font-bold">{title}</span>
         {!revealed && (
           <span className="ml-auto text-xs opacity-60 uppercase tracking-wider">
-            Click to reveal
+            Нажми, чтобы открыть
           </span>
         )}
       </button>

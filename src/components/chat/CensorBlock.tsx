@@ -17,14 +17,14 @@ export const CensorBlock: React.FC<CensorBlockProps> = ({ content, renderMarkdow
             <div className="flex items-center justify-between gap-2 text-xs uppercase tracking-wider text-terminal-amber">
                 <div className="flex items-center gap-2">
                     <span className="codicon codicon-eye-closed" />
-                    <span>Spoiler (LLM tagged)</span>
+                    <span>Спойлер (пометка LLM)</span>
                 </div>
                 <button
                     type="button"
                     onClick={() => setRevealed(!revealed)}
                     className="px-2 py-1 border border-terminal-amber/60 rounded text-terminal-amber hover:bg-terminal-amber/10 transition-colors"
                 >
-                    {revealed ? 'Hide' : 'Reveal'}
+                    {revealed ? 'Скрыть' : 'Показать'}
                 </button>
             </div>
             {revealed ? (
@@ -33,7 +33,7 @@ export const CensorBlock: React.FC<CensorBlockProps> = ({ content, renderMarkdow
                 </div>
             ) : (
                 <div className="mt-2 text-terminal-green/60 text-sm italic select-none">
-                    Spoiler hidden. Click reveal to view.
+                    Спойлер скрыт. Нажми «Показать», чтобы открыть.
                 </div>
             )}
         </div>

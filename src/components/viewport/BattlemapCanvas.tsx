@@ -35,7 +35,7 @@ export const BattlemapCanvas: React.FC<BattlemapCanvasProps> = ({ active = true 
         <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none p-8">
           <div className="bg-terminal-black/90 border border-terminal-green p-6 max-w-2xl rounded shadow-lg pointer-events-auto overflow-y-auto max-h-[80%]">
             <h3 className="text-xl font-bold text-terminal-green mb-4 uppercase tracking-wider border-b border-terminal-green-dim pb-2">
-              Battlefield Status
+              Состояние поля боя
             </h3>
             <div className="text-terminal-green-bright font-mono whitespace-pre-wrap leading-relaxed">
               {battlefieldDescription}

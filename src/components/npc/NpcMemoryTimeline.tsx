@@ -9,6 +9,13 @@ interface MemoryItemProps {
   memory: NpcMemory;
 }
 
+const IMPORTANCE_LABELS: Record<string, string> = {
+  low: 'низкая',
+  medium: 'средняя',
+  high: 'высокая',
+  critical: 'критическая',
+};
+
 /**
  * Single memory item in the timeline
  */
@@ -22,7 +29,7 @@ const MemoryItem: React.FC<MemoryItemProps> = ({ memory }) => {
       <div 
         className="w-1 rounded-full flex-shrink-0"
         style={{ backgroundColor: config.color }}
-        title={`${memory.importance} importance`}
+        title={`Важность: ${IMPORTANCE_LABELS[memory.importance] ?? memory.importance}`}
       />
       
       {/* Content */}
@@ -69,7 +76,7 @@ export const NpcMemoryTimeline: React.FC = () => {
   if (isLoading) {
     return (
       <div className="text-terminal-green-dim text-sm italic p-4 text-center">
-        Loading memories...
+        Загружаю воспоминания...
       </div>
     );
   }
@@ -77,7 +84,7 @@ export const NpcMemoryTimeline: React.FC = () => {
   if (memories.length === 0) {
     return (
       <div className="text-terminal-green-dim text-sm italic p-4 text-center">
-        No conversation history
+        История разговоров пуста
       </div>
     );
   }

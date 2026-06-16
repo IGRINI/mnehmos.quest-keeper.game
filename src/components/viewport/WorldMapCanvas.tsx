@@ -29,6 +29,29 @@ const BIOME_COLORS: Record<string, string> = {
   snow: '#fffafa',
 };
 
+const BIOME_LABELS: Record<string, string> = {
+  ocean: 'океан',
+  deep_ocean: 'глубокий океан',
+  lake: 'озеро',
+  hot_desert: 'жаркая пустыня',
+  savanna: 'саванна',
+  tropical_rainforest: 'тропический лес',
+  grassland: 'луг',
+  temperate_deciduous_forest: 'лиственный лес',
+  wetland: 'болото',
+  taiga: 'тайга',
+  tundra: 'тундра',
+  glacier: 'ледник',
+  mountain: 'горы',
+  desert: 'пустыня',
+  forest: 'лес',
+  plains: 'равнины',
+  swamp: 'топь',
+  beach: 'пляж',
+  snow: 'снег',
+  unknown: 'неизвестно',
+};
+
 // Structure icons
 const STRUCTURE_ICONS: Record<string, string> = {
   city: '🏙️',
@@ -45,6 +68,16 @@ const STRUCTURE_ICONS: Record<string, string> = {
 };
 
 type VisualizationMode = 'biomes' | 'heightmap' | 'temperature' | 'moisture' | 'rivers';
+
+const VISUALIZATION_MODE_LABELS: Record<VisualizationMode, string> = {
+  biomes: 'Биомы',
+  heightmap: 'Высоты',
+  temperature: 'Температура',
+  moisture: 'Влажность',
+  rivers: 'Реки',
+};
+
+const formatBiomeName = (biome: string): string => BIOME_LABELS[biome] ?? biome.replace(/_/g, ' ');
 
 interface TileData {
   width: number;
@@ -242,7 +275,7 @@ export const WorldMapCanvas: React.FC = () => {
   // Fetch tile data from MCP - no dependencies on callbacks that change
   const fetchTileData = useCallback(async (worldId: string) => {
     if (!worldId) {
-      setError('No world selected');
+      setError('Мир не выбран');
       setLoading(false);
       return;
     }
@@ -270,7 +303,7 @@ export const WorldMapCanvas: React.FC = () => {
 
     try {
       if (!mcpManager.gameStateClient.isConnected()) {
-        throw new Error('MCP client not available');
+        throw new Error('MCP-клиент недоступен');
       }
 
       console.log('[WorldMapCanvas] Fetching tiles for world:', worldId);
@@ -298,23 +331,23 @@ export const WorldMapCanvas: React.FC = () => {
           data = extractMcpJsonPayload<any>(legacyResult);
         }
         if (!data) {
-          throw new Error('Could not parse world_map tiles response');
+          throw new Error('Не удалось разобрать ответ world_map с тайлами');
         }
         console.log('[WorldMapCanvas] Received tile data:', data.width, 'x', data.height);
         setTileData(data);
         setError(null);
       } else {
-        throw new Error('Invalid response format');
+        throw new Error('Некорректный формат ответа');
       }
     } catch (err) {
       if (abortControllerRef.current?.signal.aborted) {
         return;
       }
       console.error('[WorldMapCanvas] Failed to fetch tiles:', err);
-      const errorMsg = err instanceof Error ? err.message : 'Failed to load map';
+      const errorMsg = err instanceof Error ? err.message : 'Не удалось загрузить карту';
       
       if (errorMsg.includes('timed out')) {
-        setError('World generation timed out. Large worlds may take longer. Try again or select a smaller world.');
+        setError('Генерация мира заняла слишком много времени. Большие миры могут требовать больше времени. Повторите попытку или выберите мир меньшего размера.');
       } else {
         setError(errorMsg);
       }
@@ -709,7 +742,7 @@ export const WorldMapCanvas: React.FC = () => {
             </div>
           )}
           <div className="text-lg text-terminal-green-bright mb-2">
-            {loadingTime}s elapsed
+            Прошло {loadingTime} с
           </div>
           <div className="text-xs text-terminal-green/50 space-y-1">
             <p>Готовлю рельеф, реки и озера...</p>
@@ -801,7 +834,7 @@ export const WorldMapCanvas: React.FC = () => {
       <div className="flex flex-wrap justify-between items-center gap-2 p-3 border-b border-terminal-green-dim flex-shrink-0">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-bold uppercase tracking-wider text-glow">
-            🗺️ World Map
+            🗺️ Карта мира
           </h2>
           
           {/* World Selector */}
@@ -810,7 +843,7 @@ export const WorldMapCanvas: React.FC = () => {
               value={activeWorldId || ''}
               onChange={(e) => handleWorldChange(e.target.value)}
               className="px-2 py-1 bg-terminal-black border border-terminal-green text-terminal-green text-sm max-w-[200px]"
-              title="Select World"
+              title="Выбрать мир"
             >
               {worlds.map((w) => (
                 <option key={w.id} value={w.id}>
@@ -828,16 +861,16 @@ export const WorldMapCanvas: React.FC = () => {
             onChange={(e) => setVisualizationMode(e.target.value as VisualizationMode)}
             className="px-2 py-1 bg-terminal-black border border-terminal-green text-terminal-green text-xs uppercase"
           >
-            <option value="biomes">Biomes</option>
-            <option value="heightmap">Heightmap</option>
-            <option value="temperature">Temperature</option>
-            <option value="moisture">Moisture</option>
-            <option value="rivers">Rivers</option>
+            <option value="biomes">{VISUALIZATION_MODE_LABELS.biomes}</option>
+            <option value="heightmap">{VISUALIZATION_MODE_LABELS.heightmap}</option>
+            <option value="temperature">{VISUALIZATION_MODE_LABELS.temperature}</option>
+            <option value="moisture">{VISUALIZATION_MODE_LABELS.moisture}</option>
+            <option value="rivers">{VISUALIZATION_MODE_LABELS.rivers}</option>
           </select>
 
           {/* Map Info */}
           <span className="text-xs text-terminal-green/70 hidden sm:inline">
-            {tileData.width}×{tileData.height} | {tileData.structures.length} POIs
+            {tileData.width}×{tileData.height} | Точек интереса: {tileData.structures.length}
           </span>
 
           {/* Zoom Controls */}
@@ -845,7 +878,7 @@ export const WorldMapCanvas: React.FC = () => {
             <button
               onClick={() => zoomAtPoint(zoom - ZOOM_STEP * 2, window.innerWidth / 2, window.innerHeight / 2)}
               className="px-2 py-1 hover:bg-terminal-green/20 transition-colors"
-              title="Zoom Out (-)"
+              title="Отдалить (-)"
             >
               −
             </button>
@@ -855,7 +888,7 @@ export const WorldMapCanvas: React.FC = () => {
             <button
               onClick={() => zoomAtPoint(zoom + ZOOM_STEP * 2, window.innerWidth / 2, window.innerHeight / 2)}
               className="px-2 py-1 hover:bg-terminal-green/20 transition-colors"
-              title="Zoom In (+)"
+              title="Приблизить (+)"
             >
               +
             </button>
@@ -877,7 +910,7 @@ export const WorldMapCanvas: React.FC = () => {
                   });
                 }}
                 className="px-2 py-1 text-xs bg-orange-500/20 border border-orange-500/50 hover:bg-orange-500/30 transition-colors text-orange-400"
-                title="Center on Party (P)"
+                title="Центрировать на группе (P)"
               >
                 ⚔️
               </button>
@@ -885,21 +918,21 @@ export const WorldMapCanvas: React.FC = () => {
             <button
               onClick={fitToView}
               className="px-2 py-1 text-xs bg-terminal-green/10 border border-terminal-green-dim hover:bg-terminal-green/20 transition-colors"
-              title="Fit to View (F)"
+              title="Вписать в экран (F)"
             >
               ⊡
             </button>
             <button
               onClick={resetView}
               className="px-2 py-1 text-xs bg-terminal-green/10 border border-terminal-green-dim hover:bg-terminal-green/20 transition-colors"
-              title="Reset View (0)"
+              title="Сбросить вид (0)"
             >
               ⌖
             </button>
             <button
               onClick={() => activeWorldId && fetchTileData(activeWorldId)}
               className="px-2 py-1 text-xs bg-terminal-green/10 border border-terminal-green-dim hover:bg-terminal-green/20 transition-colors"
-              title="Refresh Map"
+              title="Обновить карту"
             >
               🔄
             </button>
@@ -955,7 +988,7 @@ export const WorldMapCanvas: React.FC = () => {
 
         {/* Controls Help */}
         <div className="absolute bottom-3 right-3 text-xs text-terminal-green/50 bg-terminal-black/70 px-2 py-1 border border-terminal-green-dim/50">
-          Drag to pan • Scroll to zoom • F to fit • 0 to reset
+          Перетащите для сдвига • Колесо для масштаба • F вписать • 0 сбросить
         </div>
 
         {/* Tooltip */}
@@ -968,18 +1001,18 @@ export const WorldMapCanvas: React.FC = () => {
               ({tooltip.x}, {tooltip.y})
             </div>
             <div className="space-y-0.5">
-              <div><span className="text-terminal-green/60">Biome:</span> {tooltip.biome.replace(/_/g, ' ')}</div>
-              <div><span className="text-terminal-green/60">Elevation:</span> {tooltip.elevation}</div>
+              <div><span className="text-terminal-green/60">Биом:</span> {formatBiomeName(tooltip.biome)}</div>
+              <div><span className="text-terminal-green/60">Высота:</span> {tooltip.elevation}</div>
               {tooltip.region && (
-                <div><span className="text-terminal-green/60">Region:</span> {tooltip.region}</div>
+                <div><span className="text-terminal-green/60">Регион:</span> {tooltip.region}</div>
               )}
               {tooltip.hasRiver && (
-                <div className="text-blue-400">🌊 River</div>
+                <div className="text-blue-400">🌊 Река</div>
               )}
               {tooltip.structure && (
                 <div className="text-yellow-400 font-bold">
                   {STRUCTURE_ICONS[tooltip.structure.type]} {tooltip.structure.name}
-                  <div className="text-xs text-terminal-green/60 mt-0.5">(click for details)</div>
+                  <div className="text-xs text-terminal-green/60 mt-0.5">(щелкните для деталей)</div>
                 </div>
               )}
             </div>
@@ -1036,63 +1069,63 @@ export const WorldMapCanvas: React.FC = () => {
               {Object.entries(BIOME_COLORS).slice(0, 8).map(([biome, color]) => (
                 <div key={biome} className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
-                  <span className="text-terminal-green/70 capitalize">{biome.replace(/_/g, ' ')}</span>
+                  <span className="text-terminal-green/70">{formatBiomeName(biome)}</span>
                 </div>
               ))}
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-blue-500 rounded-sm" />
-                <span className="text-terminal-green/70">River</span>
+                <span className="text-terminal-green/70">Река</span>
               </div>
             </>
           )}
           {visualizationMode === 'heightmap' && (
             <div className="flex items-center gap-2">
-              <span className="text-terminal-green/70">Elevation:</span>
+              <span className="text-terminal-green/70">Высота:</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-black rounded-sm border border-terminal-green-dim" />
-                <span className="text-terminal-green/70">Low</span>
+                <span className="text-terminal-green/70">Низкая</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-gray-500 rounded-sm" />
-                <span className="text-terminal-green/70">Medium</span>
+                <span className="text-terminal-green/70">Средняя</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-white rounded-sm" />
-                <span className="text-terminal-green/70">High</span>
+                <span className="text-terminal-green/70">Высокая</span>
               </div>
             </div>
           )}
           {visualizationMode === 'temperature' && (
             <div className="flex items-center gap-2">
-              <span className="text-terminal-green/70">Temperature:</span>
+              <span className="text-terminal-green/70">Температура:</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-blue-500 rounded-sm" />
-                <span className="text-terminal-green/70">Cold</span>
+                <span className="text-terminal-green/70">Холодно</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-purple-500 rounded-sm" />
-                <span className="text-terminal-green/70">Cool</span>
+                <span className="text-terminal-green/70">Прохладно</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-red-500 rounded-sm" />
-                <span className="text-terminal-green/70">Hot</span>
+                <span className="text-terminal-green/70">Жарко</span>
               </div>
             </div>
           )}
           {visualizationMode === 'moisture' && (
             <div className="flex items-center gap-2">
-              <span className="text-terminal-green/70">Moisture:</span>
+              <span className="text-terminal-green/70">Влажность:</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-yellow-700 rounded-sm" />
-                <span className="text-terminal-green/70">Dry</span>
+                <span className="text-terminal-green/70">Сухо</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-green-700 rounded-sm" />
-                <span className="text-terminal-green/70">Moderate</span>
+                <span className="text-terminal-green/70">Умеренно</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-blue-500 rounded-sm" />
-                <span className="text-terminal-green/70">Wet</span>
+                <span className="text-terminal-green/70">Влажно</span>
               </div>
             </div>
           )}
@@ -1100,11 +1133,11 @@ export const WorldMapCanvas: React.FC = () => {
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-blue-400 rounded-sm" />
-                <span className="text-terminal-green/70">Rivers</span>
+                <span className="text-terminal-green/70">Реки</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-blue-700 rounded-sm" />
-                <span className="text-terminal-green/70">Lakes/Ocean</span>
+                <span className="text-terminal-green/70">Озера/океан</span>
               </div>
             </div>
           )}

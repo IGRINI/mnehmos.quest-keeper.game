@@ -9,33 +9,78 @@ interface CustomEffectsDisplayProps {
 
 const CATEGORY_CONFIG = {
   boon: {
-    label: 'BOONS',
+    label: 'ДАРЫ',
     icon: '🌟',
     color: 'text-yellow-400',
     bgColor: 'bg-yellow-900/20',
     borderColor: 'border-yellow-600/30'
   },
   curse: {
-    label: 'CURSES',
+    label: 'ПРОКЛЯТИЯ',
     icon: '💀',
     color: 'text-red-400',
     bgColor: 'bg-red-900/20',
     borderColor: 'border-red-600/30'
   },
   transformative: {
-    label: 'TRANSFORMATIONS',
+    label: 'ПРЕВРАЩЕНИЯ',
     icon: '🔮',
     color: 'text-purple-400',
     bgColor: 'bg-purple-900/20',
     borderColor: 'border-purple-600/30'
   },
   neutral: {
-    label: 'EFFECTS',
+    label: 'ЭФФЕКТЫ',
     icon: '⚖️',
     color: 'text-gray-400',
     bgColor: 'bg-gray-800/30',
     borderColor: 'border-gray-600/30'
   }
+};
+
+const EFFECT_SOURCE_LABELS: Record<string, string> = {
+  spell: 'заклинание',
+  item: 'предмет',
+  feature: 'особенность',
+  condition: 'состояние',
+  environment: 'окружение',
+  manual: 'вручную',
+};
+
+const EFFECT_DURATION_LABELS: Record<string, string> = {
+  instant: 'мгновенно',
+  temporary: 'временно',
+  permanent: 'постоянно',
+  rounds: 'раунды',
+  encounter: 'сцена',
+  concentration: 'концентрация',
+  until_rest: 'до отдыха',
+  short_rest: 'до короткого отдыха',
+  long_rest: 'до долгого отдыха',
+};
+
+const MECHANIC_TYPE_LABELS: Record<string, string> = {
+  advantage: 'преимущество',
+  disadvantage: 'помеха',
+  bonus: 'бонус',
+  penalty: 'штраф',
+  resistance: 'сопротивление',
+  immunity: 'иммунитет',
+  vulnerability: 'уязвимость',
+  damage: 'урон',
+  healing: 'лечение',
+  ac: 'КД',
+  hp: 'ОЗ',
+  speed: 'скорость',
+  stat: 'характеристика',
+  skill: 'навык',
+  save: 'спасбросок',
+  attack: 'атака',
+};
+
+const getMappedLabel = (value: string | null | undefined, labels: Record<string, string>) => {
+  if (!value) return 'неизвестно';
+  return labels[value.trim().toLowerCase()] ?? value;
 };
 
 const CustomEffectsDisplay: React.FC<CustomEffectsDisplayProps> = ({ effects, className = '' }) => {
@@ -69,7 +114,7 @@ const CustomEffectsDisplay: React.FC<CustomEffectsDisplayProps> = ({ effects, cl
                 <span>{config.icon}</span>
                 {config.label}
               </span>
-              <span className="text-xs opacity-60 font-mono">{items.length} ACTIVE</span>
+              <span className="text-xs opacity-60 font-mono">активно: {items.length}</span>
             </div>
             
             <div className="divide-y divide-gray-700/30">
@@ -89,8 +134,8 @@ const CustomEffectsDisplay: React.FC<CustomEffectsDisplayProps> = ({ effects, cl
                         )}
                       </div>
                       <div className="text-xs text-gray-400 truncate max-w-[250px]">
-                        {effect.source_type} • {effect.duration_type} 
-                        {effect.rounds_remaining ? ` (${effect.rounds_remaining} rounds)` : ''}
+                        {getMappedLabel(effect.source_type, EFFECT_SOURCE_LABELS)} • {getMappedLabel(effect.duration_type, EFFECT_DURATION_LABELS)}
+                        {effect.rounds_remaining ? ` (${effect.rounds_remaining} раунд(ов))` : ''}
                       </div>
                     </div>
                     <div className="text-gray-500 text-xs">
@@ -101,14 +146,14 @@ const CustomEffectsDisplay: React.FC<CustomEffectsDisplayProps> = ({ effects, cl
                   {expandedId === effect.id && (
                     <div className="px-3 pb-3 pt-0 text-sm animate-fadeIn">
                        <p className="text-gray-300 italic mb-2 border-l-2 border-gray-600 pl-2 text-xs">
-                         {effect.description || 'No description available.'}
+                         {effect.description || 'Описание недоступно.'}
                        </p>
                        
                        {effect.mechanics && effect.mechanics.length > 0 && (
                          <div className="space-y-1 bg-black/40 p-2 rounded text-xs font-mono">
                            {effect.mechanics.map((mech: any, i: number) => (
                              <div key={i} className="flex gap-2">
-                               <span className="text-terminal-green">[{mech.type}]</span>
+                                <span className="text-terminal-green">[{getMappedLabel(mech.type, MECHANIC_TYPE_LABELS)}]</span>
                                <span className="text-gray-400">{mech.value}</span>
                                {mech.condition && <span className="text-gray-500 italic">({mech.condition})</span>}
                              </div>
@@ -117,8 +162,8 @@ const CustomEffectsDisplay: React.FC<CustomEffectsDisplayProps> = ({ effects, cl
                        )}
                        
                        <div className="mt-2 text-[10px] text-gray-600 flex justify-between">
-                          <span>Source: {effect.source_entity_name || 'Unknown'}</span>
-                          <span>ID: {effect.id}</span>
+                           <span>Источник: {effect.source_entity_name || 'неизвестно'}</span>
+                           <span>Идентификатор: {effect.id}</span>
                        </div>
                     </div>
                   )}

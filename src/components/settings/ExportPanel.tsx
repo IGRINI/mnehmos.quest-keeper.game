@@ -94,7 +94,7 @@ export const ExportPanel: React.FC = () => {
         >
           {log.status === 'loading'
             ? '⏳ ЭКСПОРТ...'
-            : '📜 ЭКСПОРТ ЖУРНАЛА (MARKDOWN)'}
+            : '📜 ЭКСПОРТ ЖУРНАЛА (.MD)'}
         </button>
 
         {!hasActiveSession && (
@@ -136,7 +136,7 @@ export const ExportPanel: React.FC = () => {
         >
           {pdf.status === 'loading'
             ? '⏳ ЭКСПОРТ...'
-            : '🧾 ЭКСПОРТ ЛИСТА ПЕРСОНАЖА (PDF)'}
+            : '🧾 ЭКСПОРТ ЛИСТА ПЕРСОНАЖА (.PDF)'}
         </button>
 
         {!hasActiveCharacter && (

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { usePartyStore, MemberRole, CharacterSummary } from '../../stores/partyStore';
 import { useGameStateStore } from '../../stores/gameStateStore';
+import { getClassLabel, getRaceLabel } from '../character/displayLabels';
+import { getMemberRoleLabel } from './displayLabels';
 
 interface PartyCreatorModalProps {
   isOpen: boolean;
@@ -251,14 +253,14 @@ export const PartyCreatorModal: React.FC<PartyCreatorModalProps> = ({ isOpen, on
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-terminal-green truncate">{char.name}</div>
                     <div className="text-xs text-terminal-green/60">
-                      Ур. {char.level} {char.class}
-                      {char.race && ` · ${char.race}`}
+                      Ур. {char.level} {getClassLabel(char.class)}
+                      {char.race && ` · ${getRaceLabel(char.race)}`}
                     </div>
                   </div>
 
                   {/* HP */}
                   <div className="text-xs text-terminal-green/60">
-                    HP: {char.hp}/{char.maxHp}
+                    ОЗ: {char.hp}/{char.maxHp}
                   </div>
 
                   {/* Role Selector (if selected) */}
@@ -349,7 +351,7 @@ export const PartyCreatorModal: React.FC<PartyCreatorModalProps> = ({ isOpen, on
                       {m.role === 'leader' && <span className="text-yellow-400 mr-1">★</span>}
                       {char?.name || 'неизвестно'}
                     </span>
-                    <span className="text-terminal-green/50 text-xs capitalize">{m.role}</span>
+                    <span className="text-terminal-green/50 text-xs">{getMemberRoleLabel(m.role)}</span>
                   </div>
                 );
               })}
@@ -379,7 +381,7 @@ export const PartyCreatorModal: React.FC<PartyCreatorModalProps> = ({ isOpen, on
               onClick={onClose}
               className="w-8 h-8 rounded-full border border-terminal-green/50 text-terminal-green hover:bg-terminal-green/20 transition-colors flex items-center justify-center"
             >
-              X
+              ×
             </button>
           </div>
 

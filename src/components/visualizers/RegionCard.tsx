@@ -62,6 +62,50 @@ const REGION_TYPE_CONFIG: Record<string, { icon: string; color: string }> = {
   city: { icon: 'building', color: 'bg-slate-500' },
 };
 
+const REGION_TYPE_LABELS: Record<string, string> = {
+  kingdom: 'королевство',
+  duchy: 'герцогство',
+  county: 'графство',
+  wilderness: 'дикая местность',
+  water: 'вода',
+  plains: 'равнины',
+  forest: 'лес',
+  mountain: 'горы',
+  desert: 'пустыня',
+  city: 'город',
+};
+
+const STRUCTURE_TYPE_LABELS: Record<string, string> = {
+  city: 'город',
+  town: 'малый город',
+  village: 'деревня',
+  castle: 'замок',
+  ruins: 'руины',
+  dungeon: 'подземелье',
+  temple: 'храм',
+};
+
+const BIOME_LABELS: Record<string, string> = {
+  ocean: 'океан',
+  deep_ocean: 'глубокий океан',
+  hot_desert: 'жаркая пустыня',
+  desert: 'пустыня',
+  savanna: 'саванна',
+  tropical_rainforest: 'тропический лес',
+  grassland: 'луг',
+  temperate_deciduous_forest: 'лиственный лес',
+  wetland: 'болото',
+  taiga: 'тайга',
+  tundra: 'тундра',
+  glacier: 'ледник',
+  mountain: 'горы',
+  forest: 'лес',
+  plains: 'равнины',
+  swamp: 'топь',
+  beach: 'пляж',
+  snow: 'снег',
+};
+
 // Note: STRUCTURE_ICONS and BIOME_COLORS reserved for future mini-map visualization
 
 // Get icon emoji
@@ -94,6 +138,10 @@ function getStructureIcon(type: string): string {
   return icons[type] || '\u{1F3DB}';
 }
 
+const formatRegionType = (value: string): string => REGION_TYPE_LABELS[value] ?? value.replace(/_/g, ' ');
+const formatStructureType = (value: string): string => STRUCTURE_TYPE_LABELS[value] ?? value.replace(/_/g, ' ');
+const formatBiomeName = (value: string): string => BIOME_LABELS[value] ?? value.replace(/_/g, ' ');
+
 // Helper to check if data is RegionDetailData
 function isRegionDetailData(data: RegionData | RegionDetailData): data is RegionDetailData {
   return 'region' in data;
@@ -106,7 +154,7 @@ const StructureList: React.FC<{ structures: StructureData[] }> = ({ structures }
   return (
     <div className="bg-terminal-black/60 border border-terminal-green/40 rounded p-3">
       <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-2 flex items-center gap-2">
-        <span>{'\u{1F3D7}'}</span> Structures ({structures.length})
+        <span>{'\u{1F3D7}'}</span> Сооружения ({structures.length})
       </div>
       <div className="space-y-1">
         {structures.map((structure, idx) => {
@@ -121,11 +169,11 @@ const StructureList: React.FC<{ structures: StructureData[] }> = ({ structures }
               <div className="flex items-center gap-2">
                 <span>{getStructureIcon(structure.type)}</span>
                 <span className="text-terminal-green-bright">{structure.name}</span>
-                <span className="text-xs text-terminal-green/50 capitalize">({structure.type})</span>
+                <span className="text-xs text-terminal-green/50">({formatStructureType(structure.type)})</span>
               </div>
               <div className="flex items-center gap-3 text-xs text-terminal-green/60">
                 {structure.population !== undefined && (
-                  <span>Pop: {structure.population.toLocaleString()}</span>
+                  <span>Нас.: {structure.population.toLocaleString()}</span>
                 )}
                 {x !== undefined && y !== undefined && (
                   <span className="font-mono">({x}, {y})</span>
@@ -161,7 +209,7 @@ export const RegionCard: React.FC<RegionCardProps> = ({ data, variant = 'full' }
           <span className="text-lg">{getRegionIcon(region.type)}</span>
           <div>
             <span className="font-bold text-terminal-green-bright">{region.name}</span>
-            <span className="text-terminal-green/60 text-sm ml-2 capitalize">({region.type})</span>
+            <span className="text-terminal-green/60 text-sm ml-2">({formatRegionType(region.type)})</span>
           </div>
         </div>
         <div className="flex items-center gap-4 text-sm">
@@ -170,7 +218,7 @@ export const RegionCard: React.FC<RegionCardProps> = ({ data, variant = 'full' }
           </span>
           {region.controlLevel !== undefined && (
             <div className="flex items-center gap-1">
-              <span className="text-xs text-terminal-green/50">Control:</span>
+              <span className="text-xs text-terminal-green/50">Контроль:</span>
               <span className="text-terminal-green-bright font-bold">{region.controlLevel}%</span>
             </div>
           )}
@@ -189,7 +237,7 @@ export const RegionCard: React.FC<RegionCardProps> = ({ data, variant = 'full' }
           <div className="flex items-center gap-2">
             <span className="text-lg">{getRegionIcon(region.type)}</span>
             <span className="font-bold text-terminal-green-bright">{region.name}</span>
-            <span className="text-xs text-terminal-green/60 capitalize">({region.type})</span>
+            <span className="text-xs text-terminal-green/60">({formatRegionType(region.type)})</span>
           </div>
           <span className="text-terminal-green/60 text-sm">{expanded ? '\u25B2' : '\u25BC'}</span>
         </div>
@@ -198,14 +246,14 @@ export const RegionCard: React.FC<RegionCardProps> = ({ data, variant = 'full' }
           <div className="mt-3 space-y-2 text-sm">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <span className="text-terminal-green/60">Center:</span>
+                <span className="text-terminal-green/60">Центр:</span>
                 <span className="text-terminal-green-bright ml-2 font-mono">
                   ({region.centerX}, {region.centerY})
                 </span>
               </div>
               {capitalX !== undefined && (
                 <div>
-                  <span className="text-terminal-green/60">Capital:</span>
+                  <span className="text-terminal-green/60">Столица:</span>
                   <span className="text-terminal-green-bright ml-2 font-mono">
                     ({capitalX}, {capitalY})
                   </span>
@@ -213,15 +261,15 @@ export const RegionCard: React.FC<RegionCardProps> = ({ data, variant = 'full' }
               )}
               {region.controlLevel !== undefined && (
                 <div>
-                  <span className="text-terminal-green/60">Control:</span>
+                  <span className="text-terminal-green/60">Контроль:</span>
                   <span className="text-terminal-green-bright ml-2">{region.controlLevel}%</span>
                 </div>
               )}
               {region.dominantBiome && (
                 <div>
-                  <span className="text-terminal-green/60">Biome:</span>
-                  <span className="text-terminal-green-bright ml-2 capitalize">
-                    {region.dominantBiome.replace(/_/g, ' ')}
+                  <span className="text-terminal-green/60">Биом:</span>
+                  <span className="text-terminal-green-bright ml-2">
+                    {formatBiomeName(region.dominantBiome)}
                   </span>
                 </div>
               )}
@@ -247,11 +295,11 @@ export const RegionCard: React.FC<RegionCardProps> = ({ data, variant = 'full' }
             <div>
               <h3 className="font-bold text-terminal-green-bright text-xl">{region.name}</h3>
               <div className="flex items-center gap-2 text-sm text-terminal-green/70">
-                <span className="capitalize">{region.type}</span>
+                    <span>{formatRegionType(region.type)}</span>
                 {region.dominantBiome && (
                   <>
                     <span>•</span>
-                    <span className="capitalize">{region.dominantBiome.replace(/_/g, ' ')}</span>
+                    <span>{formatBiomeName(region.dominantBiome)}</span>
                   </>
                 )}
               </div>
@@ -261,7 +309,7 @@ export const RegionCard: React.FC<RegionCardProps> = ({ data, variant = 'full' }
             <div
               className="w-6 h-6 rounded border border-terminal-green/30"
               style={{ backgroundColor: region.color }}
-              title="Region Color"
+              title="Цвет региона"
             />
           )}
         </div>
@@ -272,18 +320,18 @@ export const RegionCard: React.FC<RegionCardProps> = ({ data, variant = 'full' }
         {/* Location Info */}
         <div className="bg-terminal-black/60 border border-terminal-green/40 rounded p-3">
           <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-2 flex items-center gap-2">
-            <span>{'\u{1F4CD}'}</span> Location Data
+            <span>{'\u{1F4CD}'}</span> Данные локации
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <span className="text-terminal-green/60">Center Position:</span>
+              <span className="text-terminal-green/60">Позиция центра:</span>
               <span className="text-terminal-green-bright ml-2 font-mono">
                 ({region.centerX}, {region.centerY})
               </span>
             </div>
             {capitalX !== undefined && capitalY !== undefined && (
               <div>
-                <span className="text-terminal-green/60">Capital:</span>
+                <span className="text-terminal-green/60">Столица:</span>
                 <span className="text-terminal-green-bright ml-2 font-mono">
                   ({capitalX}, {capitalY})
                 </span>
@@ -291,13 +339,13 @@ export const RegionCard: React.FC<RegionCardProps> = ({ data, variant = 'full' }
             )}
             {tileCount !== undefined && (
               <div>
-                <span className="text-terminal-green/60">Area:</span>
-                <span className="text-terminal-green-bright ml-2">{tileCount} tiles</span>
+                <span className="text-terminal-green/60">Площадь:</span>
+                <span className="text-terminal-green-bright ml-2">{tileCount} тайл.</span>
               </div>
             )}
             {region.controlLevel !== undefined && (
               <div>
-                <span className="text-terminal-green/60">Control Level:</span>
+                <span className="text-terminal-green/60">Уровень контроля:</span>
                 <div className="inline-flex items-center gap-2 ml-2">
                   <div className="w-16 h-2 bg-terminal-green/10 rounded overflow-hidden">
                     <div
@@ -316,10 +364,10 @@ export const RegionCard: React.FC<RegionCardProps> = ({ data, variant = 'full' }
         {region.ownerNationId && (
           <div className="bg-terminal-black/60 border border-terminal-green/40 rounded p-3">
             <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-2 flex items-center gap-2">
-              <span>{'\u{1F3F4}'}</span> Ownership
+              <span>{'\u{1F3F4}'}</span> Владение
             </div>
             <div className="text-sm">
-              <span className="text-terminal-green/60">Controlled by:</span>
+              <span className="text-terminal-green/60">Контролирует:</span>
               <span className="text-terminal-green-bright ml-2 font-mono">
                 {region.ownerNationId}
               </span>
@@ -350,7 +398,7 @@ interface RegionListProps {
 export const RegionList: React.FC<RegionListProps> = ({ regions, variant = 'grid' }) => {
   if (regions.length === 0) {
     return (
-      <div className="text-center text-terminal-green/60 py-4">No regions found in this world.</div>
+      <div className="text-center text-terminal-green/60 py-4">Регионы в этом мире не найдены.</div>
     );
   }
 

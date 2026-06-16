@@ -117,8 +117,8 @@ describe('AchievementsView', () => {
 
   it('shows points for achievements', () => {
     render(<AchievementsView />);
-    expect(screen.getByText(/10\s*PTS/i)).toBeInTheDocument();
-    expect(screen.getByText(/25\s*PTS/i)).toBeInTheDocument();
+    expect(screen.getByText(/10\s*ОЧК\./i)).toBeInTheDocument();
+    expect(screen.getByText(/25\s*ОЧК\./i)).toBeInTheDocument();
   });
 
   it('renders a progress bar for an incremental, in-progress achievement', () => {
@@ -162,7 +162,7 @@ describe('AchievementsView', () => {
     gameStateState = { activeCharacterId: null };
     achievementStoreState.achievementsByCharacter = {};
     expect(() => render(<AchievementsView />)).not.toThrow();
-    expect(screen.getByText(/NO CHARACTER SELECTED/i)).toBeInTheDocument();
+    expect(screen.getByText(/ПЕРСОНАЖ НЕ ВЫБРАН/i)).toBeInTheDocument();
   });
 
   it('renders a loading state without crashing', () => {
@@ -241,8 +241,8 @@ describe('AchievementsView', () => {
     expect(screen.getByText('First Blood')).toBeInTheDocument();
     expect(screen.getByText('Collector')).toBeInTheDocument();
     // Neither empty-state message shows, because cards are visible.
-    expect(screen.queryByText(/No achievements defined yet/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/No achievements in this category/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Достижения пока не настроены/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/В этой категории достижений нет/i)).not.toBeInTheDocument();
     // The "All" control reflects the effective (resolved) filter being active.
     expect(screen.getByTestId('achievement-filter-all').className).toMatch(/bg-terminal-green/);
   });
@@ -254,8 +254,8 @@ describe('AchievementsView', () => {
 
     render(<AchievementsView />);
 
-    expect(screen.getByText(/No achievements defined yet/i)).toBeInTheDocument();
-    expect(screen.queryByText(/No achievements in this category/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Достижения пока не настроены/i)).toBeInTheDocument();
+    expect(screen.queryByText(/В этой категории достижений нет/i)).not.toBeInTheDocument();
   });
 
   it('applies a valid (non-stale) category filter and renders only its cards', () => {
@@ -266,7 +266,7 @@ describe('AchievementsView', () => {
     expect(screen.queryByText('First Blood')).not.toBeInTheDocument();
     expect(screen.getAllByTestId('achievement-card')).toHaveLength(1);
     // Neither empty-state message shows.
-    expect(screen.queryByText(/No achievements defined yet/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/No achievements in this category/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Достижения пока не настроены/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/В этой категории достижений нет/i)).not.toBeInTheDocument();
   });
 });

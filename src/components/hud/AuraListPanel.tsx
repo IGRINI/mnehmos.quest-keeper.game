@@ -17,13 +17,13 @@ export const AuraListPanel: React.FC = () => {
   return (
     <div className="bg-terminal-black/90 border border-terminal-green-dim rounded p-2 mt-2">
       <h4 className="text-terminal-green text-xs uppercase tracking-wider mb-2 border-b border-terminal-green-dim pb-1">
-        Active Auras ({auras.length})
+        Активные ауры ({auras.length})
       </h4>
       
       <div className="space-y-1.5 max-h-32 overflow-y-auto">
         {auras.map(aura => {
           const owner = entities.find(e => e.id === aura.ownerId);
-          const ownerName = owner?.name || 'Unknown';
+          const ownerName = owner?.name || 'Неизвестно';
           
           // Determine color indicator
           const colorClass = aura.affectsEnemies 
@@ -46,7 +46,7 @@ export const AuraListPanel: React.FC = () => {
                   {aura.spellName}
                 </div>
                 <div className="text-terminal-green-dim text-[10px]">
-                  {ownerName} • {aura.radius}ft
+                  {ownerName} • {aura.radius} фт.
                 </div>
               </div>
               
@@ -54,7 +54,7 @@ export const AuraListPanel: React.FC = () => {
               {aura.requiresConcentration && (
                 <span 
                   className="text-yellow-400 text-sm" 
-                  title="Requires Concentration"
+                  title="Требует концентрации"
                 >
                   ⚡
                 </span>

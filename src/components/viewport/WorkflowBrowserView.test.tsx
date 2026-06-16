@@ -211,8 +211,8 @@ describe('WorkflowBrowserView', () => {
     const panel = screen.getByTestId('workflow-run-result');
     expect(panel).toBeInTheDocument();
     // The executed-steps + failure summary surfaces inside the result panel.
-    expect(panel).toHaveTextContent(/Executed steps:\s*2/i);
-    expect(panel).toHaveTextContent(/Failures:\s*0/i);
+    expect(panel).toHaveTextContent(/Выполнено шагов:\s*2/i);
+    expect(panel).toHaveTextContent(/Ошибок:\s*0/i);
   });
 
   it('does NOT render a run result that belongs to a different template than the selection', () => {
@@ -296,10 +296,10 @@ describe('WorkflowBrowserView', () => {
     const panel = screen.getByTestId('workflow-run-result');
     expect(panel).toBeInTheDocument();
     // Dry-run heading appears...
-    expect(panel).toHaveTextContent(/Preview \(dry-run\)/i);
+    expect(panel).toHaveTextContent(/Предпросмотр без запуска/i);
     // ...but the executed-steps / failures summary is autoExecute-only and must NOT.
-    expect(panel).not.toHaveTextContent(/Executed steps:/i);
-    expect(panel).not.toHaveTextContent(/Failures:/i);
+    expect(panel).not.toHaveTextContent(/Выполнено шагов:/i);
+    expect(panel).not.toHaveTextContent(/Ошибок:/i);
     // Prepared steps still list.
     expect(panel).toHaveTextContent(/create_party/i);
   });

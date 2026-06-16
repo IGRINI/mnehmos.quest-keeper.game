@@ -2,6 +2,27 @@ import React, { useState, useMemo } from 'react';
 import { useGameStateStore } from '../../stores/gameStateStore';
 import { useNotesStore, getSortedNotes, CATEGORY_INFO, Note, NoteCategory } from '../../stores/notesStore';
 
+const NOTE_CATEGORY_LABELS: Record<NoteCategory, string> = {
+  general: 'Общее',
+  character: 'Персонажи',
+  location: 'Локации',
+  lore: 'Лор',
+  session: 'Сессия',
+  combat: 'Бой',
+};
+
+const QUEST_STATUS_LABELS: Record<string, string> = {
+  completed: 'Завершен',
+  failed: 'Провален',
+  active: 'Активен',
+};
+
+const getNoteCategoryLabel = (category: NoteCategory): string =>
+  NOTE_CATEGORY_LABELS[category] ?? CATEGORY_INFO[category].label;
+
+const getQuestStatusLabel = (status: string): string =>
+  QUEST_STATUS_LABELS[status] ?? status;
+
 export const NotesView: React.FC = () => {
   const quests = useGameStateStore((state) => state.quests);
   const activeCharacterId = useGameStateStore((state) => state.activeCharacterId);
@@ -68,7 +89,7 @@ export const NotesView: React.FC = () => {
       .filter(Boolean);
 
     addNote({
-      title: noteTitle.trim() || 'Untitled Note',
+      title: noteTitle.trim() || 'Без названия',
       content: noteContent.trim(),
       category: noteCategory,
       tags,
@@ -99,7 +120,7 @@ export const NotesView: React.FC = () => {
       .filter(Boolean);
 
     updateNote(editingId, {
-      title: noteTitle.trim() || 'Untitled Note',
+      title: noteTitle.trim() || 'Без названия',
       content: noteContent.trim(),
       category: noteCategory,
       tags,
@@ -109,7 +130,7 @@ export const NotesView: React.FC = () => {
   };
 
   const handleDeleteNote = (id: string) => {
-    if (confirm('Delete this note permanently?')) {
+    if (confirm('Удалить эту заметку без возможности восстановления?')) {
       deleteNote(id);
       if (editingId === id) {
         resetForm();
@@ -129,7 +150,7 @@ export const NotesView: React.FC = () => {
               : 'text-terminal-green/50 hover:text-terminal-green/80'
           }`}
         >
-          Quests ({quests.length})
+          Квесты ({quests.length})
         </button>
         <button
           onClick={() => setActiveTab('notes')}
@@ -139,7 +160,7 @@ export const NotesView: React.FC = () => {
               : 'text-terminal-green/50 hover:text-terminal-green/80'
           }`}
         >
-          Field Notes ({notes.length})
+          Полевые заметки ({notes.length})
         </button>
 
         {activeTab === 'notes' && !isAdding && (
@@ -147,7 +168,7 @@ export const NotesView: React.FC = () => {
             onClick={() => setIsAdding(true)}
             className="ml-auto px-3 py-1 border border-terminal-green text-xs uppercase hover:bg-terminal-green hover:text-terminal-black transition-colors"
           >
-            + Add Note
+            + Добавить заметку
           </button>
         )}
       </div>
@@ -162,7 +183,7 @@ export const NotesView: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search notes..."
+                placeholder="Поиск заметок..."
                 className="flex-grow bg-terminal-black border border-terminal-green-dim p-2 text-sm text-terminal-green focus:outline-none focus:border-terminal-green"
               />
               <select
@@ -170,10 +191,10 @@ export const NotesView: React.FC = () => {
                 onChange={(e) => setSelectedCategory(e.target.value as NoteCategory | 'all')}
                 className="bg-terminal-black border border-terminal-green-dim p-2 text-sm text-terminal-green focus:outline-none focus:border-terminal-green"
               >
-                <option value="all">All Categories</option>
+                <option value="all">Все категории</option>
                 {Object.entries(CATEGORY_INFO).map(([key, info]) => (
                   <option key={key} value={key}>
-                    {info.icon} {info.label}
+                    {info.icon} {getNoteCategoryLabel(key as NoteCategory)}
                   </option>
                 ))}
               </select>
@@ -191,7 +212,7 @@ export const NotesView: React.FC = () => {
                   type="text"
                   value={noteTitle}
                   onChange={(e) => setNoteTitle(e.target.value)}
-                  placeholder="Note title..."
+                  placeholder="Название заметки..."
                   className="flex-grow bg-terminal-black border border-terminal-green-dim p-2 text-sm text-terminal-green focus:outline-none focus:border-terminal-green"
                 />
                 <select
@@ -201,7 +222,7 @@ export const NotesView: React.FC = () => {
                 >
                   {Object.entries(CATEGORY_INFO).map(([key, info]) => (
                     <option key={key} value={key}>
-                      {info.icon} {info.label}
+                      {info.icon} {getNoteCategoryLabel(key as NoteCategory)}
                     </option>
                   ))}
                 </select>
@@ -210,7 +231,7 @@ export const NotesView: React.FC = () => {
               <textarea
                 value={noteContent}
                 onChange={(e) => setNoteContent(e.target.value)}
-                placeholder="Enter your observations..."
+                placeholder="Введите наблюдения..."
                 className="w-full bg-terminal-black border border-terminal-green-dim p-2 text-terminal-green focus:outline-none focus:border-terminal-green h-32 resize-none mb-2"
                 autoFocus
               />
@@ -219,7 +240,7 @@ export const NotesView: React.FC = () => {
                 type="text"
                 value={noteTags}
                 onChange={(e) => setNoteTags(e.target.value)}
-                placeholder="Tags (comma separated): goblin, dungeon, treasure..."
+                placeholder="Теги через запятую: город, подземелье, сокровище..."
                 className="w-full bg-terminal-black border border-terminal-green-dim p-2 text-sm text-terminal-green focus:outline-none focus:border-terminal-green mb-2"
               />
 
@@ -228,14 +249,14 @@ export const NotesView: React.FC = () => {
                   type="submit"
                   className="flex-grow bg-terminal-green/10 border border-terminal-green py-2 hover:bg-terminal-green hover:text-terminal-black transition-colors uppercase text-sm"
                 >
-                  {editingId ? 'Update Note' : 'Save Note'}
+                  {editingId ? 'Обновить заметку' : 'Сохранить заметку'}
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
                   className="px-4 border border-terminal-green-dim py-2 hover:bg-terminal-green-dim/20 transition-colors uppercase text-sm text-terminal-green-dim"
                 >
-                  Cancel
+                  Отмена
                 </button>
               </div>
             </form>
@@ -246,8 +267,8 @@ export const NotesView: React.FC = () => {
             {filteredNotes.length === 0 ? (
               <div className="text-center opacity-50 py-8 italic">
                 {searchQuery || selectedCategory !== 'all'
-                  ? '[NO_MATCHING_NOTES]'
-                  : '[NO_DATA_RECORDED]'}
+                  ? '[ПОДХОДЯЩИЕ_ЗАМЕТКИ_НЕ_НАЙДЕНЫ]'
+                  : '[ДАННЫХ_НЕТ]'}
               </div>
             ) : (
               filteredNotes.map((note) => {
@@ -265,7 +286,7 @@ export const NotesView: React.FC = () => {
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2">
                         {note.pinned && (
-                          <span className="text-terminal-amber" title="Pinned">
+                          <span className="text-terminal-amber" title="Закреплено">
                             📌
                           </span>
                         )}
@@ -303,23 +324,23 @@ export const NotesView: React.FC = () => {
                       <button
                         onClick={() => togglePin(note.id)}
                         className="text-terminal-amber hover:text-terminal-amber/80 text-xs"
-                        title={note.pinned ? 'Unpin' : 'Pin'}
+                        title={note.pinned ? 'Открепить' : 'Закрепить'}
                       >
-                        {note.pinned ? '[UNPIN]' : '[PIN]'}
+                        {note.pinned ? '[ОТКРЕПИТЬ]' : '[ЗАКРЕПИТЬ]'}
                       </button>
                       <button
                         onClick={() => handleEditNote(note)}
                         className="text-terminal-cyan hover:text-terminal-cyan/80 text-xs"
-                        title="Edit"
+                        title="Редактировать"
                       >
-                        [EDIT]
+                        [ПРАВКА]
                       </button>
                       <button
                         onClick={() => handleDeleteNote(note.id)}
                         className="text-red-500 hover:text-red-400 text-xs"
-                        title="Delete"
+                        title="Удалить"
                       >
-                        [DEL]
+                        [УДАЛИТЬ]
                       </button>
                     </div>
                   </div>
@@ -335,7 +356,7 @@ export const NotesView: React.FC = () => {
         <div className="flex-grow overflow-y-auto space-y-3 pr-2">
           {quests.length === 0 ? (
             <div className="text-center opacity-50 py-8 italic">
-              [NO_ACTIVE_QUESTS]
+              [АКТИВНЫХ_КВЕСТОВ_НЕТ]
             </div>
           ) : (
             quests.map((quest) => (
@@ -362,14 +383,14 @@ export const NotesView: React.FC = () => {
                         : 'bg-terminal-amber text-terminal-black'
                     }`}
                   >
-                    {quest.status}
+                    {getQuestStatusLabel(quest.status)}
                   </span>
                 </div>
 
                 {/* Quest Giver */}
                 {quest.questGiver && (
                   <div className="text-xs text-terminal-green/60 mb-2">
-                    Given by: {quest.questGiver}
+                    Выдает: {quest.questGiver}
                   </div>
                 )}
 
@@ -380,7 +401,7 @@ export const NotesView: React.FC = () => {
                 {quest.objectives.length > 0 && (
                   <div className="mb-3">
                     <div className="text-xs uppercase text-terminal-green/60 mb-1">
-                      Objectives:
+                      Цели:
                     </div>
                     <div className="space-y-1 pl-2">
                       {quest.objectives.map((obj) => (
@@ -411,17 +432,17 @@ export const NotesView: React.FC = () => {
                   (quest.rewards?.items && quest.rewards.items.length > 0)) && (
                   <div className="border-t border-terminal-green-dim pt-2 mt-2">
                     <div className="text-xs uppercase text-terminal-green/60 mb-1">
-                      Rewards:
+                      Награды:
                     </div>
                     <div className="flex flex-wrap gap-3 text-xs">
                       {quest.rewards.experience ? (
                         <span className="text-terminal-cyan">
-                          ⭐ {quest.rewards.experience} XP
+                          ⭐ {quest.rewards.experience} ОП
                         </span>
                       ) : null}
                       {quest.rewards.gold ? (
                         <span className="text-terminal-amber">
-                          💰 {quest.rewards.gold} gold
+                          💰 {quest.rewards.gold} золота
                         </span>
                       ) : null}
                       {quest.rewards.items?.map((item, i) => (

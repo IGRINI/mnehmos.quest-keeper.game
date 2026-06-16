@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGameStateStore } from '../../stores/gameStateStore';
+import { getClassLabel, getRaceLabel } from '../character/displayLabels';
 
 interface SelectionStatusIndicatorProps {
   compact?: boolean;
@@ -26,31 +27,31 @@ export const SelectionStatusIndicator: React.FC<SelectionStatusIndicatorProps> =
           {isSyncing ? (
             <>
               <span className="animate-spin">&#9696;</span>
-              <span>SYNC</span>
+              <span>СИНХР</span>
             </>
           ) : (
             <>
               <span>&#9679;</span>
-              <span>IDLE</span>
+              <span>ГОТОВО</span>
             </>
           )}
         </div>
 
         {/* Lock indicator */}
         {selectionLocked && (
-          <span className="text-yellow-500" title="Selection locked during sync">
+          <span className="text-yellow-500" title="Выбор заблокирован на время синхронизации">
             &#128274;
           </span>
         )}
 
         {/* Character */}
-        <div className="text-terminal-green truncate max-w-[100px]" title={activeCharacter?.name || 'None'}>
-          {activeCharacter?.name || 'NO CHAR'}
+        <div className="text-terminal-green truncate max-w-[100px]" title={activeCharacter?.name || 'Нет персонажа'}>
+          {activeCharacter?.name || 'НЕТ ПЕРСОНАЖА'}
         </div>
 
         {/* World */}
-        <div className="text-terminal-green/60 truncate max-w-[100px]" title={world?.location || 'None'}>
-          @ {world?.location || 'NO WORLD'}
+        <div className="text-terminal-green/60 truncate max-w-[100px]" title={world?.location || 'Нет мира'}>
+          @ {world?.location || 'НЕТ МИРА'}
         </div>
       </div>
     );
@@ -59,7 +60,7 @@ export const SelectionStatusIndicator: React.FC<SelectionStatusIndicatorProps> =
   return (
     <div className="bg-terminal-black/80 border border-terminal-green/30 p-3 font-mono text-sm">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-terminal-green/60 uppercase tracking-wider text-xs">Selection Status</span>
+        <span className="text-terminal-green/60 uppercase tracking-wider text-xs">Состояние выбора</span>
         <button
           onClick={() => syncState(true)}
           disabled={isSyncing}
@@ -69,21 +70,21 @@ export const SelectionStatusIndicator: React.FC<SelectionStatusIndicatorProps> =
               : 'border-terminal-green text-terminal-green hover:bg-terminal-green/10'
           }`}
         >
-          {isSyncing ? 'Syncing...' : 'Sync Now'}
+          {isSyncing ? 'Синхронизация...' : 'Синхронизировать'}
         </button>
       </div>
 
       <div className="space-y-2">
         {/* Character Row */}
         <div className="flex items-center justify-between">
-          <span className="text-terminal-green/60">Character:</span>
+          <span className="text-terminal-green/60">Персонаж:</span>
           <div className="text-right">
             <span className="text-terminal-green font-bold">
-              {activeCharacter?.name || 'None'}
+              {activeCharacter?.name || 'Нет'}
             </span>
             {activeCharacter && (
               <span className="text-terminal-green/50 ml-2">
-                Lv{activeCharacter.level} {activeCharacter.race ? `${activeCharacter.race} ` : ''}{activeCharacter.class}
+                Ур. {activeCharacter.level} {activeCharacter.race ? `${getRaceLabel(activeCharacter.race)} ` : ''}{getClassLabel(activeCharacter.class)}
               </span>
             )}
             {showDebugIds && activeCharacterId && (
@@ -96,10 +97,10 @@ export const SelectionStatusIndicator: React.FC<SelectionStatusIndicatorProps> =
 
         {/* World Row */}
         <div className="flex items-center justify-between">
-          <span className="text-terminal-green/60">World:</span>
+          <span className="text-terminal-green/60">Мир:</span>
           <div className="text-right">
             <span className="text-terminal-green">
-              {world?.location || 'None'}
+              {world?.location || 'Нет'}
             </span>
             {showDebugIds && activeWorldId && (
               <div className="text-terminal-green/30 text-xs">
@@ -111,15 +112,15 @@ export const SelectionStatusIndicator: React.FC<SelectionStatusIndicatorProps> =
 
         {/* Sync Status Row */}
         <div className="flex items-center justify-between border-t border-terminal-green/20 pt-2 mt-2">
-          <span className="text-terminal-green/60">Status:</span>
+          <span className="text-terminal-green/60">Статус:</span>
           <div className="flex items-center gap-2">
             {selectionLocked && (
-              <span className="text-yellow-500 text-xs" title="Selection locked">
-                LOCKED
+              <span className="text-yellow-500 text-xs" title="Выбор заблокирован">
+                ЗАБЛОКИРОВАНО
               </span>
             )}
             <span className={isSyncing ? 'text-yellow-400' : 'text-terminal-green'}>
-              {isSyncing ? 'SYNCING...' : 'READY'}
+              {isSyncing ? 'СИНХРОНИЗАЦИЯ...' : 'ГОТОВО'}
             </span>
           </div>
         </div>

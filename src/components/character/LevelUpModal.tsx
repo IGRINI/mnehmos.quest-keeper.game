@@ -42,7 +42,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
       onClose();
     } catch (e: any) {
       console.error('Level up failed:', e);
-      setError(e.message || 'Failed to process level up.');
+      setError(e.message || 'Не удалось обработать повышение уровня.');
     } finally {
       setIsSubmitting(false);
     }
@@ -52,10 +52,10 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
       <div className="bg-terminal-black border border-terminal-green p-6 w-[400px] shadow-glow-lg relative">
         <h2 className="text-2xl font-bold text-terminal-green-bright mb-2 text-center">
-          LEVEL UP AVAILABLE!
+          ДОСТУПНО ПОВЫШЕНИЕ УРОВНЯ!
         </h2>
         <div className="text-center text-terminal-green/80 mb-6">
-          {characterName} is reaching Level {currentLevel + 1}
+          {characterName} достигает уровня {currentLevel + 1}
         </div>
 
         {error && (
@@ -67,7 +67,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
         <div className="space-y-4 mb-6">
           <div className="p-4 bg-terminal-green/5 border border-terminal-green/20 rounded">
             <label className="block text-sm font-bold text-terminal-green mb-2">
-              HP Increase (Optional)
+              Прирост ОЗ (необязательно)
             </label>
             <div className="flex gap-2">
               <input
@@ -76,11 +76,11 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
                 value={hpIncrease}
                 onChange={(e) => setHpIncrease(parseInt(e.target.value) || 0)}
                 className="flex-1 bg-black border border-terminal-green/50 p-2 text-terminal-green focus:outline-none focus:border-terminal-green-bright"
-                placeholder="Roll hit die..."
+                placeholder="Брось кость хитов..."
               />
             </div>
             <p className="text-xs text-terminal-green/40 mt-1">
-              Manually roll your hit die + CON mod and enter the result.
+              Брось кость хитов вручную, добавь модификатор Телосложения и введи результат.
             </p>
           </div>
         </div>
@@ -91,14 +91,14 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
             disabled={isSubmitting}
             className="px-4 py-2 text-terminal-green/60 hover:text-terminal-green transition-colors disabled:opacity-50"
           >
-            Cancel
+            Отмена
           </button>
           <button
             onClick={handleLevelUp}
             disabled={isSubmitting}
             className="px-6 py-2 bg-terminal-green text-terminal-black font-bold rounded hover:bg-terminal-green-bright transition-colors disabled:opacity-50 flex items-center gap-2"
           >
-            {isSubmitting ? 'ASCENDING...' : 'LEVEL UP!'}
+            {isSubmitting ? 'Повышение...' : 'Повысить уровень!'}
           </button>
         </div>
       </div>

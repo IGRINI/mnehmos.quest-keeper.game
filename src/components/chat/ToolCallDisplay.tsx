@@ -144,6 +144,12 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({
         error: '✗',
     };
 
+    const statusLabels = {
+        pending: 'выполняется',
+        completed: 'готово',
+        error: 'ошибка',
+    };
+
     return (
         <div className="border border-terminal-green-dim rounded bg-terminal-black/50 mb-2">
             {/* Header */}
@@ -154,13 +160,13 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({
                 <div className="flex items-center gap-3">
                     <span className="codicon codicon-server text-terminal-green" />
                     <span className="text-terminal-green font-bold">
-                        {serverName || 'MCP Tool'}
+                        {serverName || 'MCP-инструмент'}
                     </span>
                     <span className="text-terminal-green/70 text-sm">→ {toolName}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className={`text-xs uppercase tracking-wider ${statusColors[status]}`}>
-                        {statusIcons[status]} {status}
+                        {statusIcons[status]} {statusLabels[status]}
                     </span>
                     <span className={`codicon codicon-chevron-${isExpanded ? 'down' : 'right'} text-terminal-green/50`} />
                 </div>
@@ -177,7 +183,7 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({
                         >
                             <span className={`codicon codicon-chevron-${showArgs ? 'down' : 'right'} text-xs`} />
                             <span className="text-sm font-bold uppercase tracking-wider text-terminal-cyan">
-                                Call Arguments
+                                Аргументы вызова
                             </span>
                         </div>
                         {showArgs && (
@@ -200,10 +206,10 @@ export const ToolCallDisplay: React.FC<ToolCallDisplayProps> = ({
                             >
                                 <span className={`codicon codicon-chevron-${showResponse ? 'down' : 'right'} text-xs`} />
                                 <span className="text-sm font-bold uppercase tracking-wider text-terminal-green">
-                                    Response
+                                    Ответ
                                     {visualization && (
                                         <span className="ml-2 text-xs text-terminal-cyan font-normal">
-                                            [Rich View]
+                                            [Расширенный вид]
                                         </span>
                                     )}
                                 </span>

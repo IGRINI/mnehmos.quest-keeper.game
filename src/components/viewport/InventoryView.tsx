@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useGameStateStore, InventoryItem } from '../../stores/gameStateStore';
 import { mcpManager } from '../../services/mcpClient';
+import { getItemLabel } from '../character/displayLabels';
 
 interface InventoryViewProps {
   onClose?: () => void;
@@ -9,12 +10,29 @@ interface InventoryViewProps {
 type EquipSlot = 'mainhand' | 'offhand' | 'armor' | 'head' | 'feet' | 'accessory';
 
 const SLOT_LABELS: Record<EquipSlot, string> = {
-  mainhand: '⚔️ Main Hand',
-  offhand: '🛡️ Off Hand',
-  armor: '🛡️ Armor',
-  head: '👑 Head',
-  feet: '👢 Feet',
-  accessory: '💍 Accessory'
+  mainhand: '⚔️ Основная рука',
+  offhand: '🛡️ Вторая рука',
+  armor: '🛡️ Броня',
+  head: '👑 Голова',
+  feet: '👢 Обувь',
+  accessory: '💍 Аксессуар'
+};
+
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  armor: 'броня',
+  shield: 'щит',
+  weapon: 'оружие',
+  melee: 'ближний бой',
+  ranged: 'дальний бой',
+  consumable: 'расходник',
+  quest: 'квестовый предмет',
+  misc: 'прочее',
+  scroll: 'свиток',
+};
+
+const formatItemType = (type?: string): string => {
+  if (!type) return ITEM_TYPE_LABELS.misc;
+  return ITEM_TYPE_LABELS[type.toLowerCase()] ?? type;
 };
 
 // Determine which slots an item can be equipped to based on its type
@@ -95,7 +113,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
       setShowSlotSelector(false);
     } catch (err: any) {
       console.error('[InventoryView] Equip failed:', err);
-      setEquipError(err.message || 'Failed to equip item');
+      setEquipError(err.message || 'Не удалось надеть предмет');
     } finally {
       setIsEquipping(false);
     }
@@ -124,7 +142,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
       }
     } catch (err: any) {
       console.error('[InventoryView] Unequip failed:', err);
-      setEquipError(err.message || 'Failed to unequip item');
+      setEquipError(err.message || 'Не удалось снять предмет');
     } finally {
       setIsEquipping(false);
     }
@@ -160,7 +178,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
       
       <div className="flex justify-between items-center mb-4 border-b border-terminal-green-dim pb-2">
         <h2 className="text-xl font-bold uppercase tracking-wider text-glow flex-shrink-0">
-          Inventory
+          Инвентарь
         </h2>
         {onClose && (
           <button 
@@ -179,7 +197,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
       >
         {inventory.length === 0 ? (
           <div className="text-center opacity-50 py-8 italic">
-            [NO_ITEMS_DETECTED]
+            [ПРЕДМЕТЫ_НЕ_НАЙДЕНЫ]
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 pb-4">
@@ -192,19 +210,19 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
                 <div className="flex justify-between items-start">
                   <div className="flex-1 mr-4">
                     <div className="font-bold text-terminal-green-bright flex items-center gap-2 flex-wrap">
-                      <span className="text-lg group-hover:text-white transition-colors">{item.name}</span>
+                      <span className="text-lg group-hover:text-white transition-colors">{getItemLabel(item.name)}</span>
                       {item.equipped && (
                         <span className="text-[10px] bg-terminal-green text-terminal-black px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
-                          {item.slot ? SLOT_LABELS[item.slot] : 'Equipped'}
+                          {item.slot ? SLOT_LABELS[item.slot] : 'Надето'}
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-terminal-green/60 mt-1 uppercase tracking-wider">{item.type}</div>
+                    <div className="text-xs text-terminal-green/60 mt-1 uppercase tracking-wider">{formatItemType(item.type)}</div>
                   </div>
                   <div className="text-right flex-shrink-0 bg-terminal-green/10 px-3 py-1 rounded group-hover:bg-terminal-green/20 transition-colors">
-                    <div className="font-bold text-lg">x{item.quantity}</div>
+                    <div className="font-bold text-lg">×{item.quantity}</div>
                     {item.weight && (
-                      <div className="text-xs opacity-50">{item.weight} lbs</div>
+                      <div className="text-xs opacity-50">{item.weight} фунт.</div>
                     )}
                   </div>
                 </div>
@@ -237,11 +255,11 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
             </button>
             
             <div className="text-center mb-6">
-              <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-2">{selectedItem.type}</div>
-              <h3 className="text-2xl font-bold text-white mb-2 text-glow">{selectedItem.name}</h3>
+              <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-2">{formatItemType(selectedItem.type)}</div>
+              <h3 className="text-2xl font-bold text-white mb-2 text-glow">{getItemLabel(selectedItem.name)}</h3>
               {selectedItem.equipped && (
                 <span className="inline-block bg-terminal-green text-terminal-black px-2 py-0.5 rounded uppercase font-bold text-xs tracking-wide">
-                  {selectedItem.slot ? `Equipped: ${SLOT_LABELS[selectedItem.slot]}` : 'Currently Equipped'}
+                  {selectedItem.slot ? `Надето: ${SLOT_LABELS[selectedItem.slot]}` : 'Сейчас надето'}
                 </span>
               )}
             </div>
@@ -249,17 +267,17 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
             <div className="space-y-4 border-t border-terminal-green/30 pt-4">
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div className="bg-terminal-green/5 p-2 rounded">
-                  <div className="text-xs opacity-60 uppercase">Quantity</div>
+                  <div className="text-xs opacity-60 uppercase">Количество</div>
                   <div className="text-xl font-bold">{selectedItem.quantity}</div>
                 </div>
                 {selectedItem.weight ? (
                   <div className="bg-terminal-green/5 p-2 rounded">
-                    <div className="text-xs opacity-60 uppercase">Weight</div>
-                    <div className="text-xl font-bold">{selectedItem.weight} <span className="text-xs font-normal opacity-50">lbs</span></div>
+                    <div className="text-xs opacity-60 uppercase">Вес</div>
+                    <div className="text-xl font-bold">{selectedItem.weight} <span className="text-xs font-normal opacity-50">фунт.</span></div>
                   </div>
                 ) : (
                   <div className="bg-terminal-green/5 p-2 rounded opacity-50">
-                    <div className="text-xs opacity-60 uppercase">Weight</div>
+                    <div className="text-xs opacity-60 uppercase">Вес</div>
                     <div className="text-xl font-bold">-</div>
                   </div>
                 )}
@@ -267,14 +285,14 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
 
               {selectedItem.description && selectedItem.description !== selectedItem.name ? (
                 <div className="bg-terminal-green/5 p-4 rounded min-h-[80px]">
-                  <div className="text-xs opacity-60 uppercase mb-2">Description</div>
+                  <div className="text-xs opacity-60 uppercase mb-2">Описание</div>
                   <p className="text-terminal-green-bright leading-relaxed">
                     {selectedItem.description}
                   </p>
                 </div>
               ) : (
                 <div className="bg-terminal-green/5 p-4 rounded min-h-[80px] flex items-center justify-center text-terminal-green/40 italic">
-                  No additional details available.
+                  Дополнительных сведений нет.
                 </div>
               )}
 
@@ -288,7 +306,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
               {/* Slot Selector Dropdown */}
               {showSlotSelector && availableSlots.length > 0 && (
                 <div className="bg-terminal-green/10 border border-terminal-green rounded p-3">
-                  <div className="text-xs text-terminal-green/80 mb-2 uppercase">Select Slot:</div>
+                  <div className="text-xs text-terminal-green/80 mb-2 uppercase">Выберите слот:</div>
                   <div className="flex flex-wrap gap-2">
                     {availableSlots.map(slot => (
                       <button
@@ -325,10 +343,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
                   {isEquipping ? (
                     <>
                       <span className="animate-spin">⚙️</span>
-                      Equipping...
+                      Надеваю...
                     </>
                   ) : (
-                    <>⚔️ Equip</>
+                    <>⚔️ Надеть</>
                   )}
                 </button>
               )}
@@ -342,10 +360,10 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
                   {isEquipping ? (
                     <>
                       <span className="animate-spin">⚙️</span>
-                      Removing...
+                      Снимаю...
                     </>
                   ) : (
-                    <>🔓 Unequip</>
+                    <>🔓 Снять</>
                   )}
                 </button>
               )}
@@ -354,7 +372,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onClose }) => {
                 onClick={() => { setSelectedItem(null); setShowSlotSelector(false); setEquipError(null); }}
                 className="px-6 py-2 bg-terminal-green text-terminal-black font-bold uppercase tracking-wider hover:bg-white transition-colors rounded-sm"
               >
-                Close
+                Закрыть
               </button>
             </div>
           </div>

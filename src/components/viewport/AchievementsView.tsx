@@ -7,6 +7,20 @@ import { useAchievementStore, type Achievement } from '../../stores/achievementS
 // Card
 // ============================================
 
+const ACHIEVEMENT_CATEGORY_LABELS: Record<string, string> = {
+  combat: 'Бой',
+  exploration: 'Исследование',
+  social: 'Общение',
+  story: 'История',
+  collection: 'Коллекция',
+  crafting: 'Ремесло',
+  magic: 'Магия',
+  meta: 'Система',
+};
+
+const formatAchievementCategory = (category: string): string =>
+  ACHIEVEMENT_CATEGORY_LABELS[category] ?? category;
+
 interface AchievementCardProps {
   achievement: Achievement;
 }
@@ -70,12 +84,12 @@ const AchievementCard: React.FC<AchievementCardProps> = ({ achievement }) => {
               : 'border border-terminal-green/40 text-terminal-green/60'
           }`}
         >
-          {achievement.points} PTS
+          {achievement.points} ОЧК.
         </span>
       </div>
 
       <p className="text-xs text-terminal-green/60 mb-2">
-        {masked ? 'A hidden achievement. Keep playing to reveal it.' : achievement.description}
+        {masked ? 'Скрытое достижение. Продолжайте играть, чтобы открыть его.' : achievement.description}
       </p>
 
       {hasProgress && (
@@ -94,7 +108,7 @@ const AchievementCard: React.FC<AchievementCardProps> = ({ achievement }) => {
 
       {unlocked && achievement.unlockedAt && (
         <div className="text-xs text-terminal-green/40">
-          Unlocked {new Date(achievement.unlockedAt).toLocaleDateString()}
+          Открыто {new Date(achievement.unlockedAt).toLocaleDateString()}
         </div>
       )}
     </div>
@@ -150,8 +164,8 @@ export const AchievementsView: React.FC = () => {
     return (
       <div className="h-full w-full flex items-center justify-center p-8 text-terminal-green/60">
         <div className="text-center space-y-4">
-          <p className="text-xl">NO CHARACTER SELECTED</p>
-          <p className="text-sm">Select a character to view achievements.</p>
+          <p className="text-xl">ПЕРСОНАЖ НЕ ВЫБРАН</p>
+          <p className="text-sm">Выберите персонажа, чтобы посмотреть достижения.</p>
         </div>
       </div>
     );
@@ -165,13 +179,13 @@ export const AchievementsView: React.FC = () => {
     <div className="h-full w-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-terminal-green/20 scrollbar-track-transparent">
       <div className="border-b-2 border-terminal-green pb-4 mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-bold uppercase tracking-widest text-terminal-green flex items-center gap-2">
-          <span>🏆</span> Achievements
+          <span>🏆</span> Достижения
         </h2>
         <button
           onClick={() => characterId && syncAchievements(characterId)}
           className="text-xs border border-terminal-green px-2 py-1 text-terminal-green hover:bg-terminal-green/10 transition-colors"
         >
-          Refresh
+          Обновить
         </button>
       </div>
 
@@ -181,9 +195,9 @@ export const AchievementsView: React.FC = () => {
         className="mb-4 flex flex-wrap items-center gap-4 text-sm text-terminal-green"
       >
         <span className="font-bold">
-          {unlockedCount} / {totalCount} unlocked
+          {unlockedCount} / {totalCount} открыто
         </span>
-        <span className="text-terminal-green/70">{totalPoints} points</span>
+        <span className="text-terminal-green/70">{totalPoints} очков</span>
         {entry?.characterName && (
           <span className="text-terminal-green/40">— {entry.characterName}</span>
         )}
@@ -196,7 +210,7 @@ export const AchievementsView: React.FC = () => {
       )}
 
       {isLoading && catalog.length === 0 && (
-        <div className="text-terminal-green/60 mb-4">Loading achievements…</div>
+        <div className="text-terminal-green/60 mb-4">Загружаю достижения...</div>
       )}
 
       {/* Category filter */}
@@ -213,7 +227,7 @@ export const AchievementsView: React.FC = () => {
                 : 'border-terminal-green/40 text-terminal-green/70 hover:bg-terminal-green/10'
             }`}
           >
-            All
+            Все
           </button>
           {categories.map((cat) => (
             <button
@@ -226,7 +240,7 @@ export const AchievementsView: React.FC = () => {
                   : 'border-terminal-green/40 text-terminal-green/70 hover:bg-terminal-green/10'
               }`}
             >
-              {cat}
+              {formatAchievementCategory(cat)}
             </button>
           ))}
         </div>
@@ -239,8 +253,8 @@ export const AchievementsView: React.FC = () => {
       {!isLoading && visible.length === 0 && !error && (
         <div className="text-terminal-green/60">
           {catalog.length === 0
-            ? 'No achievements defined yet.'
-            : 'No achievements in this category.'}
+            ? 'Достижения пока не настроены.'
+            : 'В этой категории достижений нет.'}
         </div>
       )}
 

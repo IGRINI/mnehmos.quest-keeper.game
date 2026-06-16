@@ -68,11 +68,11 @@ describe('SkillsView', () => {
 
   it('renders all five skill names', () => {
     render(<SkillsView />);
-    expect(screen.getByText(/combat/i)).toBeInTheDocument();
-    expect(screen.getByText(/magic/i)).toBeInTheDocument();
-    expect(screen.getByText(/crafting/i)).toBeInTheDocument();
-    expect(screen.getByText(/gathering/i)).toBeInTheDocument();
-    expect(screen.getByText(/social/i)).toBeInTheDocument();
+    expect(screen.getByText(/Бой/i)).toBeInTheDocument();
+    expect(screen.getByText(/Магия/i)).toBeInTheDocument();
+    expect(screen.getByText(/Ремесло/i)).toBeInTheDocument();
+    expect(screen.getByText(/Сбор/i)).toBeInTheDocument();
+    expect(screen.getByText(/Общение/i)).toBeInTheDocument();
   });
 
   it('renders a progress bar element per skill', () => {
@@ -84,9 +84,9 @@ describe('SkillsView', () => {
   it('shows each skill level', () => {
     render(<SkillsView />);
     // combat level 2 and crafting level 10 and social level 99 should appear
-    expect(screen.getByText(/LVL\s*2/i)).toBeInTheDocument();
-    expect(screen.getByText(/LVL\s*10/i)).toBeInTheDocument();
-    expect(screen.getByText(/LVL\s*99/i)).toBeInTheDocument();
+    expect(screen.getByText(/УР\.\s*2/i)).toBeInTheDocument();
+    expect(screen.getByText(/УР\.\s*10/i)).toBeInTheDocument();
+    expect(screen.getByText(/УР\.\s*99/i)).toBeInTheDocument();
   });
 
   it('calls syncSkills on mount with the active character id', () => {

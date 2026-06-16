@@ -103,8 +103,8 @@ describe('ReputationView', () => {
     render(<ReputationView />);
     const badges = screen.getAllByTestId('faction-standing');
     expect(badges.length).toBe(3);
-    expect(screen.getByText('Honored')).toBeInTheDocument();
-    expect(screen.getByText('Hostile')).toBeInTheDocument();
+    expect(screen.getByText('Уважение')).toBeInTheDocument();
+    expect(screen.getByText('Враждебность')).toBeInTheDocument();
   });
 
   it('renders a rep bar for each faction', () => {
@@ -126,11 +126,11 @@ describe('ReputationView', () => {
     expect(totals).toHaveTextContent(/3/);
   });
 
-  it('renders an untracked faction as Neutral / 0', () => {
+  it('renders an untracked faction as neutral standing / 0', () => {
     render(<ReputationView />);
     const card = screen.getByText('Untracked Order').closest('[data-testid="faction-card"]');
     expect(card).not.toBeNull();
-    expect(card).toHaveTextContent('Neutral');
+    expect(card).toHaveTextContent('Нейтралитет');
     expect(card).toHaveTextContent('0');
   });
 
@@ -138,7 +138,7 @@ describe('ReputationView', () => {
     gameStateState = { activeCharacterId: null };
     reputationStoreState.reputationByCharacter = {};
     expect(() => render(<ReputationView />)).not.toThrow();
-    expect(screen.getByText(/NO CHARACTER SELECTED/i)).toBeInTheDocument();
+    expect(screen.getByText(/ПЕРСОНАЖ НЕ ВЫБРАН/i)).toBeInTheDocument();
   });
 
   it('renders a loading state without crashing', () => {
@@ -161,10 +161,10 @@ describe('ReputationView', () => {
       'char-1': { factions: [], factionCount: 0, characterName: 'Aria' },
     };
     expect(() => render(<ReputationView />)).not.toThrow();
-    expect(screen.getByText(/No factions defined yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/Фракции пока не заданы/i)).toBeInTheDocument();
   });
 
-  it('defaults a faction missing value/standing annotations to Neutral / 0 in the UI', () => {
+  it('defaults a faction missing value/standing annotations to neutral standing / 0 in the UI', () => {
     // Even if the store hands a faction with no value/standing (untracked), the
     // view must render Neutral / 0 rather than crashing or showing blanks.
     reputationStoreState.reputationByCharacter = {
@@ -181,7 +181,7 @@ describe('ReputationView', () => {
 
     const card = screen.getByText('Bare Faction').closest('[data-testid="faction-card"]');
     expect(card).not.toBeNull();
-    expect(card).toHaveTextContent('Neutral');
+    expect(card).toHaveTextContent('Нейтралитет');
     expect(card).toHaveTextContent('0');
   });
 });

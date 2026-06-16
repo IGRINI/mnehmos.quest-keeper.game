@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGameStateStore } from '../../stores/gameStateStore';
+import { getClassLabel, getRaceLabel } from '../character/displayLabels';
 
 export const CharacterHeader: React.FC = () => {
   const activeCharacter = useGameStateStore(state => state.activeCharacter);
@@ -12,7 +13,7 @@ export const CharacterHeader: React.FC = () => {
   if (!activeCharacter) {
     return (
       <div className="bg-terminal-dim border-b border-terminal-green-dim p-2 text-terminal-green/60 text-xs font-mono flex items-center justify-between">
-        <span>NO ACTIVE CHARACTER LINKED</span>
+        <span>АКТИВНЫЙ ПЕРСОНАЖ НЕ ПРИВЯЗАН</span>
         <button
           onClick={() => syncState(true)}
           disabled={isSyncing}
@@ -22,7 +23,7 @@ export const CharacterHeader: React.FC = () => {
               : 'border-terminal-green text-terminal-green hover:bg-terminal-green/10'
           }`}
         >
-          {isSyncing ? 'Syncing...' : 'Sync'}
+          {isSyncing ? 'Синхронизация...' : 'Синхр.'}
         </button>
       </div>
     );
@@ -41,7 +42,7 @@ export const CharacterHeader: React.FC = () => {
             {activeCharacter.name}
           </div>
           <div className="text-terminal-green/60 text-xs">
-            LVL {activeCharacter.level} {activeCharacter.race ? `${activeCharacter.race} ` : ''}{activeCharacter.class}
+            УРОВ. {activeCharacter.level} {activeCharacter.race ? `${getRaceLabel(activeCharacter.race)} ` : ''}{getClassLabel(activeCharacter.class)}
           </div>
         </div>
       </div>
@@ -49,15 +50,15 @@ export const CharacterHeader: React.FC = () => {
       <div className="flex items-center space-x-6">
         {/* World indicator */}
         <div className="flex flex-col text-xs">
-          <span className="text-terminal-green/60 mb-1">World</span>
+          <span className="text-terminal-green/60 mb-1">Мир</span>
           <span className="text-terminal-green truncate max-w-[100px]" title={world?.location}>
-            {world?.location || 'Unknown'}
+            {world?.location || 'Неизвестно'}
           </span>
         </div>
 
         {/* Active selector */}
         <div className="flex flex-col text-xs">
-          <span className="text-terminal-green/60 mb-1">Active</span>
+          <span className="text-terminal-green/60 mb-1">Активный</span>
           <select
             value={activeCharacter.id || ''}
             onChange={(e) => {
@@ -68,7 +69,7 @@ export const CharacterHeader: React.FC = () => {
           >
             {party.map((c) => (
               <option key={c.id || c.name} value={c.id || ''}>
-                {c.name} (Lv{c.level})
+                {c.name} (ур. {c.level})
               </option>
             ))}
           </select>
@@ -77,7 +78,7 @@ export const CharacterHeader: React.FC = () => {
         {/* HP Bar */}
         <div className="flex flex-col w-32">
           <div className="flex justify-between text-xs mb-1">
-            <span>HP</span>
+            <span>ОЗ</span>
             <span>{activeCharacter.hp.current}/{activeCharacter.hp.max}</span>
           </div>
           <div className="h-2 bg-terminal-black border border-terminal-green-dim relative">
@@ -91,7 +92,7 @@ export const CharacterHeader: React.FC = () => {
         {/* XP Bar */}
         <div className="flex flex-col w-24">
           <div className="flex justify-between text-xs mb-1">
-            <span>XP</span>
+            <span>ОП</span>
             <span>{activeCharacter.xp.current}/{activeCharacter.xp.max}</span>
           </div>
           <div className="h-1 bg-terminal-black border border-terminal-green-dim relative">
@@ -111,15 +112,15 @@ export const CharacterHeader: React.FC = () => {
               ? 'border-yellow-500/50 text-yellow-500 cursor-not-allowed'
               : 'border-terminal-green text-terminal-green hover:bg-terminal-green/10'
           }`}
-          title="Sync game state from MCP server"
+          title="Синхронизировать состояние игры с MCP-сервером"
         >
           {isSyncing ? (
             <span className="flex items-center gap-1">
               <span className="animate-spin">&#8635;</span>
-              <span>SYNC</span>
+              <span>СИНХР.</span>
             </span>
           ) : (
-            'SYNC'
+            'СИНХР.'
           )}
         </button>
       </div>

@@ -5,21 +5,59 @@ import { useCombatStore } from '../../stores/combatStore';
  * Get health status description based on HP percentage
  */
 function getHealthStatus(current: number, max: number): { label: string; color: string; bgColor: string } {
-    if (max <= 0) return { label: 'Unknown', color: 'text-terminal-green-dim', bgColor: 'bg-terminal-green/5' };
+    if (max <= 0) return { label: 'Неизвестно', color: 'text-terminal-green-dim', bgColor: 'bg-terminal-green/5' };
     
     const percent = (current / max) * 100;
     
     if (current <= 0) {
-        return { label: 'Defeated', color: 'text-gray-500', bgColor: 'bg-gray-500/10' };
+        return { label: 'Побежден', color: 'text-gray-500', bgColor: 'bg-gray-500/10' };
     } else if (percent >= 75) {
-        return { label: 'Healthy', color: 'text-green-400', bgColor: 'bg-green-500/10' };
+        return { label: 'Здоров', color: 'text-green-400', bgColor: 'bg-green-500/10' };
     } else if (percent >= 50) {
-        return { label: 'Wounded', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10' };
+        return { label: 'Ранен', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10' };
     } else if (percent >= 25) {
-        return { label: 'Bloodied', color: 'text-orange-400', bgColor: 'bg-orange-500/10' };
+        return { label: 'Тяжело ранен', color: 'text-orange-400', bgColor: 'bg-orange-500/10' };
     } else {
-        return { label: 'Critical', color: 'text-red-400', bgColor: 'bg-red-500/10' };
+        return { label: 'Критическое', color: 'text-red-400', bgColor: 'bg-red-500/10' };
     }
+}
+
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+    character: 'Персонаж',
+    monster: 'Монстр',
+    npc: 'НПС',
+};
+
+const SIZE_LABELS: Record<string, string> = {
+    tiny: 'крошечный',
+    small: 'маленький',
+    medium: 'средний',
+    large: 'большой',
+    huge: 'огромный',
+    gargantuan: 'исполинский',
+};
+
+const CONDITION_LABELS: Record<string, string> = {
+    blinded: 'ослеплен',
+    charmed: 'очарован',
+    deafened: 'оглох',
+    frightened: 'испуган',
+    grappled: 'схвачен',
+    incapacitated: 'выведен из строя',
+    invisible: 'невидим',
+    paralyzed: 'парализован',
+    petrified: 'окаменел',
+    poisoned: 'отравлен',
+    prone: 'сбит с ног',
+    restrained: 'опутан',
+    stunned: 'оглушен',
+    unconscious: 'без сознания',
+    exhausted: 'истощен',
+};
+
+function getDisplayLabel(value: string | undefined, labels: Record<string, string>): string {
+    if (!value) return '';
+    return labels[value.toLowerCase()] || value;
 }
 
 /**
@@ -53,7 +91,7 @@ export const CharacterQuickView: React.FC = () => {
                     ? 'bg-terminal-red/10 text-terminal-red border-terminal-red/30' 
                     : 'bg-terminal-green/10 text-terminal-green border-terminal-green-dim'
                 }`}>
-                   {entity.type}
+                   {getDisplayLabel(entity.type, ENTITY_TYPE_LABELS)}
                 </span>
             </div>
             
@@ -62,7 +100,7 @@ export const CharacterQuickView: React.FC = () => {
                 {/* HP Display - Different for enemies vs PCs */}
                 <div className={`border border-terminal-green-dim rounded-sm p-2 text-center ${isEnemy ? healthStatus.bgColor : 'bg-terminal-green/10'}`}>
                     <div className="text-[10px] text-terminal-green-dim uppercase tracking-wider mb-1">
-                        {isEnemy ? 'Status' : 'HP'}
+                        {isEnemy ? 'Состояние' : 'ОЗ'}
                     </div>
                     {isEnemy ? (
                         // Enemies: Show status description only
@@ -78,7 +116,7 @@ export const CharacterQuickView: React.FC = () => {
                 </div>
                 
                 <div className="bg-terminal-green/10 border border-terminal-green-dim rounded-sm p-2 text-center">
-                    <div className="text-[10px] text-terminal-green-dim uppercase tracking-wider mb-1">AC</div>
+                    <div className="text-[10px] text-terminal-green-dim uppercase tracking-wider mb-1">КД</div>
                     <div className="text-xl text-terminal-green-bright">
                         {meta.ac}
                     </div>
@@ -104,19 +142,19 @@ export const CharacterQuickView: React.FC = () => {
             {isEnemy && meta.speed && (
                 <div className="grid grid-cols-3 gap-2 mb-3 text-center">
                     <div className="bg-terminal-green/5 border border-terminal-green-dim/50 rounded-sm p-1.5">
-                        <div className="text-[9px] text-terminal-green-dim uppercase">Speed</div>
-                        <div className="text-sm text-terminal-green">{meta.speed} ft</div>
+                        <div className="text-[9px] text-terminal-green-dim uppercase">Скор.</div>
+                        <div className="text-sm text-terminal-green">{meta.speed} фт.</div>
                     </div>
                     {meta.initiative !== undefined && (
                         <div className="bg-terminal-green/5 border border-terminal-green-dim/50 rounded-sm p-1.5">
-                            <div className="text-[9px] text-terminal-green-dim uppercase">Init</div>
+                            <div className="text-[9px] text-terminal-green-dim uppercase">Иниц.</div>
                             <div className="text-sm text-terminal-green">{meta.initiative}</div>
                         </div>
                     )}
                     {meta.size && (
                         <div className="bg-terminal-green/5 border border-terminal-green-dim/50 rounded-sm p-1.5">
-                            <div className="text-[9px] text-terminal-green-dim uppercase">Size</div>
-                            <div className="text-sm text-terminal-green capitalize">{meta.size}</div>
+                            <div className="text-[9px] text-terminal-green-dim uppercase">Размер</div>
+                            <div className="text-sm text-terminal-green capitalize">{getDisplayLabel(meta.size, SIZE_LABELS)}</div>
                         </div>
                     )}
                 </div>
@@ -128,10 +166,10 @@ export const CharacterQuickView: React.FC = () => {
                     {meta.conditions.map(c => (
                         <span 
                             key={c} 
-                            title={c}
+                            title={getDisplayLabel(c, CONDITION_LABELS)}
                             className="text-[10px] bg-terminal-amber/10 text-terminal-amber border border-terminal-amber/30 px-2 py-0.5 rounded-sm cursor-help"
                         >
-                           {c}
+                           {getDisplayLabel(c, CONDITION_LABELS)}
                         </span>
                     ))}
                 </div>

@@ -9,6 +9,8 @@ import CustomEffectsDisplay from '../character/CustomEffectsDisplay';
 import { ConcentrationIndicator } from '../character/ConcentrationIndicator';
 import { XPBar } from '../common/XPBar';
 import { LevelUpModal } from '../character/LevelUpModal';
+import { getClassLabel, getItemLabel, getRaceLabel } from '../character/displayLabels';
+import { getMemberRoleLabel } from '../party/displayLabels';
 
 // Armor type categories for AC calculation
 type ArmorCategory = 'light' | 'medium' | 'heavy' | 'none';
@@ -18,6 +20,51 @@ interface ArmorInfo {
   baseAC: number;
   name: string;
 }
+
+const NO_EQUIPMENT_LABEL = 'Нет';
+
+const ABILITY_LABELS = {
+  str: 'СИЛ',
+  dex: 'ЛОВ',
+  con: 'ТЕЛ',
+  int: 'ИНТ',
+  wis: 'МДР',
+  cha: 'ХАР',
+} as const;
+
+const EQUIPMENT_SLOT_LABELS: Record<string, string> = {
+  mainhand: 'Основная рука',
+  offhand: 'Вторая рука',
+  armor: 'Броня',
+  head: 'Голова',
+  feet: 'Обувь',
+  accessory: 'Аксессуар',
+};
+
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  armor: 'броня',
+  shield: 'щит',
+  weapon: 'оружие',
+  melee: 'ближний бой',
+  ranged: 'дальний бой',
+  consumable: 'расходник',
+  quest: 'квестовый предмет',
+  misc: 'прочее',
+  scroll: 'свиток',
+};
+
+const formatEquipmentName = (name?: string | null): string => {
+  if (!name || name === 'None') return NO_EQUIPMENT_LABEL;
+  return getItemLabel(name);
+};
+
+const formatEquipmentSlot = (slot: string): string => EQUIPMENT_SLOT_LABELS[slot] ?? slot;
+
+const formatItemType = (type?: string | null): string => {
+  if (!type) return ITEM_TYPE_LABELS.misc;
+  const normalized = type.toLowerCase();
+  return ITEM_TYPE_LABELS[normalized] ?? type;
+};
 
 // Get armor info from equipped armor name
 function getArmorInfo(armorName: string): ArmorInfo {
@@ -70,27 +117,27 @@ function calculateAC(
     case 'none':
       total = 10 + dexMod;
       parts.push('10');
-      if (dexMod !== 0) parts.push(`${dexMod >= 0 ? '+' : ''}${dexMod} DEX`);
+      if (dexMod !== 0) parts.push(`${dexMod >= 0 ? '+' : ''}${dexMod} ЛОВ`);
       break;
     case 'light':
       total = armorInfo.baseAC + dexMod;
-      parts.push(`${armorInfo.baseAC} ${armorInfo.name}`);
-      if (dexMod !== 0) parts.push(`${dexMod >= 0 ? '+' : ''}${dexMod} DEX`);
+      parts.push(`${armorInfo.baseAC} ${formatEquipmentName(armorInfo.name)}`);
+      if (dexMod !== 0) parts.push(`${dexMod >= 0 ? '+' : ''}${dexMod} ЛОВ`);
       break;
     case 'medium':
       const cappedDex = Math.min(dexMod, 2);
       total = armorInfo.baseAC + cappedDex;
-      parts.push(`${armorInfo.baseAC} ${armorInfo.name}`);
-      if (cappedDex !== 0) parts.push(`+${cappedDex} DEX (max 2)`);
+      parts.push(`${armorInfo.baseAC} ${formatEquipmentName(armorInfo.name)}`);
+      if (cappedDex !== 0) parts.push(`+${cappedDex} ЛОВ (макс. 2)`);
       break;
     case 'heavy':
-      parts.push(`${armorInfo.baseAC} ${armorInfo.name}`);
+      parts.push(`${armorInfo.baseAC} ${formatEquipmentName(armorInfo.name)}`);
       break;
   }
 
   if (hasShield) {
     total += 2;
-    parts.push('+2 Shield');
+    parts.push('+2 щит');
   }
 
   return { total, breakdown: parts.join(' ') };
@@ -123,15 +170,15 @@ export const CharacterSheetView: React.FC = () => {
   const getTypeBadge = (type?: string) => {
     switch (type) {
       case 'pc':
-        return { label: 'PC', color: 'bg-blue-500/20 text-blue-400 border-blue-500/50' };
+        return { label: 'ГЕРОЙ', color: 'bg-blue-500/20 text-blue-400 border-blue-500/50' };
       case 'npc':
-        return { label: 'NPC', color: 'bg-purple-500/20 text-purple-400 border-purple-500/50' };
+        return { label: 'НПС', color: 'bg-purple-500/20 text-purple-400 border-purple-500/50' };
       case 'enemy':
-        return { label: 'ENEMY', color: 'bg-red-500/20 text-red-400 border-red-500/50' };
+        return { label: 'ВРАГ', color: 'bg-red-500/20 text-red-400 border-red-500/50' };
       case 'neutral':
-        return { label: 'NEUTRAL', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' };
+        return { label: 'НЕЙТР.', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' };
       default:
-        return { label: 'PC', color: 'bg-blue-500/20 text-blue-400 border-blue-500/50' };
+        return { label: 'ГЕРОЙ', color: 'bg-blue-500/20 text-blue-400 border-blue-500/50' };
     }
   };
 
@@ -153,8 +200,8 @@ export const CharacterSheetView: React.FC = () => {
     return (
       <div className="h-full w-full flex items-center justify-center p-8 text-terminal-green/60">
         <div className="text-center space-y-4">
-          <p className="text-xl">NO CHARACTER DATA DETECTED</p>
-          <p className="text-sm">Initialize character via terminal to view stats.</p>
+          <p className="text-xl">ДАННЫЕ ПЕРСОНАЖА НЕ НАЙДЕНЫ</p>
+          <p className="text-sm">Создайте персонажа через терминал, чтобы увидеть характеристики.</p>
         </div>
       </div>
     );
@@ -180,17 +227,17 @@ export const CharacterSheetView: React.FC = () => {
   );
   const dexMod = getMod(stats.dex);
   const acCalc = activeCharacter.armorClass
-    ? { total: activeCharacter.armorClass, breakdown: 'Override' }
+    ? { total: activeCharacter.armorClass, breakdown: 'Задано вручную' }
     : calculateAC(armorInfo, dexMod, hasShield);
 
   // Saving throws calculation
   const savingThrows = [
-    { key: 'str', label: 'STR', stat: stats.str },
-    { key: 'dex', label: 'DEX', stat: stats.dex },
-    { key: 'con', label: 'CON', stat: stats.con },
-    { key: 'int', label: 'INT', stat: stats.int },
-    { key: 'wis', label: 'WIS', stat: stats.wis },
-    { key: 'cha', label: 'CHA', stat: stats.cha },
+    { key: 'str', label: ABILITY_LABELS.str, stat: stats.str },
+    { key: 'dex', label: ABILITY_LABELS.dex, stat: stats.dex },
+    { key: 'con', label: ABILITY_LABELS.con, stat: stats.con },
+    { key: 'int', label: ABILITY_LABELS.int, stat: stats.int },
+    { key: 'wis', label: ABILITY_LABELS.wis, stat: stats.wis },
+    { key: 'cha', label: ABILITY_LABELS.cha, stat: stats.cha },
   ] as const;
 
   const StatBlock = ({ label, value }: { label: string; value: number }) => (
@@ -216,7 +263,7 @@ export const CharacterSheetView: React.FC = () => {
                 <button
                   onClick={() => setShowCharacterDropdown(!showCharacterDropdown)}
                   className="text-4xl font-bold uppercase hover:text-terminal-green-bright transition-colors flex items-center gap-2"
-                  title="Switch Character"
+                  title="Сменить персонажа"
                 >
                   {name}
                   <span className="text-lg">▼</span>
@@ -238,7 +285,7 @@ export const CharacterSheetView: React.FC = () => {
                       >
                         <div className="font-semibold">{member.character?.name || member.characterId}</div>
                         <div className="text-xs opacity-60">
-                          {member.character?.class} • {member.role}
+                          {getClassLabel(member.character?.class)} • {getMemberRoleLabel(member.role)}
                         </div>
                       </button>
                     ))}
@@ -255,21 +302,21 @@ export const CharacterSheetView: React.FC = () => {
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 className="px-2 py-1 text-xs bg-red-500/10 border border-red-500/50 text-red-400 rounded hover:bg-red-500/20 transition-colors"
-                title="Delete Character"
+                title="Удалить персонажа"
               >
                 🗑️
               </button>
             </div>
             <div className="flex space-x-4 text-lg text-terminal-green/80">
-              <span>LVL {level}</span>
-              {race && <span>{race}</span>}
-              <span>{charClass}</span>
-              <span className="text-terminal-green/50">PROF {formatMod(proficiencyBonus)}</span>
+              <span>УРОВ. {level}</span>
+              {race && <span>{getRaceLabel(race)}</span>}
+              <span>{getClassLabel(charClass)}</span>
+              <span className="text-terminal-green/50">МАСТ. {formatMod(proficiencyBonus)}</span>
             </div>
           </div>
           <div className="text-right">
             <div className="mb-2">
-              <span className="text-sm text-terminal-green/60 mr-2">HP</span>
+              <span className="text-sm text-terminal-green/60 mr-2">ОЗ</span>
               <span className="text-2xl font-bold">{hp.current}</span>
               <span className="text-terminal-green/60">/{hp.max}</span>
             </div>
@@ -285,7 +332,7 @@ export const CharacterSheetView: React.FC = () => {
                   onClick={() => setShowLevelUpModal(true)}
                   className="mt-2 w-full text-xs bg-terminal-green text-terminal-black font-bold py-1 px-2 rounded animate-pulse hover:bg-terminal-green-bright transition-colors"
                 >
-                  ✨ LEVEL UP AVAILABLE
+                  ✨ ДОСТУПЕН НОВЫЙ УРОВЕНЬ
                 </button>
               )}
             </div>
@@ -337,7 +384,7 @@ export const CharacterSheetView: React.FC = () => {
           }`}
           onClick={() => setViewTab('stats')}
         >
-          STATS & GEAR
+          ХАРАКТЕРИСТИКИ И СНАРЯЖЕНИЕ
         </button>
         <button
           className={`px-6 py-2 font-bold transition-colors ${
@@ -347,7 +394,7 @@ export const CharacterSheetView: React.FC = () => {
           }`}
           onClick={() => setViewTab('spells')}
         >
-          SPELL BOOK
+          КНИГА ЗАКЛИНАНИЙ
         </button>
         <button
           className={`px-6 py-2 font-bold transition-colors ${
@@ -357,43 +404,43 @@ export const CharacterSheetView: React.FC = () => {
           }`}
           onClick={() => setViewTab('effects')}
         >
-          EFFECTS
+          ЭФФЕКТЫ
         </button>
       </div>
 
       {viewTab === 'stats' ? (
         <>
           <div className="grid grid-cols-3 gap-4 mb-8">
-            <StatBlock label="STR" value={stats.str} />
-            <StatBlock label="DEX" value={stats.dex} />
-            <StatBlock label="CON" value={stats.con} />
-            <StatBlock label="INT" value={stats.int} />
-            <StatBlock label="WIS" value={stats.wis} />
-            <StatBlock label="CHA" value={stats.cha} />
+            <StatBlock label={ABILITY_LABELS.str} value={stats.str} />
+            <StatBlock label={ABILITY_LABELS.dex} value={stats.dex} />
+            <StatBlock label={ABILITY_LABELS.con} value={stats.con} />
+            <StatBlock label={ABILITY_LABELS.int} value={stats.int} />
+            <StatBlock label={ABILITY_LABELS.wis} value={stats.wis} />
+            <StatBlock label={ABILITY_LABELS.cha} value={stats.cha} />
           </div>
 
           {/* Combat Stats + Saving Throws */}
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div className="border border-terminal-green/30 p-4">
-              <h3 className="text-lg font-bold border-b border-terminal-green/30 pb-2 mb-4">COMBAT</h3>
+              <h3 className="text-lg font-bold border-b border-terminal-green/30 pb-2 mb-4">БОЙ</h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
-                  <span className="text-terminal-green/60">ARMOR CLASS</span>
+                  <span className="text-terminal-green/60">КЛАСС ДОСПЕХА</span>
                   <div className="text-right">
                     <span className="text-2xl font-bold">{acCalc.total}</span>
                     <div className="text-xs text-terminal-green/50">{acCalc.breakdown}</div>
                   </div>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-terminal-green/60">INITIATIVE</span>
+                  <span className="text-terminal-green/60">ИНИЦИАТИВА</span>
                   <span>{formatMod(dexMod)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-terminal-green/60">SPEED</span>
-                  <span>{speed || 30} ft</span>
+                  <span className="text-terminal-green/60">СКОРОСТЬ</span>
+                  <span>{speed || 30} фт.</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-terminal-green/60">PROFICIENCY</span>
+                  <span className="text-terminal-green/60">МАСТЕРСТВО</span>
                   <span>{formatMod(proficiencyBonus)}</span>
                 </div>
               </div>
@@ -402,14 +449,14 @@ export const CharacterSheetView: React.FC = () => {
                   onClick={() => syncState(true)}
                   className="text-xs border border-terminal-green px-2 py-1 text-terminal-green hover:bg-terminal-green/10 transition-colors"
                 >
-                  Refresh from MCP
+                  Обновить из MCP
                 </button>
               </div>
             </div>
 
             {/* Saving Throws */}
             <div className="border border-terminal-green/30 p-4">
-              <h3 className="text-lg font-bold border-b border-terminal-green/30 pb-2 mb-4">SAVING THROWS</h3>
+              <h3 className="text-lg font-bold border-b border-terminal-green/30 pb-2 mb-4">СПАСБРОСКИ</h3>
               <div className="grid grid-cols-2 gap-2">
                 {savingThrows.map(({ key, label, stat }) => {
                   const isProficient = savingThrowProficiencies?.includes(key) ?? false;
@@ -440,62 +487,62 @@ export const CharacterSheetView: React.FC = () => {
           <div className="grid grid-cols-2 gap-6 mb-6">
             {/* Currencies */}
             <div className="border border-terminal-green/30 p-4">
-              <h3 className="text-lg font-bold border-b border-terminal-green/30 pb-2 mb-4">CURRENCY</h3>
+              <h3 className="text-lg font-bold border-b border-terminal-green/30 pb-2 mb-4">ВАЛЮТА</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-2 bg-yellow-900/20 border border-yellow-600/30 rounded">
                   <div className="text-2xl font-bold text-yellow-500">{currencies?.gold ?? 0}</div>
-                  <div className="text-xs text-yellow-600/80 uppercase">Gold</div>
+                  <div className="text-xs text-yellow-600/80 uppercase">Золото</div>
                 </div>
                 <div className="text-center p-2 bg-gray-500/20 border border-gray-400/30 rounded">
                   <div className="text-2xl font-bold text-gray-300">{currencies?.silver ?? 0}</div>
-                  <div className="text-xs text-gray-400/80 uppercase">Silver</div>
+                  <div className="text-xs text-gray-400/80 uppercase">Серебро</div>
                 </div>
                 <div className="text-center p-2 bg-orange-900/20 border border-orange-700/30 rounded">
                   <div className="text-2xl font-bold text-orange-400">{currencies?.copper ?? 0}</div>
-                  <div className="text-xs text-orange-600/80 uppercase">Copper</div>
+                  <div className="text-xs text-orange-600/80 uppercase">Медь</div>
                 </div>
               </div>
               {(currencies?.platinum !== undefined && currencies.platinum > 0) && (
                 <div className="mt-3 text-center p-2 bg-blue-900/20 border border-blue-400/30 rounded">
                   <span className="text-blue-300 font-bold">{currencies.platinum}</span>
-                  <span className="text-xs text-blue-400/80 uppercase ml-2">Platinum</span>
+                  <span className="text-xs text-blue-400/80 uppercase ml-2">Платина</span>
                 </div>
               )}
             </div>
 
             {/* Equipment */}
             <div className="border border-terminal-green/30 p-4">
-              <h3 className="text-lg font-bold border-b border-terminal-green/30 pb-2 mb-4">EQUIPMENT</h3>
+              <h3 className="text-lg font-bold border-b border-terminal-green/30 pb-2 mb-4">СНАРЯЖЕНИЕ</h3>
               <div className="space-y-4">
                 <div>
-                  <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-1">Armor</div>
-                  <div className="text-lg">{activeCharacter.equipment?.armor || 'None'}</div>
+                  <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-1">Броня</div>
+                  <div className="text-lg">{formatEquipmentName(activeCharacter.equipment?.armor)}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-1">Weapons</div>
+                  <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-1">Оружие</div>
                   {activeCharacter.equipment?.weapons && activeCharacter.equipment.weapons.length > 0 ? (
                     <ul className="list-disc list-inside">
                       {activeCharacter.equipment.weapons.map((w, i) => (
-                        <li key={i} className="text-lg">{w}</li>
+                        <li key={i} className="text-lg">{formatEquipmentName(w)}</li>
                       ))}
                     </ul>
                   ) : (
-                    <div className="text-lg text-terminal-green/40">None</div>
+                    <div className="text-lg text-terminal-green/40">{NO_EQUIPMENT_LABEL}</div>
                   )}
                 </div>
                 {equippedItems.length > 0 && (
                   <div>
-                    <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-1">Equipped Items</div>
+                    <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-1">Надето</div>
                     <ul className="list-none space-y-1 text-terminal-green">
                       {equippedItems.map((item) => (
                         <li key={item.id} className="flex items-center gap-2">
                           {item.slot && (
                             <span className="text-xs bg-terminal-green/20 text-terminal-green px-1.5 py-0.5 rounded uppercase font-bold">
-                              {item.slot}
+                              {formatEquipmentSlot(item.slot)}
                             </span>
                           )}
-                          <span className="font-semibold">{item.name}</span>
-                          {item.type ? <span className="text-terminal-green/60 text-sm">({item.type})</span> : null}
+                          <span className="font-semibold">{formatEquipmentName(item.name)}</span>
+                          {item.type ? <span className="text-terminal-green/60 text-sm">({formatItemType(item.type)})</span> : null}
                         </li>
                       ))}
                     </ul>
@@ -507,16 +554,16 @@ export const CharacterSheetView: React.FC = () => {
 
           {/* Inventory List */}
           <div className="border border-terminal-green/30 p-4">
-            <h3 className="text-lg font-bold border-b border-terminal-green/30 pb-2 mb-4">INVENTORY</h3>
+            <h3 className="text-lg font-bold border-b border-terminal-green/30 pb-2 mb-4">ИНВЕНТАРЬ</h3>
             {inventory.length === 0 ? (
-              <div className="text-terminal-green/60">No items carried.</div>
+              <div className="text-terminal-green/60">Переносимых предметов нет.</div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 {stowedItems.map((item) => (
                   <div key={item.id} className="border border-terminal-green/20 p-2 bg-terminal-green/5">
-                    <div className="font-semibold">{item.name}</div>
+                    <div className="font-semibold">{formatEquipmentName(item.name)}</div>
                     <div className="text-xs text-terminal-green/60">
-                      {item.type || 'misc'} • {item.weight ?? '?'} lbs
+                      {formatItemType(item.type)} • {item.weight ?? '?'} фунт.
                     </div>
                     {item.description ? (
                       <div className="text-xs text-terminal-green/70 mt-1 line-clamp-3">{item.description}</div>
@@ -545,17 +592,17 @@ export const CharacterSheetView: React.FC = () => {
         <div className="space-y-6">
           <div className="bg-black/40 border border-terminal-green/30 p-4 rounded-lg">
             <h3 className="text-xl font-bold text-terminal-green-bright mb-4 border-b border-terminal-green/30 pb-2">
-              ACTIVE EFFECTS
+              АКТИВНЫЕ ЭФФЕКТЫ
             </h3>
             <p className="text-terminal-green/60 text-sm mb-4">
-              Detailed tracking of boons, curses, and magical transformations affecting your character.
+              Подробный учет благословений, проклятий и магических изменений, влияющих на персонажа.
             </p>
             
             {activeCharacter.customEffects && activeCharacter.customEffects.length > 0 ? (
                <CustomEffectsDisplay effects={activeCharacter.customEffects} />
             ) : (
                <div className="text-center py-8 text-terminal-green/40 italic">
-                 No active custom effects.
+                 Активных пользовательских эффектов нет.
                </div>
             )}
             
@@ -564,7 +611,7 @@ export const CharacterSheetView: React.FC = () => {
                 onClick={() => syncState(true)}
                 className="text-xs border border-terminal-green px-3 py-1 text-terminal-green hover:bg-terminal-green/10 transition-colors"
               >
-                Refresh Effects
+                Обновить эффекты
               </button>
             </div>
           </div>
@@ -577,9 +624,9 @@ export const CharacterSheetView: React.FC = () => {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteCharacter}
-        title="Delete Character"
-        message={`Are you sure you want to permanently delete ${name}? This action cannot be undone.`}
-        confirmText="Delete"
+        title="Удалить персонажа"
+        message={`Точно удалить ${name} без возможности восстановления?`}
+        confirmText="Удалить"
         isDanger={true}
         isLoading={isLoading}
       />

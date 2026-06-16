@@ -14,7 +14,7 @@ export const TurnOrderBar: React.FC = () => {
 
   return (
     <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-terminal-dim/95 border border-terminal-green-dim rounded-sm px-4 py-2 flex items-center gap-4 pointer-events-auto shadow-lg backdrop-blur-sm z-30">
-      <div className="text-[10px] text-terminal-green-dim font-mono font-bold tracking-widest uppercase">Turn Order</div>
+      <div className="text-[10px] text-terminal-green-dim font-mono font-bold tracking-widest uppercase">Порядок хода</div>
       <div className="h-4 w-px bg-terminal-green-dim"></div>
       
       <div className="flex items-center gap-2">

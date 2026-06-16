@@ -36,13 +36,13 @@ describe('CombatLogPanel', () => {
 
   it('shows a Combat Log header when open', () => {
     render(<CombatLogPanel />);
-    expect(screen.getByText(/combat log/i)).toBeInTheDocument();
+    expect(screen.getByText(/журнал боя/i)).toBeInTheDocument();
   });
 
   it('shows an empty-state message when there are no entries', () => {
     combatLogState = [];
     render(<CombatLogPanel />);
-    expect(screen.getByText(/no combat events/i)).toBeInTheDocument();
+    expect(screen.getByText(/боевых событий пока нет/i)).toBeInTheDocument();
   });
 
   it('renders each log entry message in order', () => {
@@ -57,7 +57,7 @@ describe('CombatLogPanel', () => {
 
   it('calls toggleCombatLog when the close button is clicked', () => {
     render(<CombatLogPanel />);
-    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+    fireEvent.click(screen.getByRole('button', { name: /закрыть журнал боя/i }));
     expect(toggleCombatLog).toHaveBeenCalledTimes(1);
   });
 });

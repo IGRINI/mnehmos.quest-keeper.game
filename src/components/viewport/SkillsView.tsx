@@ -8,11 +8,11 @@ import { xpProgress } from '../../utils/skillXp';
 // Per-skill flavor for the terminal UI. Keyed by SKILL_NAMES so it can never
 // drift from the canonical list.
 const SKILL_META: Record<SkillName, { label: string; icon: string }> = {
-  combat: { label: 'Combat', icon: '⚔️' },
-  magic: { label: 'Magic', icon: '✨' },
-  crafting: { label: 'Crafting', icon: '🛠️' },
-  gathering: { label: 'Gathering', icon: '🌿' },
-  social: { label: 'Social', icon: '💬' },
+  combat: { label: 'Бой', icon: '⚔️' },
+  magic: { label: 'Магия', icon: '✨' },
+  crafting: { label: 'Ремесло', icon: '🛠️' },
+  gathering: { label: 'Сбор', icon: '🌿' },
+  social: { label: 'Общение', icon: '💬' },
 };
 
 interface SkillBarProps {
@@ -48,7 +48,7 @@ const SkillBar: React.FC<SkillBarProps> = ({ skill, entry }) => {
           </span>
         </div>
         <span className="text-sm font-bold bg-terminal-green text-terminal-black px-2 rounded">
-          LVL {progress.level}
+          УР. {progress.level}
         </span>
       </div>
 
@@ -62,16 +62,16 @@ const SkillBar: React.FC<SkillBarProps> = ({ skill, entry }) => {
 
       <div className="mt-1 flex justify-between text-xs text-terminal-green/60">
         {progress.atMax ? (
-          <span className="text-terminal-green-bright">MAX LEVEL ({MAX_SKILL_LEVEL})</span>
+          <span className="text-terminal-green-bright">МАКС. УРОВЕНЬ ({MAX_SKILL_LEVEL})</span>
         ) : (
           <>
-            <span>{progress.xpIntoLevel.toLocaleString()} XP into level</span>
-            <span>{progress.xpToNext.toLocaleString()} to next</span>
+            <span>{progress.xpIntoLevel.toLocaleString()} ОП на уровне</span>
+            <span>{progress.xpToNext.toLocaleString()} до следующего</span>
           </>
         )}
       </div>
       <div className="mt-0.5 text-xs text-terminal-green/40">
-        {entry.xp.toLocaleString()} total XP
+        {entry.xp.toLocaleString()} ОП всего
       </div>
     </div>
   );
@@ -101,8 +101,8 @@ export const SkillsView: React.FC = () => {
     return (
       <div className="h-full w-full flex items-center justify-center p-8 text-terminal-green/60">
         <div className="text-center space-y-4">
-          <p className="text-xl">NO CHARACTER SELECTED</p>
-          <p className="text-sm">Select a character to view skill progression.</p>
+          <p className="text-xl">ПЕРСОНАЖ НЕ ВЫБРАН</p>
+          <p className="text-sm">Выберите персонажа, чтобы посмотреть прогресс навыков.</p>
         </div>
       </div>
     );
@@ -112,13 +112,13 @@ export const SkillsView: React.FC = () => {
     <div className="h-full w-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-terminal-green/20 scrollbar-track-transparent">
       <div className="border-b-2 border-terminal-green pb-4 mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold uppercase tracking-widest text-terminal-green flex items-center gap-2">
-          <span>✨</span> Skills
+          <span>✨</span> Навыки
         </h2>
         <button
           onClick={() => characterId && syncSkills(characterId)}
           className="text-xs border border-terminal-green px-2 py-1 text-terminal-green hover:bg-terminal-green/10 transition-colors"
         >
-          Refresh
+          Обновить
         </button>
       </div>
 
@@ -129,7 +129,7 @@ export const SkillsView: React.FC = () => {
       )}
 
       {isLoading && !skills && (
-        <div className="text-terminal-green/60 mb-4">Loading skills…</div>
+        <div className="text-terminal-green/60 mb-4">Загружаю навыки...</div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

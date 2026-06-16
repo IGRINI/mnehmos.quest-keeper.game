@@ -4,6 +4,7 @@ import { useCombatStore } from '../../stores/combatStore';
 import { mcpManager } from '../../services/mcpClient';
 import { useChatStore } from '../../stores/chatStore';
 import { extractEmbeddedJson } from '../../utils/mcpUtils';
+import { getItemLabel } from '../character/displayLabels';
 
 interface Corpse {
   id: string;
@@ -24,6 +25,16 @@ interface LootItem {
 interface LootPanelProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+const CORPSE_TYPE_LABELS: Record<string, string> = {
+  character: 'персонаж',
+  monster: 'монстр',
+  npc: 'НПС',
+};
+
+function formatCorpseType(type: string): string {
+  return CORPSE_TYPE_LABELS[type.toLowerCase()] || type;
 }
 
 /**
@@ -118,7 +129,7 @@ export const LootPanel: React.FC<LootPanelProps> = ({ isOpen, onClose }) => {
         addMessage({
           id: Date.now().toString(),
           sender: 'system',
-          content: `❌ Loot failed: the server returned an unreadable response.`,
+          content: `❌ Не удалось забрать добычу: сервер вернул нечитаемый ответ.`,
           timestamp: Date.now(),
           type: 'error'
         });
@@ -130,7 +141,7 @@ export const LootPanel: React.FC<LootPanelProps> = ({ isOpen, onClose }) => {
       addMessage({
         id: Date.now().toString(),
         sender: 'system',
-        content: `💰 **${activeCharacter.name}** loots ${items.length} items from corpse.`,
+        content: `💰 **${activeCharacter.name}** забирает предметы с тела: ${items.length}.`,
         timestamp: Date.now(),
         type: 'info'
       });
@@ -144,7 +155,7 @@ export const LootPanel: React.FC<LootPanelProps> = ({ isOpen, onClose }) => {
       addMessage({
         id: Date.now().toString(),
         sender: 'system',
-        content: `❌ Loot failed: ${error.message}`,
+        content: `❌ Не удалось забрать добычу: ${error.message}`,
         timestamp: Date.now(),
         type: 'error'
       });
@@ -161,22 +172,22 @@ export const LootPanel: React.FC<LootPanelProps> = ({ isOpen, onClose }) => {
     <div className="loot-panel-overlay" onClick={onClose}>
       <div className="loot-panel" onClick={(e) => e.stopPropagation()}>
         <div className="loot-panel-header">
-          <h3>💀 Corpses & Loot</h3>
+          <h3>💀 Тела и добыча</h3>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
         <div className="loot-panel-content">
           {!activeEncounterId ? (
-            <div className="empty-state">No active encounter - no corpses to loot</div>
+            <div className="empty-state">Нет активной схватки — добывать нечего</div>
           ) : isLoading && corpses.length === 0 ? (
-            <div className="loading">Loading...</div>
+            <div className="loading">Загрузка...</div>
           ) : corpses.length === 0 ? (
-            <div className="empty-state">No corpses in this encounter</div>
+            <div className="empty-state">В этой схватке нет тел</div>
           ) : (
             <div className="corpse-grid">
               {/* Corpse List */}
               <div className="corpse-list">
-                <div className="section-title">Bodies ({corpses.length})</div>
+                <div className="section-title">Тела ({corpses.length})</div>
                 {corpses.map(corpse => (
                   <div 
                     key={corpse.id}
@@ -185,8 +196,8 @@ export const LootPanel: React.FC<LootPanelProps> = ({ isOpen, onClose }) => {
                   >
                     <span className="corpse-icon">{corpse.looted ? '💀' : '⚰️'}</span>
                     <span className="corpse-name">{corpse.characterName}</span>
-                    <span className="corpse-type">{corpse.characterType}</span>
-                    {corpse.looted && <span className="looted-badge">Looted</span>}
+                    <span className="corpse-type">{formatCorpseType(corpse.characterType)}</span>
+                    {corpse.looted && <span className="looted-badge">Осмотрено</span>}
                   </div>
                 ))}
               </div>
@@ -195,17 +206,17 @@ export const LootPanel: React.FC<LootPanelProps> = ({ isOpen, onClose }) => {
               {selectedCorpse && (
                 <div className="loot-details">
                   <div className="section-title">
-                    {selectedCorpseData?.characterName}'s Remains
+                    Останки: {selectedCorpseData?.characterName}
                   </div>
                   
                   {lootItems.length === 0 ? (
-                    <div className="empty-loot">Nothing left to loot</div>
+                    <div className="empty-loot">Больше нечего забрать</div>
                   ) : (
                     <>
                       <div className="loot-list">
                         {lootItems.map((item, i) => (
                           <div key={i} className="loot-item">
-                            <span className="item-name">{item.name}</span>
+                            <span className="item-name">{getItemLabel(item.name)}</span>
                             {item.quantity > 1 && <span className="item-qty">x{item.quantity}</span>}
                           </div>
                         ))}
@@ -216,7 +227,7 @@ export const LootPanel: React.FC<LootPanelProps> = ({ isOpen, onClose }) => {
                         onClick={handleLootAll}
                         disabled={isLoading || !activeCharacter}
                       >
-                        {isLoading ? 'Looting...' : '💰 Loot All'}
+                        {isLoading ? 'Забираю...' : '💰 Забрать все'}
                       </button>
                     </>
                   )}

@@ -96,7 +96,7 @@ const ChatMessage = memo(({
     return (
       <ToolCallDisplay
         key={msg.id}
-        toolName={msg.toolName || 'Unknown'}
+        toolName={msg.toolName || 'Неизвестный инструмент'}
         serverName={msg.serverName}
         arguments={msg.toolArguments || {}}
         response={msg.toolResponse}
@@ -302,8 +302,8 @@ export const ChatHistory: React.FC = () => {
             <p className="text-terminal-amber text-sm">{currentTip}</p>
           </div>
           <div className="text-terminal-green/40 text-xs mt-4">
-            <kbd className="px-2 py-1 bg-terminal-green/10 border border-terminal-green/30 rounded">Enter</kbd> отправить •
-            <kbd className="px-2 py-1 bg-terminal-green/10 border border-terminal-green/30 rounded ml-1">Shift+Enter</kbd> новая строка
+            <kbd className="px-2 py-1 bg-terminal-green/10 border border-terminal-green/30 rounded">Ввод</kbd> отправить •
+            <kbd className="px-2 py-1 bg-terminal-green/10 border border-terminal-green/30 rounded ml-1">⇧+Ввод</kbd> новая строка
           </div>
         </>
       )}

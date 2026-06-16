@@ -4,6 +4,27 @@ import { useUIStore, ActiveTab } from '../../stores/uiStore';
 export const NavBar: React.FC = () => {
     const { activeTab, setActiveTab, setPendingCommand } = useUIStore();
 
+    const navItems: Array<{ tab: ActiveTab; icon: string; label: string }> = [
+        { tab: 'adventure', icon: '📜', label: 'Приключение' },
+        { tab: 'combat', icon: '⚔️', label: 'Бой' },
+        { tab: 'character', icon: '👤', label: 'Персонаж' },
+        { tab: 'map', icon: '🗺️', label: 'Карта мира' },
+        { tab: 'journal', icon: '📓', label: 'Журнал' },
+        { tab: 'skills', icon: '✨', label: 'Навыки' },
+        { tab: 'chains', icon: '🔗', label: 'Цепочки' },
+        { tab: 'achievements', icon: '🏆', label: 'Достижения' },
+        { tab: 'reputation', icon: '🤝', label: 'Репутация' },
+        { tab: 'workflows', icon: '🔁', label: 'Сценарии' },
+    ];
+
+    const quickCommands: Array<{ command: string; icon: string; label: string }> = [
+        { command: '/character', icon: '👤', label: 'Персонаж' },
+        { command: '/inventory', icon: '🎒', label: 'Инвентарь' },
+        { command: '/roll 1d20', icon: '🎲', label: 'Бросок к20' },
+        { command: '/quests', icon: '📋', label: 'Квесты' },
+        { command: '/help', icon: '❓', label: 'Помощь' },
+    ];
+
     const NavItem = ({ tab, icon, label }: { tab: ActiveTab; icon: string; label: string }) => (
         <button
             onClick={() => setActiveTab(tab)}
@@ -20,14 +41,14 @@ export const NavBar: React.FC = () => {
         </button>
     );
 
-    const QuickCommand = ({ command, icon }: { command: string; icon: string }) => (
+    const QuickCommand = ({ command, icon, label }: { command: string; icon: string; label: string }) => (
         <button
             onClick={() => setPendingCommand(command, true)}
             className="w-full flex items-center gap-2 px-3 py-1.5 text-terminal-green/50 hover:text-terminal-green hover:bg-terminal-green/10 transition-colors text-xs font-mono"
-            title={`Выполнить ${command}`}
+            title={`Выполнить: ${label}`}
         >
             <span className="text-sm">{icon}</span>
-            <span className="hidden md:block">{command}</span>
+            <span className="hidden md:block">{label}</span>
         </button>
     );
 
@@ -37,22 +58,15 @@ export const NavBar: React.FC = () => {
             <div className="p-4 border-b border-terminal-green-dim mb-2 flex items-center justify-center md:justify-start gap-2">
                 <span className="text-2xl">⚔️</span>
                 <h1 className="font-display font-bold text-terminal-green text-glow hidden md:block tracking-widest">
-                    QUEST<br />KEEPER
+                    ХРАНИТЕЛЬ<br />КВЕСТОВ
                 </h1>
             </div>
 
             {/* Navigation Items */}
             <div className="flex-1 flex flex-col gap-1 py-2">
-                <NavItem tab="adventure" icon="📜" label="Приключение" />
-                <NavItem tab="combat" icon="⚔️" label="Бой" />
-                <NavItem tab="character" icon="👤" label="Персонаж" />
-                <NavItem tab="map" icon="🗺️" label="Карта мира" />
-                <NavItem tab="journal" icon="📓" label="Журнал" />
-                <NavItem tab="skills" icon="✨" label="Навыки" />
-                <NavItem tab="chains" icon="🔗" label="Цепочки" />
-                <NavItem tab="achievements" icon="🏆" label="Достижения" />
-                <NavItem tab="reputation" icon="🤝" label="Репутация" />
-                <NavItem tab="workflows" icon="🔁" label="Сценарии" />
+                {navItems.map((item) => (
+                    <NavItem key={item.tab} {...item} />
+                ))}
             </div>
 
             {/* Quick Commands Divider */}
@@ -62,11 +76,9 @@ export const NavBar: React.FC = () => {
             
             {/* Quick Command Buttons */}
             <div className="flex flex-col gap-0.5 px-1 pb-2">
-                <QuickCommand command="/character" icon="👤" />
-                <QuickCommand command="/inventory" icon="🎒" />
-                <QuickCommand command="/roll 1d20" icon="🎲" />
-                <QuickCommand command="/quests" icon="📋" />
-                <QuickCommand command="/help" icon="❓" />
+                {quickCommands.map((item) => (
+                    <QuickCommand key={item.command} {...item} />
+                ))}
             </div>
 
             {/* Bottom Actions */}

@@ -15,12 +15,12 @@ export const XPBar: React.FC<XPBarProps> = ({ current, max, level, className = '
     <div className={`w-full ${className}`}>
       {showLabels && (
         <div className="flex justify-between items-end mb-1 text-xs">
-          <span className="text-terminal-green/60 uppercase tracking-wider font-bold">Experience</span>
+          <span className="text-terminal-green/60 uppercase tracking-wider font-bold">Опыт</span>
           <div className="flex gap-2">
             <span className="text-terminal-green font-mono">{current}</span>
             <span className="text-terminal-green/40">/</span>
             <span className="text-terminal-green/60 font-mono">{max}</span>
-            <span className="text-terminal-green/40 ml-1">XP</span>
+            <span className="text-terminal-green/40 ml-1">ОП</span>
           </div>
         </div>
       )}
@@ -48,8 +48,8 @@ export const XPBar: React.FC<XPBarProps> = ({ current, max, level, className = '
       
       {showLabels && (
         <div className="mt-1 flex justify-between text-[10px] text-terminal-green/40 font-mono">
-          <span>LVL {level}</span>
-          <span>NEXT: LVL {level + 1}</span>
+          <span>УР. {level}</span>
+          <span>СЛЕД.: УР. {level + 1}</span>
         </div>
       )}
     </div>

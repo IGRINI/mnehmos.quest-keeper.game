@@ -316,7 +316,7 @@ export const GridSystem: React.FC = () => {
             outlineWidth={0.02}
             outlineColor={colors.ground}
           >
-            N
+            С
           </Text>
           <Text 
             position={[1.5, 0.05, 0]} 
@@ -326,7 +326,7 @@ export const GridSystem: React.FC = () => {
             anchorX="center" 
             anchorY="middle"
           >
-            E
+            В
           </Text>
           <Text 
             position={[0, 0.05, 1.5]} 
@@ -336,7 +336,7 @@ export const GridSystem: React.FC = () => {
             anchorX="center" 
             anchorY="middle"
           >
-            S
+            Ю
           </Text>
           <Text 
             position={[-1.5, 0.05, 0]} 
@@ -346,7 +346,7 @@ export const GridSystem: React.FC = () => {
             anchorX="center" 
             anchorY="middle"
           >
-            W
+            З
           </Text>
 
           {/* Ticks/Markings */}
@@ -446,7 +446,7 @@ export const GridSystem: React.FC = () => {
                            {/* Label */}
                            <Html position={[(startPos.x + endPos.x)/2, (startPos.y + endPos.y)/2 + 0.5, (startPos.z + endPos.z)/2]} center>
                               <div style={{ background: 'rgba(0,0,0,0.8)', color: '#00ffff', padding: '2px 6px', borderRadius: '4px', fontSize: '12px', fontFamily: 'monospace', pointerEvents: 'none' }}>
-                                {distFeet} ft
+                                {distFeet} фт.
                               </div>
                            </Html>
                         </group>

@@ -4,6 +4,23 @@ import { useGameStateStore } from '../../stores/gameStateStore';
 import { NpcRelationshipList } from '../npc/NpcRelationshipCard';
 import { NpcMemoryTimeline } from '../npc/NpcMemoryTimeline';
 
+const FAMILIARITY_LABELS: Record<string, string> = {
+  stranger: 'Незнакомец',
+  acquaintance: 'Знакомый',
+  friend: 'Друг',
+  close_friend: 'Близкий друг',
+  rival: 'Соперник',
+  enemy: 'Враг',
+};
+
+const DISPOSITION_LABELS: Record<string, string> = {
+  hostile: 'Враждебен',
+  unfriendly: 'Недружелюбен',
+  neutral: 'Нейтрален',
+  friendly: 'Дружелюбен',
+  helpful: 'Готов помочь',
+};
+
 /**
  * NPC Journal View - Shows relationships and conversation history
  */
@@ -34,7 +51,7 @@ export const NpcJournalView: React.FC = () => {
   if (!activeCharacter) {
     return (
       <div className="h-full flex items-center justify-center text-terminal-green-dim">
-        Select a character to view their journal
+        Выберите персонажа, чтобы открыть его журнал
       </div>
     );
   }
@@ -45,10 +62,10 @@ export const NpcJournalView: React.FC = () => {
       <div className="w-64 border-r border-terminal-green-dim/30 flex flex-col">
         <div className="p-3 border-b border-terminal-green-dim/30">
           <h2 className="text-terminal-green font-bold uppercase tracking-wider text-sm">
-            Known NPCs
+            Известные НПС
           </h2>
           <p className="text-terminal-green-dim text-xs mt-1">
-            {relationships.length} contacts
+            Контактов: {relationships.length}
           </p>
         </div>
         
@@ -79,10 +96,10 @@ export const NpcJournalView: React.FC = () => {
                         color: FAMILIARITY_CONFIG[selectedRelationship.familiarity].color
                       }}
                     >
-                      {FAMILIARITY_CONFIG[selectedRelationship.familiarity].label}
+                      {FAMILIARITY_LABELS[selectedRelationship.familiarity] ?? FAMILIARITY_CONFIG[selectedRelationship.familiarity].label}
                     </span>
                     <span className="text-terminal-green-dim text-sm">
-                      {DISPOSITION_CONFIG[selectedRelationship.disposition].icon} {DISPOSITION_CONFIG[selectedRelationship.disposition].label}
+                      {DISPOSITION_CONFIG[selectedRelationship.disposition].icon} {DISPOSITION_LABELS[selectedRelationship.disposition] ?? DISPOSITION_CONFIG[selectedRelationship.disposition].label}
                     </span>
                   </div>
                 </div>
@@ -99,7 +116,7 @@ export const NpcJournalView: React.FC = () => {
             {/* Conversation Timeline */}
             <div className="flex-grow overflow-y-auto p-4">
               <h3 className="text-terminal-green font-bold uppercase tracking-wider text-sm mb-3">
-                Conversation History
+                История разговоров
               </h3>
               <NpcMemoryTimeline />
             </div>
@@ -108,7 +125,7 @@ export const NpcJournalView: React.FC = () => {
           <div className="h-full flex items-center justify-center text-terminal-green-dim">
             <div className="text-center">
               <div className="text-4xl mb-2">📖</div>
-              <p>Select an NPC to view their history</p>
+              <p>Выберите НПС, чтобы увидеть историю общения</p>
             </div>
           </div>
         )}
@@ -117,7 +134,7 @@ export const NpcJournalView: React.FC = () => {
       {/* Loading overlay */}
       {isLoading && (
         <div className="absolute inset-0 bg-terminal-black/50 flex items-center justify-center">
-          <div className="text-terminal-green animate-pulse">Loading...</div>
+          <div className="text-terminal-green animate-pulse">Загрузка...</div>
         </div>
       )}
     </div>

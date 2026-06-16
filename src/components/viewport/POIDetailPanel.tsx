@@ -36,19 +36,58 @@ const STRUCTURE_ICONS: Record<string, string> = {
   fortress: '🏰',
 };
 
-const POI_DESCRIPTIONS: Record<string, string> = {
-  city: 'A bustling metropolis with stone walls, markets, guildhalls, and thousands of inhabitants.',
-  town: 'A sizable settlement with shops, an inn, and a town guard. A hub for local trade.',
-  village: 'A small rural community with farms, cottages, and a tavern. Home to friendly locals.',
-  castle: 'A fortified stronghold with towers, battlements, and garrison. Symbol of power.',
-  ruins: 'Crumbling remnants of a once-great structure. May hold secrets... or danger.',
-  dungeon: 'A dark, foreboding entrance descending underground. Adventure awaits the brave.',
-  temple: 'A sacred place of worship. Priests offer blessings and healing to the faithful.',
-  camp: 'A temporary encampment. Could be traders, nomads, or something less friendly.',
-  landmark: 'A notable geographical feature or monument. Visible from afar.',
-  shrine: 'A small holy site dedicated to a deity or spirit. A place of quiet reflection.',
-  fortress: 'A military installation with thick walls and armed defenders. Approach with caution.',
+const STRUCTURE_LABELS: Record<string, string> = {
+  city: 'город',
+  town: 'малый город',
+  village: 'деревня',
+  castle: 'замок',
+  ruins: 'руины',
+  dungeon: 'подземелье',
+  temple: 'храм',
+  camp: 'лагерь',
+  landmark: 'ориентир',
+  shrine: 'святилище',
+  fortress: 'крепость',
 };
+
+const BIOME_LABELS: Record<string, string> = {
+  ocean: 'океан',
+  deep_ocean: 'глубокий океан',
+  lake: 'озеро',
+  hot_desert: 'жаркая пустыня',
+  desert: 'пустыня',
+  savanna: 'саванна',
+  tropical_rainforest: 'тропический лес',
+  grassland: 'луг',
+  temperate_deciduous_forest: 'лиственный лес',
+  wetland: 'болото',
+  taiga: 'тайга',
+  tundra: 'тундра',
+  glacier: 'ледник',
+  mountain: 'горы',
+  forest: 'лес',
+  plains: 'равнины',
+  swamp: 'топь',
+  beach: 'пляж',
+  snow: 'снег',
+};
+
+const POI_DESCRIPTIONS: Record<string, string> = {
+  city: 'Оживленный город с каменными стенами, рынками, гильдиями и тысячами жителей.',
+  town: 'Крупное поселение с лавками, трактиром и стражей. Центр местной торговли.',
+  village: 'Небольшая сельская община с фермами, домами и таверной.',
+  castle: 'Укрепленная твердыня с башнями, зубцами и гарнизоном. Символ власти.',
+  ruins: 'Осыпающиеся остатки древнего строения. Здесь могут скрываться тайны или опасность.',
+  dungeon: 'Мрачный вход, ведущий под землю. Испытание для смелых.',
+  temple: 'Священное место поклонения. Жрецы даруют благословения и исцеление.',
+  camp: 'Временный лагерь. Это могут быть торговцы, кочевники или менее дружелюбные путники.',
+  landmark: 'Примечательный объект или памятник, заметный издалека.',
+  shrine: 'Небольшое святилище, посвященное божеству или духу.',
+  fortress: 'Военное укрепление с толстыми стенами и вооруженной охраной. Подходите осторожно.',
+};
+
+const formatStructureType = (type: string): string => STRUCTURE_LABELS[type] ?? type.replace(/_/g, ' ');
+const formatBiomeName = (value: string): string => BIOME_LABELS[value] ?? value.replace(/_/g, ' ');
 
 export const POIDetailPanel: React.FC<POIDetailPanelProps> = ({
   poi,
@@ -60,7 +99,7 @@ export const POIDetailPanel: React.FC<POIDetailPanelProps> = ({
   onEnter,
 }) => {
   const icon = STRUCTURE_ICONS[poi.type] || '📍';
-  const description = POI_DESCRIPTIONS[poi.type] || 'An interesting location worth investigating.';
+  const description = POI_DESCRIPTIONS[poi.type] || 'Интересное место, которое стоит изучить.';
 
   // Calculate distance from party
   const distance = partyPosition
@@ -84,7 +123,7 @@ export const POIDetailPanel: React.FC<POIDetailPanelProps> = ({
               {poi.name}
             </div>
             <div className="text-xs text-terminal-green/60 capitalize">
-              {poi.type.replace(/_/g, ' ')}
+              {formatStructureType(poi.type)}
             </div>
           </div>
         </div>
@@ -106,19 +145,19 @@ export const POIDetailPanel: React.FC<POIDetailPanelProps> = ({
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="bg-terminal-green/5 p-2 border border-terminal-green/30">
-            <div className="text-terminal-green/60 mb-1">Coordinates</div>
+            <div className="text-terminal-green/60 mb-1">Координаты</div>
             <div className="font-bold">({poi.x}, {poi.y})</div>
           </div>
           {region && (
             <div className="bg-terminal-green/5 p-2 border border-terminal-green/30">
-              <div className="text-terminal-green/60 mb-1">Region</div>
+              <div className="text-terminal-green/60 mb-1">Регион</div>
               <div className="font-bold">{region}</div>
             </div>
           )}
           {biome && (
             <div className="bg-terminal-green/5 p-2 border border-terminal-green/30 col-span-2">
-              <div className="text-terminal-green/60 mb-1">Biome</div>
-              <div className="font-bold capitalize">{biome.replace(/_/g, ' ')}</div>
+              <div className="text-terminal-green/60 mb-1">Биом</div>
+              <div className="font-bold">{formatBiomeName(biome)}</div>
             </div>
           )}
         </div>
@@ -126,16 +165,16 @@ export const POIDetailPanel: React.FC<POIDetailPanelProps> = ({
         {/* Distance Info */}
         {distance !== null && !isAtLocation && (
           <div className="bg-orange-500/10 border border-orange-500/30 p-2 text-xs">
-            <span className="text-orange-400">📏 Distance:</span>{' '}
-            <span className="font-bold">{distance} tile{distance !== 1 ? 's' : ''}</span>
-            <span className="text-terminal-green/60 ml-2">from current position</span>
+            <span className="text-orange-400">📏 Расстояние:</span>{' '}
+            <span className="font-bold">{distance} тайл.</span>
+            <span className="text-terminal-green/60 ml-2">от текущей позиции</span>
           </div>
         )}
 
         {/* Party is here indicator */}
         {isAtLocation && (
           <div className="bg-green-500/10 border border-green-500/30 p-2 text-xs">
-            <span className="text-green-400">⚔️ Your party is here!</span>
+            <span className="text-green-400">⚔️ Группа уже здесь!</span>
           </div>
         )}
 
@@ -153,11 +192,11 @@ export const POIDetailPanel: React.FC<POIDetailPanelProps> = ({
             }`}
           >
             {isMoving ? (
-              <>{'⏳'} Traveling...</>
+              <>{'⏳'} Перемещение...</>
             ) : isAtLocation ? (
-              <>{'✓'} Already Here</>
+              <>{'✓'} Уже здесь</>
             ) : (
-              <>{'🚪'} Travel Here</>
+              <>{'🚪'} Перейти сюда</>
             )}
           </button>
         </div>
@@ -165,7 +204,7 @@ export const POIDetailPanel: React.FC<POIDetailPanelProps> = ({
 
       {/* Footer Hint */}
       <div className="px-3 py-2 border-t border-terminal-green/30 bg-terminal-green/5 text-xs text-terminal-green/50 text-center">
-        Press ESC to close
+        Нажмите ESC, чтобы закрыть
       </div>
     </div>
   );

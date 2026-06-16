@@ -24,8 +24,8 @@ const iconOf = (btn: HTMLElement) => btn.querySelector('span')?.textContent ?? '
 describe('NavBar', () => {
   it('gives Workflows a non-empty icon that is DISTINCT from Settings', () => {
     render(<NavBar />);
-    const workflows = screen.getByTitle('Workflows');
-    const settings = screen.getByTitle('Settings');
+    const workflows = screen.getByTitle('Сценарии');
+    const settings = screen.getByTitle('Настройки');
 
     expect(iconOf(workflows)).not.toBe('');
     // Collapsed rail shows icon-only — a shared glyph makes the two tabs ambiguous.
@@ -35,8 +35,8 @@ describe('NavBar', () => {
   it('renders no two nav destinations with the same icon (collapsed-rail disambiguation)', () => {
     render(<NavBar />);
     const labels = [
-      'Adventure', 'Combat', 'Character', 'World Map', 'Journal',
-      'Skills', 'Chains', 'Achievements', 'Reputation', 'Workflows', 'Settings',
+      'Приключение', 'Бой', 'Персонаж', 'Карта мира', 'Журнал',
+      'Навыки', 'Цепочки', 'Достижения', 'Репутация', 'Сценарии', 'Настройки',
     ];
     const icons = labels.map((l) => iconOf(screen.getByTitle(l)));
     expect(new Set(icons).size).toBe(icons.length);

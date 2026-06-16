@@ -58,7 +58,7 @@ export const RestPanel: React.FC<RestPanelProps> = ({ isOpen, onClose }) => {
       addMessage({
         id: Date.now().toString(),
         sender: 'system',
-        content: `⛺ **${activeCharacter.name}** takes a short rest.\n\n**HP:** ${data.previousHp} → ${data.newHp} (+${data.hpRestored})\n**Hit Dice:** ${data.hitDiceSpent}${data.hitDieSize} rolled [${data.rolls?.join(', ')}]`,
+        content: `⛺ **${activeCharacter.name}** устраивает короткий отдых.\n\n**ОЗ:** ${data.previousHp} → ${data.newHp} (+${data.hpRestored})\n**Кости хитов:** ${data.hitDiceSpent}${data.hitDieSize}, броски [${data.rolls?.join(', ')}]`,
         timestamp: Date.now(),
         type: 'info'
       });
@@ -69,7 +69,7 @@ export const RestPanel: React.FC<RestPanelProps> = ({ isOpen, onClose }) => {
       addMessage({
         id: Date.now().toString(),
         sender: 'system',
-        content: `❌ Rest failed: ${error.message}`,
+        content: `❌ Отдых не удался: ${error.message}`,
         timestamp: Date.now(),
         type: 'error'
       });
@@ -94,9 +94,9 @@ export const RestPanel: React.FC<RestPanelProps> = ({ isOpen, onClose }) => {
       setRestResult(data);
       
       // Add message to chat
-      let msg = `🌙 **${activeCharacter.name}** takes a long rest.\n\n**HP:** ${data.previousHp} → ${data.newHp} (Full)`;
+      let msg = `🌙 **${activeCharacter.name}** устраивает долгий отдых.\n\n**ОЗ:** ${data.previousHp} → ${data.newHp} (полностью)`;
       if (data.spellSlotsRestored) {
-        msg += `\n**Spell Slots:** Fully restored`;
+        msg += `\n**Ячейки заклинаний:** полностью восстановлены`;
       }
       
       addMessage({
@@ -113,7 +113,7 @@ export const RestPanel: React.FC<RestPanelProps> = ({ isOpen, onClose }) => {
       addMessage({
         id: Date.now().toString(),
         sender: 'system',
-        content: `❌ Rest failed: ${error.message}`,
+        content: `❌ Отдых не удался: ${error.message}`,
         timestamp: Date.now(),
         type: 'error'
       });
@@ -126,7 +126,7 @@ export const RestPanel: React.FC<RestPanelProps> = ({ isOpen, onClose }) => {
     <div className="rest-panel-overlay" onClick={onClose}>
       <div className="rest-panel" onClick={(e) => e.stopPropagation()}>
         <div className="rest-panel-header">
-          <h3>⛺ Rest Menu</h3>
+          <h3>⛺ Меню отдыха</h3>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
@@ -139,14 +139,14 @@ export const RestPanel: React.FC<RestPanelProps> = ({ isOpen, onClose }) => {
                 className="hp-bar" 
                 style={{ width: `${(currentHp / maxHp) * 100}%` }}
               />
-              <span className="hp-text">{currentHp} / {maxHp} HP</span>
+              <span className="hp-text">{currentHp} / {maxHp} ОЗ</span>
             </div>
           </div>
 
           {/* Combat Warning */}
           {isInCombat && (
             <div className="combat-warning">
-              ⚔️ Cannot rest during combat!
+              ⚔️ Нельзя отдыхать во время боя!
             </div>
           )}
 
@@ -156,14 +156,14 @@ export const RestPanel: React.FC<RestPanelProps> = ({ isOpen, onClose }) => {
             <div className={`rest-option ${isInCombat ? 'disabled' : ''}`}>
               <div className="rest-type">
                 <span className="rest-icon">☕</span>
-                <span className="rest-title">Short Rest</span>
-                <span className="rest-duration">1 hour</span>
+                <span className="rest-title">Короткий отдых</span>
+                <span className="rest-duration">1 час</span>
               </div>
               <div className="rest-description">
-                Spend hit dice to recover HP
+                Потрать кости хитов, чтобы восстановить ОЗ
               </div>
               <div className="hit-dice-selector">
-                <label>Hit Dice to spend:</label>
+                <label>Потратить костей хитов:</label>
                 <div className="dice-controls">
                   <button 
                     onClick={() => setHitDiceToSpend(Math.max(1, hitDiceToSpend - 1))}
@@ -177,14 +177,14 @@ export const RestPanel: React.FC<RestPanelProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
               <div className="rest-preview">
-                Est. healing: +{estimatedShortRestHealing} HP
+                Примерное лечение: +{estimatedShortRestHealing} ОЗ
               </div>
               <button 
                 className="rest-btn short-rest-btn"
                 onClick={handleShortRest}
                 disabled={isInCombat || isResting || hpMissing === 0}
               >
-                {isResting ? 'Resting...' : 'Take Short Rest'}
+                {isResting ? 'Отдых...' : 'Короткий отдых'}
               </button>
             </div>
 
@@ -192,21 +192,21 @@ export const RestPanel: React.FC<RestPanelProps> = ({ isOpen, onClose }) => {
             <div className={`rest-option ${isInCombat ? 'disabled' : ''}`}>
               <div className="rest-type">
                 <span className="rest-icon">🌙</span>
-                <span className="rest-title">Long Rest</span>
-                <span className="rest-duration">8 hours</span>
+                <span className="rest-title">Долгий отдых</span>
+                <span className="rest-duration">8 часов</span>
               </div>
               <div className="rest-description">
-                Fully restore HP and spell slots
+                Полностью восстановить ОЗ и ячейки заклинаний
               </div>
               <div className="rest-preview">
-                Restores: {hpMissing} HP + all spell slots
+                Восстановит: {hpMissing} ОЗ + все ячейки заклинаний
               </div>
               <button 
                 className="rest-btn long-rest-btn"
                 onClick={handleLongRest}
                 disabled={isInCombat || isResting}
               >
-                {isResting ? 'Resting...' : 'Take Long Rest'}
+                {isResting ? 'Отдых...' : 'Долгий отдых'}
               </button>
             </div>
           </div>

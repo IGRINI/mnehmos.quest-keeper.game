@@ -3,6 +3,7 @@ import { mcpManager } from '../../services/mcpClient';
 import { extractEmbeddedJson } from '../../utils/mcpUtils';
 import { useGameStateStore } from '../../stores/gameStateStore';
 import { getStartingGear, getStartingItemIds } from '../../data/startingGear';
+import { getAbilityShortLabel, getClassLabel, getRaceLabel } from '../character/displayLabels';
 
 interface CharacterCreationModalProps {
   isOpen: boolean;
@@ -404,11 +405,11 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({
         setRollResults({ str: null, dex: null, con: null, int: null, wis: null, cha: null });
         setStandardArrayAssignments([null, null, null, null, null, null]);
       } else {
-        throw new Error('Failed to create character - no ID returned');
+        throw new Error('Не удалось создать персонажа: сервер не вернул идентификатор');
       }
     } catch (err: any) {
       console.error('Character creation failed:', err);
-      setError(err.message || 'Failed to create character');
+      setError(err.message || 'Не удалось создать персонажа');
     } finally {
       setLoading(false);
     }
@@ -483,7 +484,7 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({
                     onChange={(e) => setRace(e.target.value)}
                     className="w-full bg-terminal-black border border-terminal-green/50 text-terminal-green px-3 py-2 rounded-lg focus:outline-none focus:border-terminal-green"
                   >
-                    {RACES.map(r => <option key={r} value={r}>{r}</option>)}
+                    {RACES.map(r => <option key={r} value={r}>{getRaceLabel(r)}</option>)}
                   </select>
                   {race === 'Other' && (
                     <input
@@ -502,7 +503,7 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({
                     onChange={(e) => setCharClass(e.target.value)}
                     className="w-full bg-terminal-black border border-terminal-green/50 text-terminal-green px-3 py-2 rounded-lg focus:outline-none focus:border-terminal-green"
                   >
-                    {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+                    {CLASSES.map(c => <option key={c} value={c}>{getClassLabel(c)}</option>)}
                   </select>
                   {charClass === 'Other' && (
                     <input
@@ -647,7 +648,7 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({
                           <option value="">--</option>
                           {ABILITY_NAMES.map(a => (
                             <option key={a} value={a} disabled={standardArrayAssignments.includes(a) && standardArrayAssignments[idx] !== a}>
-                              {a.toUpperCase()}
+                              {getAbilityShortLabel(a)}
                             </option>
                           ))}
                         </select>
@@ -809,16 +810,16 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({
                   </div>
                   <div>
                     <span className="text-terminal-green/60">Раса:</span>{' '}
-                    <span className="text-terminal-green">{race === 'Other' ? customRace : race}</span>
+                    <span className="text-terminal-green">{race === 'Other' ? customRace : getRaceLabel(race)}</span>
                   </div>
                   <div>
                     <span className="text-terminal-green/60">Класс:</span>{' '}
-                    <span className="text-terminal-green">{charClass === 'Other' ? customClass : charClass}</span>
+                    <span className="text-terminal-green">{charClass === 'Other' ? customClass : getClassLabel(charClass)}</span>
                   </div>
                   <div className="col-span-2">
                     <span className="text-terminal-green/60">Характеристики:</span>{' '}
                     <span className="text-terminal-green">
-                      STR {stats.str} • DEX {stats.dex} • CON {stats.con} • INT {stats.int} • WIS {stats.wis} • CHA {stats.cha}
+                      {getAbilityShortLabel('str')} {stats.str} • {getAbilityShortLabel('dex')} {stats.dex} • {getAbilityShortLabel('con')} {stats.con} • {getAbilityShortLabel('int')} {stats.int} • {getAbilityShortLabel('wis')} {stats.wis} • {getAbilityShortLabel('cha')} {stats.cha}
                     </span>
                   </div>
                 </div>

@@ -51,6 +51,39 @@ const GENERATION_PHASES = [
   { id: 'complete', label: 'Генерация мира завершена!', duration: 500 },
 ];
 
+const POI_TYPE_LABELS: Record<string, string> = {
+  city: 'город',
+  town: 'городок',
+  village: 'деревню',
+  settlement: 'поселение',
+  castle: 'замок',
+  fortress: 'крепость',
+  ruins: 'руины',
+  ruin: 'руины',
+  dungeon: 'подземелье',
+  cave: 'пещеру',
+  forest: 'лес',
+  mountain: 'гору',
+  lake: 'озеро',
+  river: 'реку',
+  road: 'дорогу',
+  temple: 'храм',
+  shrine: 'святилище',
+  tower: 'башню',
+  landmark: 'ориентир',
+  camp: 'лагерь',
+  mine: 'шахту',
+  portal: 'портал',
+  location: 'локацию',
+  structure: 'структуру',
+  poi: 'точку интереса',
+};
+
+const getPoiTypeLabel = (type: string | null | undefined): string => {
+  if (!type) return 'локацию';
+  return POI_TYPE_LABELS[type.trim().toLowerCase()] ?? 'точку интереса';
+};
+
 // ============================================
 // Component
 // ============================================
@@ -192,11 +225,11 @@ Description: [one atmospheric sentence]`;
         console.log('[WorldGen] World ID:', worldId);
         
         if (!worldId) {
-          throw new Error('world_manage/generate не вернул ID мира');
+          throw new Error('world_manage/generate не вернул идентификатор мира');
         }
         
         // worldId is used directly in onComplete callback
-        addLog(`Мир создан, ID: ${worldId.slice(0, 8)}...`, 'success');
+        addLog(`Мир создан, идентификатор: ${worldId.slice(0, 8)}...`, 'success');
         
         // world_manage generate returns structureCount (a number), not an array.
         // Fetch actual structures from world_map (action: tiles) for LLM lore.
@@ -253,14 +286,14 @@ Description: [one atmospheric sentence]`;
           if (abortRef.current) break;
           
           const poi = poisToName[i];
-          const poiType = poi.type?.toLowerCase() || 'location';
+          const poiType = getPoiTypeLabel(poi.type);
           addLog(`Описываю ${poiType}...`, 'info');
           
           try {
             const lore = await generatePOILore(poi, accumulatedLore, worldContext);
             accumulatedLore.push(`- ${lore.name}: ${lore.description}`);
             
-            addLog(`📜 ${poi.type || 'Location'}: "${lore.name}"`, 'lore');
+            addLog(`📜 ${getPoiTypeLabel(poi.type)}: "${lore.name}"`, 'lore');
             if (lore.description) {
               addLog(`   ${lore.description}`, 'lore');
             }
@@ -268,14 +301,14 @@ Description: [one atmospheric sentence]`;
             setProgress(85 + Math.floor((i / poisToName.length) * 10));
           } catch (e) {
             console.warn('[WorldGen] Lore generation failed for POI:', e);
-            addLog(`⚠️ Использую стандартное имя для ${poi.type}`, 'info');
+            addLog(`⚠️ Использую стандартное имя для ${getPoiTypeLabel(poi.type)}`, 'info');
           }
           
           await new Promise((r) => setTimeout(r, 200));
         }
       } else if (!hasAiProvider) {
-        addLog('⚠️ AI-провайдер не настроен, lore-генерация пропущена', 'info');
-        addLog('Настрой API-ключ или Codex OAuth для расширенного lore', 'info');
+        addLog('⚠️ ИИ-провайдер не настроен, генерация лора пропущена', 'info');
+        addLog('Настрой API-ключ или Codex OAuth для расширенного лора', 'info');
       } else if (structures.length === 0) {
         addLog('⚠️ Нет структур для летописи', 'info');
       }
@@ -294,14 +327,14 @@ Description: [one atmospheric sentence]`;
           onComplete(worldId!);
         }, 1500);
       } else {
-        throw new Error('Генерация мира завершилась, но ID мира отсутствует');
+        throw new Error('Генерация мира завершилась, но идентификатор мира отсутствует');
       }
 
     } catch (err) {
       console.error('[WorldGen] Generation error:', err);
       const errorMsg = err instanceof Error ? err.message : 'Генерация не удалась';
       setError(errorMsg);
-      addLog(`❌ Error: ${errorMsg}`, 'error');
+      addLog(`❌ Ошибка: ${errorMsg}`, 'error');
     } finally {
       setIsGenerating(false);
     }

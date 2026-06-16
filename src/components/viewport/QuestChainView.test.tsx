@@ -111,9 +111,9 @@ describe('QuestChainView', () => {
     const { container } = render(<QuestChainView />);
     const nodes = container.querySelectorAll('[data-testid="chain-quest-node"]');
     expect(nodes).toHaveLength(3);
-    // completed + locked badges should be visible somewhere.
-    expect(screen.getAllByText(/completed/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/locked/i)).toBeInTheDocument();
+    // Completed + locked badges should be visible somewhere.
+    expect(screen.getAllByText(/Завершено/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Закрыто/i)).toBeInTheDocument();
   });
 
   it('renders branch choice buttons for a completed quest that has branches', () => {
@@ -151,7 +151,7 @@ describe('QuestChainView', () => {
     expect(() => render(<QuestChainView />)).not.toThrow();
   });
 
-  it('shows "Requires:" gating text ONLY for locked quests', () => {
+  it('shows requirement gating text ONLY for locked quests', () => {
     const graph = sampleGraph() as any;
     // Locked node with a skill gate -> must show Requires.
     graph.quests[2].skillRequirements = [{ skill: 'Lockpicking', level: 5 }];
@@ -163,9 +163,9 @@ describe('QuestChainView', () => {
     render(<QuestChainView />);
 
     // The locked quest surfaces its gate.
-    expect(screen.getByText(/Lockpicking Lv5/i)).toBeInTheDocument();
+    expect(screen.getByText(/Навык ур\.\s*5/i)).toBeInTheDocument();
     // The non-locked quest does NOT, so its (now-moot) requirement is hidden.
-    expect(screen.queryByText(/Diplomacy Lv3/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Навык ур\.\s*3/i)).not.toBeInTheDocument();
   });
 
   it('renders chainId-less graphs without a duplicate-key warning even when quest ids collide', () => {

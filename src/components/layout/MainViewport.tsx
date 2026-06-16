@@ -47,7 +47,7 @@ export const MainViewport: React.FC<MainViewportProps> = ({ className }) => {
       case 'settings':
         return <SettingsView />;
       default:
-        return <div className="p-8 text-center text-terminal-green">Unknown View Module</div>;
+        return <div className="p-8 text-center text-terminal-green">Неизвестный модуль экрана</div>;
     }
   };
 

@@ -7,6 +7,8 @@ import { llmService } from '../../services/llm/LLMService';
 import { WorldGenerationModal } from './WorldGenerationModal';
 import { CharacterCreationModal } from '../party/CharacterCreationModal';
 import { PartyCreatorModal } from '../party/PartyCreatorModal';
+import { getClassLabel } from '../character/displayLabels';
+import { getPartyStatusLabel } from '../party/displayLabels';
 
 // ============================================
 // Types
@@ -478,7 +480,7 @@ Generate an immersive opening scene in Russian. Describe the environment, atmosp
                         <div className="flex flex-wrap gap-2 justify-center">
                           {unassignedCharacters.map(char => (
                             <span key={char.id} className="px-2 py-1 bg-terminal-green/20 rounded text-xs text-terminal-green">
-                              {char.name} - ур. {char.level} {char.class}
+                              {char.name} - ур. {char.level} {getClassLabel(char.class)}
                             </span>
                           ))}
                         </div>
@@ -545,7 +547,7 @@ Generate an immersive opening scene in Russian. Describe the environment, atmosp
                         >
                           <div className="font-bold text-terminal-green">{party.name}</div>
                           <div className="text-sm text-terminal-green/60">
-                            Статус: {party.status}
+                            Статус: {getPartyStatusLabel(party.status)}
                           </div>
                         </div>
                         <button
@@ -592,7 +594,7 @@ Generate an immersive opening scene in Russian. Describe the environment, atmosp
                               className="flex-1 cursor-pointer text-sm text-terminal-green"
                               onClick={() => updateField('activeCharacterId', wizardState.activeCharacterId === member.characterId ? null : member.characterId)}
                             >
-                              {member.character?.name || 'неизвестно'} - ур. {member.character?.level || '?'} {member.character?.class || ''}
+                              {member.character?.name || 'неизвестно'} - ур. {member.character?.level || '?'} {getClassLabel(member.character?.class || '')}
                             </div>
                             <button
                               onClick={async () => {
@@ -707,7 +709,7 @@ Be evocative and concise.`;
                     disabled={isGeneratingContext}
                     className="px-3 py-1 bg-terminal-green/20 border border-terminal-green text-terminal-green text-xs rounded hover:bg-terminal-green/30 transition-colors disabled:opacity-50 disabled:cursor-wait"
                   >
-                    {isGeneratingContext ? '✨ Генерация...' : '✨ Сгенерировать AI'}
+                    {isGeneratingContext ? '✨ Генерация...' : '✨ Сгенерировать ИИ'}
                   </button>
                 </div>
                 <textarea
@@ -749,7 +751,7 @@ Be evocative and concise.`;
                 </div>
               </div>
               <p className="text-terminal-green/70 text-sm">
-                Нажми «Начать приключение», чтобы запустить кампанию. AI создаст вступительную сцену на основе выбора.
+                Нажми «Начать приключение», чтобы запустить кампанию. ИИ создаст вступительную сцену на основе выбора.
               </p>
             </div>
           )}

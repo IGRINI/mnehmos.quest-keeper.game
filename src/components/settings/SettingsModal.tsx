@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSettingsStore, LLMProvider } from '../../stores/settingsStore';
+import { useSettingsStore, type LLMProvider } from '../../stores/settingsStore';
 import { open } from '@tauri-apps/plugin-shell';
 import { appLogDir } from '@tauri-apps/api/path';
 import { mkdir } from '@tauri-apps/plugin-fs';
@@ -12,6 +12,14 @@ interface SettingsModalProps {
     onClose: () => void;
 }
 
+const PROVIDER_LABELS: Record<LLMProvider, string> = {
+    openai: 'OpenAI',
+    anthropic: 'Anthropic',
+    gemini: 'Google Gemini',
+    openrouter: 'OpenRouter',
+    codex: 'Codex',
+};
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const {
         apiKeys,
@@ -23,6 +31,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         setModel,
         setSystemPrompt,
     } = useSettingsStore();
+    const selectedProviderLabel = PROVIDER_LABELS[selectedProvider];
 
     const handleOpenLogs = async () => {
         try {
@@ -61,8 +70,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     <button
                         onClick={onClose}
                         className="text-terminal-green hover:text-terminal-green-bright"
+                        title="Закрыть"
                     >
-                        [X]
+                        ×
                     </button>
                 </div>
 
@@ -79,7 +89,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             <option value="anthropic">Anthropic</option>
                             <option value="gemini">Google Gemini</option>
                             <option value="openrouter">OpenRouter</option>
-                            <option value="codex">Codex OAuth</option>
+                            <option value="codex">Codex (авторизация)</option>
                         </select>
                         <p className="text-xs text-terminal-green-dim">
                             Этот провайдер будет использоваться для всех сообщений в чате.
@@ -91,14 +101,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     ) : (
                         <div className="space-y-2">
                             <label className="block text-sm font-bold text-terminal-green">
-                                API-КЛЮЧ {selectedProvider.toUpperCase()}
+                                КЛЮЧ ДОСТУПА {selectedProviderLabel}
                             </label>
                             <input
                                 type="password"
                                 value={apiKeys[selectedProvider] || ''}
                                 onChange={(e) => setApiKey(selectedProvider, e.target.value)}
                                 className="w-full rounded border border-terminal-green bg-black px-3 py-2 text-terminal-green focus:border-terminal-green-bright focus:outline-none"
-                                placeholder={`Введите API-ключ ${selectedProvider}`}
+                                placeholder={`Введите ключ доступа для ${selectedProviderLabel}`}
                             />
                         </div>
                     )}
@@ -112,7 +122,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                 value={providerModels[selectedProvider] || ''}
                                 onChange={(e) => setModel(selectedProvider, e.target.value)}
                                 className="flex-1 rounded border border-terminal-green bg-black px-3 py-2 text-terminal-green focus:border-terminal-green-bright focus:outline-none"
-                                placeholder="Выберите или введите ID модели"
+                                placeholder="Выберите или введите идентификатор модели"
                             />
                             <select
                                 onChange={(e) => {
@@ -124,16 +134,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                 <option value="">▼</option>
                                 {selectedProvider === 'openai' && (
                                     <>
-                                        <optgroup label="GPT-5 Series">
+                                        <optgroup label="Серия GPT-5">
                                             <option value="gpt-5.1">GPT-5.1</option>
                                             <option value="gpt-5-pro">GPT-5 Pro</option>
                                             <option value="gpt-5-mini">GPT-5 Mini</option>
                                         </optgroup>
-                                        <optgroup label="Reasoning">
+                                        <optgroup label="Рассуждающие">
                                             <option value="o4-mini">o4-mini</option>
                                             <option value="o3-mini">o3-mini</option>
                                         </optgroup>
-                                        <optgroup label="Legacy">
+                                        <optgroup label="Устаревшие">
                                             <option value="gpt-4o">GPT-4o</option>
                                         </optgroup>
                                     </>
@@ -147,13 +157,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                 )}
                                 {selectedProvider === 'openrouter' && (
                                     <>
-                                        <optgroup label="Free / Free Tier">
-                                            <option value="meta-llama/llama-3.2-3b-instruct:free">Llama 3.2 3B (Free)</option>
-                                            <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash Exp (Free)</option>
-                                            <option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free)</option>
-                                            <option value="qwen/qwen3-coder:free">Qwen3 Coder (Free)</option>
+                                        <optgroup label="Бесплатные">
+                                            <option value="meta-llama/llama-3.2-3b-instruct:free">Llama 3.2 3B (бесплатно)</option>
+                                            <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash Exp (бесплатно)</option>
+                                            <option value="deepseek/deepseek-r1:free">DeepSeek R1 (бесплатно)</option>
+                                            <option value="qwen/qwen3-coder:free">Qwen3 Coder (бесплатно)</option>
                                         </optgroup>
-                                        <optgroup label="Premium">
+                                        <optgroup label="Платные">
                                             <option value="anthropic/claude-sonnet-4.5">Claude Sonnet 4.5</option>
                                             <option value="openai/gpt-5.1">GPT-5.1</option>
                                             <option value="google/gemini-3-pro">Gemini 3 Pro</option>
@@ -180,7 +190,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
                     {/* System Prompt */}
                     <div className="space-y-2">
-                        <label className="block text-sm font-bold text-terminal-green">СИСТЕМНЫЙ ПРОМПТ</label>
+                        <label className="block text-sm font-bold text-terminal-green">СИСТЕМНАЯ ИНСТРУКЦИЯ</label>
                         <textarea
                             value={systemPrompt}
                             onChange={(e) => setSystemPrompt(e.target.value)}

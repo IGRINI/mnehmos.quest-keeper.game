@@ -29,7 +29,7 @@ describe('Character Formatters', () => {
   describe('formatCharacterList', () => {
     it('returns empty message for no characters', () => {
       const result = formatCharacterList({ characters: [], count: 0 });
-      expect(result).toContain('No characters found');
+      expect(result).toContain('Персонажи в базе не найдены');
     });
 
     it('formats a list of characters', () => {
@@ -41,7 +41,7 @@ describe('Character Formatters', () => {
         ],
       };
       const result = formatCharacterList(data);
-      expect(result).toContain('Characters (2)');
+      expect(result).toContain('Персонажи (2)');
       expect(result).toContain('Gandalf');
     });
   });
@@ -60,7 +60,7 @@ describe('Character Formatters', () => {
       };
       const result = formatCharacter(char);
       expect(result).toContain('Aragorn');
-      expect(result).toContain('Level 10');
+      expect(result).toContain('Уровень 10');
     });
   });
 });
@@ -69,14 +69,14 @@ describe('Inventory Formatters', () => {
   describe('formatInventory', () => {
     it('returns empty message for no items', () => {
       const result = formatInventory({ items: [] });
-      expect(result).toContain('Inventory is empty');
+      expect(result).toContain('Инвентарь пуст');
     });
   });
 
   describe('formatItem', () => {
     it('returns not found for missing item', () => {
       const result = formatItem({});
-      expect(result).toContain('Item not found');
+      expect(result).toContain('Предмет не найден');
     });
   });
 });
@@ -85,7 +85,7 @@ describe('Quest Formatters', () => {
   describe('formatQuestLog', () => {
     it('returns empty message for no quests', () => {
       const result = formatQuestLog({ quests: [] });
-      expect(result).toContain('No active quests');
+      expect(result).toContain('Активных квестов нет');
     });
   });
 });
@@ -94,7 +94,7 @@ describe('Encounter Formatters', () => {
   describe('formatEncounter', () => {
     it('returns no encounter message for null data', () => {
       const result = formatEncounter(null);
-      expect(result).toContain('No active encounter');
+      expect(result).toContain('Активной схватки нет');
     });
   });
 
@@ -108,7 +108,7 @@ describe('Encounter Formatters', () => {
         ],
       };
       const result = formatCreateEncounter(data);
-      expect(result).toContain('COMBAT ENCOUNTER STARTED');
+      expect(result).toContain('БОЕВАЯ СХВАТКА НАЧАЛАСЬ');
     });
   });
 });
@@ -133,7 +133,7 @@ describe('Secret Keeper Formatters', () => {
   describe('formatListSecrets', () => {
     it('returns empty message for no secrets', () => {
       const result = formatListSecrets({ secrets: [], count: 0 });
-      expect(result).toContain('No secrets found');
+      expect(result).toContain('секреты не найдены');
     });
   });
 });
@@ -146,7 +146,7 @@ describe('Main Dispatcher Functions', () => {
         count: 1,
       };
       const result = formatToolResponse('list_characters', charData);
-      expect(result).toContain('Characters');
+      expect(result).toContain('Персонажи');
     });
 
     it('returns string as-is if not parseable', () => {
@@ -159,11 +159,11 @@ describe('Main Dispatcher Functions', () => {
 describe('Edge Cases', () => {
   it('handles null characters gracefully', () => {
     const result = formatCharacterList({ characters: null, count: 0 });
-    expect(result).toContain('No characters');
+    expect(result).toContain('Персонажи');
   });
 
   it('handles null items gracefully', () => {
     const result = formatInventory({ items: null });
-    expect(result).toContain('empty');
+    expect(result).toContain('Инвентарь пуст');
   });
 });

@@ -139,7 +139,7 @@ describe('TurnOrderBar', () => {
   it('shows "Turn Order" label', () => {
     render(<TurnOrderBar />);
     
-    expect(screen.getByText('Turn Order')).toBeInTheDocument();
+    expect(screen.getByText('Порядок хода')).toBeInTheDocument();
   });
 
   // Note: Testing empty turnOrder requires test factory pattern.
@@ -157,28 +157,28 @@ describe('PartyStatusBar', () => {
   it('shows Party header', () => {
     render(<PartyStatusBar />);
     
-    expect(screen.getByText('Party Roster')).toBeInTheDocument();
+    expect(screen.getByText('Состав группы')).toBeInTheDocument();
   });
 
   it('displays HP values for each member', () => {
     render(<PartyStatusBar />);
     
-    expect(screen.getAllByText((_, node) => (node?.textContent?.includes('HP 80/100') ?? false) && (node?.tagName?.toLowerCase() === 'span'))[0]).toBeInTheDocument();
-    expect(screen.getAllByText((_, node) => (node?.textContent?.includes('HP 25/30') ?? false) && (node?.tagName?.toLowerCase() === 'span'))[0]).toBeInTheDocument();
+    expect(screen.getAllByText((_, node) => (node?.textContent?.includes('ОЗ 80/100') ?? false) && (node?.tagName?.toLowerCase() === 'span'))[0]).toBeInTheDocument();
+    expect(screen.getAllByText((_, node) => (node?.textContent?.includes('ОЗ 25/30') ?? false) && (node?.tagName?.toLowerCase() === 'span'))[0]).toBeInTheDocument();
   });
 
   it('displays AC values for each member', () => {
     render(<PartyStatusBar />);
     
-    expect(screen.getByText(/AC 15/)).toBeInTheDocument();
-    expect(screen.getByText(/AC 14/)).toBeInTheDocument();
+    expect(screen.getByText(/КД 15/)).toBeInTheDocument();
+    expect(screen.getByText(/КД 14/)).toBeInTheDocument();
   });
 
   it('displays level for each member', () => {
     render(<PartyStatusBar />);
     
-    expect(screen.getByText('LVL 20')).toBeInTheDocument();
-    expect(screen.getByText('LVL 5')).toBeInTheDocument();
+    expect(screen.getByText('УР 20')).toBeInTheDocument();
+    expect(screen.getByText('УР 5')).toBeInTheDocument();
   });
 });
 
@@ -186,10 +186,10 @@ describe('QuickActionBar', () => {
   it('renders action buttons', () => {
     render(<QuickActionBar />);
     
-    expect(screen.getByRole('button', { name: /Inventory/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Spellbook/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Line of Sight/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /End Combat/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Инвентарь/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Заклинания/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Обзор/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Завершить/i })).toBeInTheDocument();
   });
 
   it('renders action icons', () => {
@@ -204,7 +204,7 @@ describe('QuickActionBar', () => {
   it('inventory button is clickable', () => {
     render(<QuickActionBar />);
     
-    const inventoryButton = screen.getByRole('button', { name: /Inventory/i });
+    const inventoryButton = screen.getByRole('button', { name: /Инвентарь/i });
     expect(inventoryButton).not.toBeNull();
     fireEvent.click(inventoryButton!);
     
@@ -246,15 +246,15 @@ describe('User Interaction Flows', () => {
       render(<PartyStatusBar />);
       
       // Both party members should be visible with HP
-      expect(screen.getAllByText((_, node) => (node?.textContent?.includes('HP 80/100') ?? false) && (node?.tagName?.toLowerCase() === 'span'))[0]).toBeInTheDocument();
-      expect(screen.getAllByText((_, node) => (node?.textContent?.includes('HP 25/30') ?? false) && (node?.tagName?.toLowerCase() === 'span'))[0]).toBeInTheDocument();
+      expect(screen.getAllByText((_, node) => (node?.textContent?.includes('ОЗ 80/100') ?? false) && (node?.tagName?.toLowerCase() === 'span'))[0]).toBeInTheDocument();
+      expect(screen.getAllByText((_, node) => (node?.textContent?.includes('ОЗ 25/30') ?? false) && (node?.tagName?.toLowerCase() === 'span'))[0]).toBeInTheDocument();
     });
 
     it('low HP member should have red HP bar', () => {
       // This would require CSS class checking or visual regression
       // For now, just verify the HP is displayed
       render(<PartyStatusBar />);
-      expect(screen.getAllByText((_, node) => (node?.textContent?.includes('HP 25/30') ?? false) && (node?.tagName?.toLowerCase() === 'span'))[0]).toBeInTheDocument();
+      expect(screen.getAllByText((_, node) => (node?.textContent?.includes('ОЗ 25/30') ?? false) && (node?.tagName?.toLowerCase() === 'span'))[0]).toBeInTheDocument();
     });
   });
 
@@ -263,10 +263,10 @@ describe('User Interaction Flows', () => {
       render(<QuickActionBar />);
       
       // All common actions should be accessible
-      const inventoryBtn = screen.getByRole('button', { name: /Inventory/i });
-      const spellbookBtn = screen.getByRole('button', { name: /Spellbook/i });
-      const losBtn = screen.getByRole('button', { name: /Line of Sight/i });
-      const endCombatBtn = screen.getByRole('button', { name: /End Combat/i });
+      const inventoryBtn = screen.getByRole('button', { name: /Инвентарь/i });
+      const spellbookBtn = screen.getByRole('button', { name: /Заклинания/i });
+      const losBtn = screen.getByRole('button', { name: /Обзор/i });
+      const endCombatBtn = screen.getByRole('button', { name: /Завершить/i });
       
       expect(inventoryBtn).toBeEnabled();
       expect(spellbookBtn).toBeEnabled();

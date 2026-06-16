@@ -60,7 +60,7 @@ export const SpellSlotsDisplay: React.FC<SpellSlotsDisplayProps> = ({ characterI
                   ? 'bg-purple-600 border-purple-400 hover:bg-purple-500' // Available
                   : 'bg-gray-900 border-gray-700 hover:bg-gray-800'     // Used
               }`}
-              title={i < slot.current ? "Click to expend slot" : "Click to regain slot"}
+              title={i < slot.current ? 'Потратить ячейку' : 'Восстановить ячейку'}
             />
           ))}
         </div>
@@ -74,8 +74,8 @@ export const SpellSlotsDisplay: React.FC<SpellSlotsDisplayProps> = ({ characterI
     return (
       <div className="flex items-center justify-between p-2 bg-purple-900/20 border border-purple-500/30 rounded mb-2 mt-4">
         <div className="flex flex-col">
-          <span className="text-purple-300 font-bold">Pact Magic</span>
-          <span className="text-purple-400/60 text-xs">Level {pactMagicSlots.slotLevel}</span>
+          <span className="text-purple-300 font-bold">Магия договора</span>
+          <span className="text-purple-400/60 text-xs">Круг {pactMagicSlots.slotLevel}</span>
         </div>
         
         <div className="flex gap-1">
@@ -89,7 +89,7 @@ export const SpellSlotsDisplay: React.FC<SpellSlotsDisplayProps> = ({ characterI
                   ? 'bg-purple-500 border-purple-300 hover:bg-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]' // Available
                   : 'bg-gray-900 border-gray-700 hover:bg-gray-800'     // Used
               }`}
-              title={i < pactMagicSlots.current ? "Click to expend pact slot" : "Click to regain pact slot"}
+              title={i < pactMagicSlots.current ? 'Потратить ячейку договора' : 'Восстановить ячейку договора'}
             />
           ))}
         </div>
@@ -99,7 +99,7 @@ export const SpellSlotsDisplay: React.FC<SpellSlotsDisplayProps> = ({ characterI
 
   return (
     <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
-      <h3 className="text-lg font-bold text-purple-400 mb-3 border-b border-gray-700 pb-1">Spell Slots</h3>
+      <h3 className="text-lg font-bold text-purple-400 mb-3 border-b border-gray-700 pb-1">Ячейки заклинаний</h3>
       
       {/* Pact Magic Slots */}
       {renderPactMagic()}
@@ -108,21 +108,21 @@ export const SpellSlotsDisplay: React.FC<SpellSlotsDisplayProps> = ({ characterI
       <div className="space-y-1">
         {slots && (
           <>
-            {renderLevel('level1', '1st')}
-            {renderLevel('level2', '2nd')}
-            {renderLevel('level3', '3rd')}
-            {renderLevel('level4', '4th')}
-            {renderLevel('level5', '5th')}
-            {renderLevel('level6', '6th')}
-            {renderLevel('level7', '7th')}
-            {renderLevel('level8', '8th')}
-            {renderLevel('level9', '9th')}
+            {renderLevel('level1', '1 круг')}
+            {renderLevel('level2', '2 круг')}
+            {renderLevel('level3', '3 круг')}
+            {renderLevel('level4', '4 круг')}
+            {renderLevel('level5', '5 круг')}
+            {renderLevel('level6', '6 круг')}
+            {renderLevel('level7', '7 круг')}
+            {renderLevel('level8', '8 круг')}
+            {renderLevel('level9', '9 круг')}
           </>
         )}
       </div>
       
       {!slots && !pactMagicSlots && (
-        <div className="text-gray-500 italic text-center text-sm py-2">No spell slots available.</div>
+        <div className="text-gray-500 italic text-center text-sm py-2">Ячеек заклинаний нет.</div>
       )}
     </div>
   );

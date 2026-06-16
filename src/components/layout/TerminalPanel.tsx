@@ -35,7 +35,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({ className }) => {
             className="text-terminal-green hover:text-terminal-green-bright"
             title="Настройки"
           >
-            [CONFIG]
+            [НАСТРОЙКИ]
           </button>
         </div>
         <ChatHistory />

@@ -2,6 +2,62 @@ import React, { useState } from 'react';
 import { useGameStateStore } from '../../stores/gameStateStore';
 import { WorldEnvironmentForm } from './WorldEnvironmentForm';
 
+const UNKNOWN_LABEL = 'Неизвестно';
+
+const WORLD_VALUE_LABELS: Record<string, string> = {
+  dawn: 'рассвет',
+  morning: 'утро',
+  noon: 'полдень',
+  afternoon: 'после полудня',
+  dusk: 'закат',
+  evening: 'вечер',
+  night: 'ночь',
+  midnight: 'полночь',
+  spring: 'весна',
+  summer: 'лето',
+  autumn: 'осень',
+  fall: 'осень',
+  winter: 'зима',
+  clear: 'ясно',
+  cloudy: 'облачно',
+  overcast: 'пасмурно',
+  light_rain: 'легкий дождь',
+  heavy_rain: 'сильный дождь',
+  thunderstorm: 'гроза',
+  fog: 'туман',
+  snow: 'снег',
+  blizzard: 'метель',
+  windy: 'ветрено',
+  freezing: 'мороз',
+  cold: 'холодно',
+  cool: 'прохладно',
+  mild: 'умеренно',
+  warm: 'тепло',
+  hot: 'жарко',
+  scorching: 'пекло',
+  bright_daylight: 'яркий дневной свет',
+  dim_golden_light: 'тусклый золотой свет',
+  fading_orange_light: 'гаснущий оранжевый свет',
+  moonlight: 'лунный свет',
+  starlight: 'только звезды',
+  pitch_black: 'кромешная тьма',
+  torchlight: 'свет факелов',
+  candlelight: 'свет свечей',
+  magical_glow: 'магическое сияние',
+  dark_and_ominous: 'мрачно и зловеще',
+  new_moon: 'новолуние',
+  waxing_crescent: 'растущий серп',
+  first_quarter: 'первая четверть',
+  waxing_gibbous: 'растущая луна',
+  full_moon: 'полнолуние',
+  waning_gibbous: 'убывающая луна',
+  third_quarter: 'третья четверть',
+  waning_crescent: 'убывающий серп',
+};
+
+const formatWorldValue = (value: string): string =>
+  WORLD_VALUE_LABELS[value] ?? value;
+
 export const WorldStateView: React.FC = () => {
   const world = useGameStateStore((state) => state.world);
   const syncState = useGameStateStore((state) => state.syncState);
@@ -12,12 +68,12 @@ export const WorldStateView: React.FC = () => {
     return (
       <div className="h-full w-full flex items-center justify-center font-mono text-terminal-green">
         <div className="text-center">
-          <div className="text-xl mb-2">⚠️ Loading World State...</div>
+          <div className="text-xl mb-2">⚠️ Загружаю состояние мира...</div>
           <button
             onClick={() => syncState?.()}
             className="px-4 py-2 bg-terminal-green text-terminal-black font-bold uppercase"
           >
-            Retry Sync
+            Повторить синхронизацию
           </button>
         </div>
       </div>
@@ -54,25 +110,25 @@ export const WorldStateView: React.FC = () => {
     <div className="h-full w-full flex flex-col p-4 font-mono text-terminal-green overflow-hidden">
       <div className="flex justify-between items-center mb-4 border-b border-terminal-green-dim pb-2 flex-shrink-0">
         <h2 className="text-xl font-bold uppercase tracking-wider text-glow">
-          World State Matrix
+          Матрица состояния мира
         </h2>
         <button
           onClick={() => syncState()}
           className="px-3 py-1 text-xs bg-terminal-green/10 border border-terminal-green hover:bg-terminal-green/20 transition-colors uppercase tracking-wider"
-          title="Refresh world state from server"
+          title="Обновить состояние мира с сервера"
         >
-          🔄 Refresh
+          🔄 Обновить
         </button>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-scroll pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0, 255, 65, 0.6) rgba(0, 255, 65, 0.1)' }}>
         {/* Location Banner */}
         <div className="bg-terminal-green/10 border-2 border-terminal-green p-4 mb-6 rounded-sm">
-          <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-1">Current Location</div>
+          <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-1">Текущая локация</div>
           <div className="text-2xl font-bold text-terminal-green-bright text-glow">{world.location}</div>
           {world.lastUpdated && (
             <div className="text-xs text-terminal-green/50 mt-2">
-              Last Updated: {new Date(world.lastUpdated).toLocaleString()}
+              Обновлено: {new Date(world.lastUpdated).toLocaleString()}
             </div>
           )}
         </div>
@@ -85,7 +141,7 @@ export const WorldStateView: React.FC = () => {
           >
             <span className="text-sm font-bold uppercase tracking-wider text-terminal-green-bright flex items-center gap-2">
               <span>🌤️</span>
-              Set Environment
+              Настроить окружение
             </span>
             <span className="text-terminal-green">{showEnvironmentForm ? '▲' : '▼'}</span>
           </button>
@@ -97,83 +153,83 @@ export const WorldStateView: React.FC = () => {
         </div>
 
         {/* Time & Astronomical Data */}
-        <Section title="Time & Astronomical" icon="🌙">
+        <Section title="Время и астрономия" icon="🌙">
           <div className="bg-terminal-black/50 p-3 border border-terminal-green-dim rounded-sm space-y-1">
-            <InfoRow 
-              label="Date" 
-              value={env.date?.full_date || env.date || world.date || 'Unknown'} 
-              icon="📅" 
+            <InfoRow
+              label="Дата"
+              value={env.date?.full_date || env.date || world.date || UNKNOWN_LABEL}
+              icon="📅"
             />
-            <InfoRow 
-              label="Time of Day" 
-              value={env.specific_time || env.time_of_day || env.battlefield?.time_of_day || world.time || 'Unknown'} 
-              icon="🕒" 
+            <InfoRow
+              label="Время суток"
+              value={formatWorldValue(env.specific_time || env.time_of_day || env.battlefield?.time_of_day || world.time || UNKNOWN_LABEL)}
+              icon="🕒"
             />
-            <InfoRow 
-              label="Season" 
-              value={env.season?.current || (typeof env.season === 'string' ? env.season : null) || 'Unknown'} 
-              icon="🍂" 
+            <InfoRow
+              label="Сезон"
+              value={formatWorldValue(env.season?.current || (typeof env.season === 'string' ? env.season : null) || UNKNOWN_LABEL)}
+              icon="🍂"
             />
-            <InfoRow 
-              label="Moon Phase" 
-              value={env.moon_phase?.phase || (typeof env.moon_phase === 'string' ? env.moon_phase : null) || 'Unknown'} 
-              icon="🌙" 
+            <InfoRow
+              label="Фаза луны"
+              value={formatWorldValue(env.moon_phase?.phase || (typeof env.moon_phase === 'string' ? env.moon_phase : null) || UNKNOWN_LABEL)}
+              icon="🌙"
             />
             {(env.sunrise?.time || env.sunset?.time) && (
               <>
-                {env.sunrise?.time && <InfoRow label="Sunrise" value={env.sunrise.time} icon="🌅" />}
-                {env.sunset?.time && <InfoRow label="Sunset" value={env.sunset.time} icon="🌆" />}
+                {env.sunrise?.time && <InfoRow label="Рассвет" value={env.sunrise.time} icon="🌅" />}
+                {env.sunset?.time && <InfoRow label="Закат" value={env.sunset.time} icon="🌆" />}
               </>
             )}
           </div>
         </Section>
 
         {/* Weather & Environment */}
-        <Section title="Weather & Environment" icon="☁️">
+        <Section title="Погода и окружение" icon="☁️">
           <div className="bg-terminal-black/50 p-3 border border-terminal-green-dim rounded-sm space-y-1">
-            <InfoRow 
-              label="Conditions" 
-              value={env.weather?.condition || env.battlefield?.weather || (typeof env.weather === 'string' ? env.weather : null) || world.weather || 'Unknown'} 
-              icon="☁️" 
+            <InfoRow
+              label="Условия"
+              value={formatWorldValue(env.weather?.condition || env.battlefield?.weather || (typeof env.weather === 'string' ? env.weather : null) || world.weather || UNKNOWN_LABEL)}
+              icon="☁️"
             />
-            <InfoRow 
-              label="Temperature" 
-              value={env.temperature?.current || (typeof env.temperature === 'string' ? env.temperature : null) || 'Unknown'} 
-              icon="🌡️" 
+            <InfoRow
+              label="Температура"
+              value={formatWorldValue(env.temperature?.current || (typeof env.temperature === 'string' ? env.temperature : null) || UNKNOWN_LABEL)}
+              icon="🌡️"
             />
-            <InfoRow 
-              label="Lighting" 
-              value={env.lighting?.overall || env.lighting?.ambient || (typeof env.lighting === 'string' ? env.lighting : null) || 'Unknown'} 
-              icon="💡" 
+            <InfoRow
+              label="Освещение"
+              value={formatWorldValue(env.lighting?.overall || env.lighting?.ambient || (typeof env.lighting === 'string' ? env.lighting : null) || UNKNOWN_LABEL)}
+              icon="💡"
             />
             {env.wind?.speed && (
-              <InfoRow 
-                label="Wind" 
-                value={`${env.wind.speed} ${env.wind.direction || ''}`} 
-                icon="💨" 
+              <InfoRow
+                label="Ветер"
+                value={`${env.wind.speed} ${env.wind.direction || ''}`}
+                icon="💨"
               />
             )}
             {env.visibility?.current && (
-              <InfoRow 
-                label="Visibility" 
-                value={env.visibility.current} 
-                icon="👁️" 
+              <InfoRow
+                label="Видимость"
+                value={env.visibility.current}
+                icon="👁️"
               />
             )}
             {env.forecast && (
               <div className="mt-3 pt-3 border-t border-terminal-green-dim/30">
-                <div className="text-xs text-terminal-green/60 uppercase mb-1">Forecast</div>
+                <div className="text-xs text-terminal-green/60 uppercase mb-1">Прогноз</div>
                 <div className="text-sm text-terminal-green-bright italic">
                   {typeof env.forecast === 'string' 
                     ? env.forecast 
-                    : env.forecast?.tonight || 'No forecast available'}
+                    : env.forecast?.tonight || 'Прогноз недоступен'}
                 </div>
               </div>
             )}
             {env.hazards && Array.isArray(env.hazards) && env.hazards.length > 0 && (
               <div className="mt-3 pt-3 border-t border-terminal-green-dim/30">
                 <div className="text-xs text-terminal-green/60 uppercase mb-2 flex items-center gap-1">
-                  <span>⚠️</span> Hazards
+                  <span>⚠️</span> Опасности
                 </div>
                 <ul className="space-y-1">
                   {env.hazards.map((hazard: string, idx: number) => (
@@ -190,10 +246,10 @@ export const WorldStateView: React.FC = () => {
 
         {/* NPCs */}
         {npcCount > 0 && (
-          <Section title="NPCs Nearby" icon="👥">
+          <Section title="НПС рядом" icon="👥">
             <div className="bg-terminal-black/50 p-3 border border-terminal-green-dim rounded-sm">
               <div className="text-sm text-terminal-green/80">
-                {npcCount} NPC{npcCount !== 1 ? 's' : ''} tracked
+                НПС отслеживается: {npcCount}
               </div>
               <div className="mt-2 space-y-1">
                 {Object.keys(world.npcs!).slice(0, 5).map((npcName) => (
@@ -203,7 +259,7 @@ export const WorldStateView: React.FC = () => {
                 ))}
                 {npcCount > 5 && (
                   <div className="text-xs text-terminal-green/50 italic">
-                    ...and {npcCount - 5} more
+                    ...и еще {npcCount - 5}
                   </div>
                 )}
               </div>
@@ -213,10 +269,10 @@ export const WorldStateView: React.FC = () => {
 
         {/* Events */}
         {eventCount > 0 && (
-          <Section title="Recent Events" icon="📚">
+          <Section title="Недавние события" icon="📚">
             <div className="bg-terminal-black/50 p-3 border border-terminal-green-dim rounded-sm">
               <div className="text-sm text-terminal-green/80">
-                {eventCount} event{eventCount !== 1 ? 's' : ''} recorded
+                Событий записано: {eventCount}
               </div>
               <div className="mt-2 space-y-1">
                 {Object.keys(world.events!).slice(0, 5).map((eventKey) => (
@@ -226,7 +282,7 @@ export const WorldStateView: React.FC = () => {
                 ))}
                 {eventCount > 5 && (
                   <div className="text-xs text-terminal-green/50 italic">
-                    ...and {eventCount - 5} more
+                    ...и еще {eventCount - 5}
                   </div>
                 )}
               </div>
@@ -237,7 +293,7 @@ export const WorldStateView: React.FC = () => {
         {/* Placeholder for no data */}
         {npcCount === 0 && eventCount === 0 && (
           <div className="mt-8 border border-terminal-green-dim p-8 text-center opacity-30 uppercase tracking-widest">
-            [Additional Data Module Offline]
+            [ДОПОЛНИТЕЛЬНЫЙ МОДУЛЬ ДАННЫХ ОТКЛЮЧЕН]
           </div>
         )}
       </div>

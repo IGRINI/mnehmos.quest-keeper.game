@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { usePartyStore } from '../../stores/partyStore';
 import { useGameStateStore } from '../../stores/gameStateStore';
+import { getPartyStatusLabel } from './displayLabels';
 
 interface PartySelectorProps {
   onCreateParty?: () => void;
@@ -159,7 +160,7 @@ export const PartySelector: React.FC<PartySelectorProps> = ({ onCreateParty, cla
                         {activeChar ? (
                           <span>Играет: {activeChar.character.name}</span>
                         ) : (
-                          <span>{count} участник(ов) · {party.status}</span>
+                          <span>{count} участник(ов) · {getPartyStatusLabel(party.status)}</span>
                         )}
                       </div>
                     </div>

@@ -53,10 +53,10 @@ export const CombatLogPanel: React.FC = () => {
     <div className="pointer-events-auto absolute right-4 top-24 z-30 flex w-80 max-h-[45vh] flex-col rounded border border-terminal-green-dim bg-terminal-black/95 font-mono shadow-[0_0_20px_rgba(0,0,0,0.6)] backdrop-blur-sm animate-fade-in-up">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-terminal-green-dim px-3 py-2">
-        <h4 className="text-xs uppercase tracking-wider text-terminal-green">⚔️ Combat Log</h4>
+        <h4 className="text-xs uppercase tracking-wider text-terminal-green">⚔️ Журнал боя</h4>
         <button
           type="button"
-          aria-label="Close combat log"
+          aria-label="Закрыть журнал боя"
           onClick={toggleCombatLog}
           className="px-1 text-sm leading-none text-terminal-green-dim transition-colors hover:text-terminal-green-bright"
         >
@@ -67,13 +67,13 @@ export const CombatLogPanel: React.FC = () => {
       {/* Entries */}
       <div ref={containerRef} className="flex-1 space-y-1 overflow-y-auto px-3 py-2 text-xs">
         {combatLog.length === 0 ? (
-          <p className="italic text-terminal-green-dim">No combat events yet.</p>
+          <p className="italic text-terminal-green-dim">Боевых событий пока нет.</p>
         ) : (
           combatLog.map((entry) => (
             <div key={entry.id} className="flex items-start gap-1.5 leading-snug">
               <span className="shrink-0">{TYPE_ICON[entry.type] || '•'}</span>
               {entry.round != null && (
-                <span className="mt-0.5 shrink-0 text-[10px] text-terminal-green-dim">R{entry.round}</span>
+                <span className="mt-0.5 shrink-0 text-[10px] text-terminal-green-dim">Р{entry.round}</span>
               )}
               <span className={TYPE_TONE[entry.type] || 'text-terminal-green'}>{entry.message}</span>
             </div>

@@ -1,12 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { useGameStateStore } from '../../stores/gameStateStore';
 import { usePartyStore, CharacterUpdates } from '../../stores/partyStore';
+import { getClassLabel, getRaceLabel } from '../character/displayLabels';
 
 interface CharacterEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   characterId: string;
 }
+
+const RACE_OPTIONS = [
+  'Human',
+  'Elf',
+  'Dwarf',
+  'Halfling',
+  'Half-Elf',
+  'Half-Orc',
+  'Gnome',
+  'Tiefling',
+  'Dragonborn',
+  'Goliath',
+  'Aasimar',
+  'Tabaxi',
+  'Kenku',
+  'Hobbit',
+  'Other',
+];
+
+const CLASS_OPTIONS = [
+  'Fighter',
+  'Wizard',
+  'Rogue',
+  'Cleric',
+  'Ranger',
+  'Paladin',
+  'Barbarian',
+  'Bard',
+  'Druid',
+  'Monk',
+  'Sorcerer',
+  'Warlock',
+  'Artificer',
+  'Other',
+];
+
+const normalizeOptionValue = (value: string) => value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
 
 export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
   isOpen,
@@ -71,6 +109,11 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
     }));
   };
 
+  const selectedRaceOption = RACE_OPTIONS.find((race) => normalizeOptionValue(race) === normalizeOptionValue(formData.race));
+  const selectedClassOption = CLASS_OPTIONS.find((characterClass) => normalizeOptionValue(characterClass) === normalizeOptionValue(formData.class));
+  const isKnownRace = Boolean(selectedRaceOption);
+  const isKnownClass = Boolean(selectedClassOption);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -129,7 +172,7 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
         {/* Header */}
         <div className="px-6 py-4 border-b border-terminal-green/30">
           <h2 className="text-xl font-bold uppercase tracking-wide text-terminal-green">
-            Edit Character
+            Редактировать персонажа
           </h2>
         </div>
 
@@ -138,7 +181,7 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
           {/* Basic Info */}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-xs text-terminal-green/60 uppercase mb-1">Name</label>
+              <label className="block text-xs text-terminal-green/60 uppercase mb-1">Имя</label>
               <input
                 type="text"
                 value={formData.name}
@@ -148,29 +191,55 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs text-terminal-green/60 uppercase mb-1">Race</label>
-              <input
-                type="text"
-                value={formData.race}
-                onChange={(e) => handleInputChange('race', e.target.value)}
+              <label className="block text-xs text-terminal-green/60 uppercase mb-1">Раса</label>
+              <select
+                value={selectedRaceOption ?? '__custom'}
+                onChange={(e) => handleInputChange('race', e.target.value === '__custom' ? '' : e.target.value)}
                 className="w-full bg-terminal-black border border-terminal-green/40 text-terminal-green rounded px-3 py-2 focus:outline-none focus:border-terminal-green"
-              />
+              >
+                {RACE_OPTIONS.map((race) => (
+                  <option key={race} value={race}>{getRaceLabel(race)}</option>
+                ))}
+                <option value="__custom">Своя раса</option>
+              </select>
+              {!isKnownRace && (
+                <input
+                  type="text"
+                  value={formData.race}
+                  onChange={(e) => handleInputChange('race', e.target.value)}
+                  placeholder="Введите расу..."
+                  className="w-full mt-2 bg-terminal-black border border-terminal-green/40 text-terminal-green rounded px-3 py-2 focus:outline-none focus:border-terminal-green"
+                />
+              )}
             </div>
             <div>
-              <label className="block text-xs text-terminal-green/60 uppercase mb-1">Class</label>
-              <input
-                type="text"
-                value={formData.class}
-                onChange={(e) => handleInputChange('class', e.target.value)}
+              <label className="block text-xs text-terminal-green/60 uppercase mb-1">Класс</label>
+              <select
+                value={selectedClassOption ?? '__custom'}
+                onChange={(e) => handleInputChange('class', e.target.value === '__custom' ? '' : e.target.value)}
                 className="w-full bg-terminal-black border border-terminal-green/40 text-terminal-green rounded px-3 py-2 focus:outline-none focus:border-terminal-green"
-              />
+              >
+                {CLASS_OPTIONS.map((characterClass) => (
+                  <option key={characterClass} value={characterClass}>{getClassLabel(characterClass)}</option>
+                ))}
+                <option value="__custom">Свой класс</option>
+              </select>
+              {!isKnownClass && (
+                <input
+                  type="text"
+                  value={formData.class}
+                  onChange={(e) => handleInputChange('class', e.target.value)}
+                  placeholder="Введите класс..."
+                  className="w-full mt-2 bg-terminal-black border border-terminal-green/40 text-terminal-green rounded px-3 py-2 focus:outline-none focus:border-terminal-green"
+                />
+              )}
             </div>
           </div>
 
           {/* Combat Stats */}
           <div className="grid grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs text-terminal-green/60 uppercase mb-1">Level</label>
+              <label className="block text-xs text-terminal-green/60 uppercase mb-1">Уровень</label>
               <input
                 type="number"
                 min={1}
@@ -181,7 +250,7 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs text-terminal-green/60 uppercase mb-1">HP</label>
+              <label className="block text-xs text-terminal-green/60 uppercase mb-1">ОЗ</label>
               <input
                 type="number"
                 min={0}
@@ -191,7 +260,7 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs text-terminal-green/60 uppercase mb-1">Max HP</label>
+              <label className="block text-xs text-terminal-green/60 uppercase mb-1">Макс. ОЗ</label>
               <input
                 type="number"
                 min={1}
@@ -201,7 +270,7 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs text-terminal-green/60 uppercase mb-1">AC</label>
+              <label className="block text-xs text-terminal-green/60 uppercase mb-1">КД</label>
               <input
                 type="number"
                 min={0}
@@ -215,15 +284,15 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
           {/* Ability Scores */}
           <div>
             <label className="block text-xs text-terminal-green/60 uppercase mb-2">
-              Ability Scores
+              Характеристики
             </label>
             <div className="grid grid-cols-6 gap-2">
-              <StatInput label="STR" stat="str" />
-              <StatInput label="DEX" stat="dex" />
-              <StatInput label="CON" stat="con" />
-              <StatInput label="INT" stat="int" />
-              <StatInput label="WIS" stat="wis" />
-              <StatInput label="CHA" stat="cha" />
+              <StatInput label="СИЛ" stat="str" />
+              <StatInput label="ЛОВ" stat="dex" />
+              <StatInput label="ТЕЛ" stat="con" />
+              <StatInput label="ИНТ" stat="int" />
+              <StatInput label="МДР" stat="wis" />
+              <StatInput label="ХАР" stat="cha" />
             </div>
           </div>
         </div>
@@ -236,14 +305,14 @@ export const CharacterEditModal: React.FC<CharacterEditModalProps> = ({
             disabled={isLoading}
             className="px-4 py-2 text-sm border border-terminal-green/50 text-terminal-green/70 rounded hover:bg-terminal-green/10 hover:text-terminal-green transition-colors disabled:opacity-50"
           >
-            Cancel
+            Отмена
           </button>
           <button
             type="submit"
             disabled={isLoading}
             className="px-4 py-2 text-sm font-medium bg-terminal-green hover:bg-terminal-green-bright text-terminal-black border border-terminal-green rounded transition-colors disabled:opacity-50"
           >
-            {isLoading ? 'Saving...' : 'Save Changes'}
+            {isLoading ? 'Сохраняю...' : 'Сохранить'}
           </button>
         </div>
       </form>

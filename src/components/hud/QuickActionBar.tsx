@@ -25,7 +25,7 @@ export const QuickActionBar: React.FC = () => {
     const clearCombat = useCombatStore(s => s.clearCombat);
     
     const handleClearScene = () => {
-        if (window.confirm('Clear the scene completely? This will reset all combat visuals and the active encounter.')) {
+        if (window.confirm('Полностью очистить сцену? Это сбросит все боевые визуализации и активную схватку.')) {
             clearCombat(false); // Full reset including encounter ID
         }
     };
@@ -33,11 +33,11 @@ export const QuickActionBar: React.FC = () => {
     // End encounter handler - calls backend and clears local state
     const handleEndEncounter = async () => {
         if (!activeEncounterId) {
-            alert('No active encounter to end.');
+            alert('Нет активной схватки для завершения.');
             return;
         }
         
-        if (window.confirm('End this encounter? This will finalize combat and clear the battlefield.')) {
+        if (window.confirm('Завершить эту схватку? Бой будет закрыт, а поле боя очищено.')) {
             try {
                 const result = await mcpManager.gameStateClient.callTool('combat_manage', {
                     action: 'end',
@@ -55,7 +55,7 @@ export const QuickActionBar: React.FC = () => {
 
                 if (!parsed || parsed.error) {
                     console.error('[QuickActionBar] Failed to end encounter (no success envelope):', parsed?.error ?? result);
-                    alert('Failed to end encounter. The combat is still active. Check console for details.');
+                    alert('Не удалось завершить схватку. Бой все еще активен. Подробности в консоли.');
                     return; // Preserve the encounter — do NOT clear local combat state.
                 }
 
@@ -63,49 +63,49 @@ export const QuickActionBar: React.FC = () => {
                 console.log('[QuickActionBar] Encounter ended:', activeEncounterId);
             } catch (e) {
                 console.error('[QuickActionBar] Failed to end encounter:', e);
-                alert('Failed to end encounter. Check console for details.');
+                alert('Не удалось завершить схватку. Подробности в консоли.');
             }
         }
     };
 
     return (
         <div className="flex gap-2 p-2 bg-terminal-dim/95 rounded-sm border border-terminal-green-dim shadow-2xl animate-fade-in-up">
-            <ActionButton 
-                label="Inventory" 
-                icon="🎒" 
-                onClick={toggleInventory} 
+            <ActionButton
+                label="Инвентарь"
+                icon="🎒"
+                onClick={toggleInventory}
             />
-            <ActionButton 
-                label="Spellbook" 
-                icon="📖" 
+            <ActionButton
+                label="Заклинания"
+                icon="📖"
                 onClick={toggleSpellbook}
             />
             <ActionButton
-                label="Combat Log"
+                label="Журнал боя"
                 icon="📜"
                 onClick={toggleCombatLog}
                 active={isCombatLogOpen}
             />
-            <ActionButton 
-                label="Line of Sight" 
-                icon="👁️" 
+            <ActionButton
+                label="Обзор"
+                icon="👁️"
                 onClick={() => setShowLineOfSight(!showLineOfSight)}
                 active={showLineOfSight}
             />
-            <ActionButton 
-                label="Distance" 
-                icon="📏" 
+            <ActionButton
+                label="Дистанция"
+                icon="📏"
                 onClick={() => setMeasureMode(!measureMode)}
                 active={measureMode}
             />
-            <ActionButton 
-                label="Clear Scene" 
-                icon="🗑️" 
+            <ActionButton
+                label="Очистить"
+                icon="🗑️"
                 onClick={handleClearScene}
             />
-            <ActionButton 
-                label="End Combat" 
-                icon="⚔️" 
+            <ActionButton
+                label="Завершить"
+                icon="⚔️"
                 onClick={handleEndEncounter}
                 disabled={!activeEncounterId}
             />

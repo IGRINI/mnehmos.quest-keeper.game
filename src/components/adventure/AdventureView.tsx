@@ -5,6 +5,7 @@ import { useGameStateStore } from '../../stores/gameStateStore';
 import { usePartyStore } from '../../stores/partyStore';
 import { CharacterCreationModal } from './CharacterCreationModal';
 import { PartySelector, PartyPanel, PartyCreatorModal, CharacterPickerModal } from '../party';
+import { getClassLabel, getRaceLabel } from '../character/displayLabels';
 
 const QuickStats = () => {
     const worlds = useGameStateStore((state) => state.worlds || []);
@@ -70,7 +71,7 @@ const QuickStats = () => {
                                 {activeChar.character.name}
                             </div>
                             <div className="text-xs text-terminal-green/70 mb-2">
-                                Ур. {activeChar.character.level} {activeChar.character.race ? `${activeChar.character.race} ` : ''}{activeChar.character.class}
+                                Ур. {activeChar.character.level} {activeChar.character.race ? `${getRaceLabel(activeChar.character.race)} ` : ''}{getClassLabel(activeChar.character.class)}
                                 {activeChar.role === 'leader' && (
                                     <span className="ml-2 text-yellow-400">★ Лидер</span>
                                 )}

@@ -12,6 +12,23 @@ interface NpcRelationshipCardProps {
   onClick: () => void;
 }
 
+const FAMILIARITY_LABELS: Record<string, string> = {
+  stranger: 'Незнакомец',
+  acquaintance: 'Знакомый',
+  friend: 'Друг',
+  close_friend: 'Близкий друг',
+  rival: 'Соперник',
+  enemy: 'Враг',
+};
+
+const DISPOSITION_LABELS: Record<string, string> = {
+  hostile: 'Враждебен',
+  unfriendly: 'Недружелюбен',
+  neutral: 'Нейтрален',
+  friendly: 'Дружелюбен',
+  helpful: 'Готов помочь',
+};
+
 /**
  * Compact card showing NPC relationship status
  */
@@ -26,7 +43,7 @@ export const NpcRelationshipCard: React.FC<NpcRelationshipCardProps> = ({
   // Format last interaction date
   const lastSeen = relationship.lastInteractionAt 
     ? new Date(relationship.lastInteractionAt).toLocaleDateString()
-    : 'Never';
+    : 'Никогда';
   
   return (
     <div 
@@ -44,8 +61,8 @@ export const NpcRelationshipCard: React.FC<NpcRelationshipCardProps> = ({
           {relationship.npcName || relationship.npcId.slice(0, 8)}
         </span>
         <div className="flex items-center gap-1 text-sm">
-          <span title={famConfig.label}>{famConfig.icon}</span>
-          <span title={dispConfig.label}>{dispConfig.icon}</span>
+          <span title={FAMILIARITY_LABELS[relationship.familiarity] ?? famConfig.label}>{famConfig.icon}</span>
+          <span title={DISPOSITION_LABELS[relationship.disposition] ?? dispConfig.label}>{dispConfig.icon}</span>
         </div>
       </div>
       
@@ -55,14 +72,14 @@ export const NpcRelationshipCard: React.FC<NpcRelationshipCardProps> = ({
           className="text-xs px-1.5 py-0.5 rounded"
           style={{ backgroundColor: famConfig.color + '30', color: famConfig.color }}
         >
-          {famConfig.label}
+          {FAMILIARITY_LABELS[relationship.familiarity] ?? famConfig.label}
         </span>
       </div>
       
       {/* Footer: Stats */}
       <div className="text-xs text-terminal-green-dim flex justify-between">
-        <span>{relationship.interactionCount} interactions</span>
-        <span>Last: {lastSeen}</span>
+        <span>Встреч: {relationship.interactionCount}</span>
+        <span>Последняя: {lastSeen}</span>
       </div>
     </div>
   );
@@ -79,7 +96,7 @@ export const NpcRelationshipList: React.FC = () => {
   if (relationships.length === 0) {
     return (
       <div className="text-terminal-green-dim text-sm italic p-4 text-center">
-        No NPCs met yet
+        НПС пока не встречены
       </div>
     );
   }

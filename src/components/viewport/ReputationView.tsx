@@ -50,6 +50,17 @@ const STANDING_STYLES: Record<Standing, { badge: string; bar: string }> = {
 
 const NEUTRAL_STYLE = STANDING_STYLES.Neutral;
 
+const STANDING_LABELS: Record<Standing, string> = {
+  Exalted: 'Превознесение',
+  Revered: 'Почтение',
+  Honored: 'Уважение',
+  Friendly: 'Дружелюбие',
+  Neutral: 'Нейтралитет',
+  Unfriendly: 'Недружелюбие',
+  Hostile: 'Враждебность',
+  Hated: 'Ненависть',
+};
+
 // ============================================
 // Card
 // ============================================
@@ -88,7 +99,7 @@ const FactionCard: React.FC<FactionCardProps> = ({ faction }) => {
           data-testid="faction-standing"
           className={`text-xs font-bold px-2 py-0.5 rounded shrink-0 ${style.badge}`}
         >
-          {standing}
+          {STANDING_LABELS[standing] ?? standing}
         </span>
       </div>
 
@@ -147,8 +158,8 @@ export const ReputationView: React.FC = () => {
     return (
       <div className="h-full w-full flex items-center justify-center p-8 text-terminal-green/60">
         <div className="text-center space-y-4">
-          <p className="text-xl">NO CHARACTER SELECTED</p>
-          <p className="text-sm">Select a character to view reputation.</p>
+          <p className="text-xl">ПЕРСОНАЖ НЕ ВЫБРАН</p>
+          <p className="text-sm">Выберите персонажа, чтобы посмотреть репутацию.</p>
         </div>
       </div>
     );
@@ -160,13 +171,13 @@ export const ReputationView: React.FC = () => {
     <div className="h-full w-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-terminal-green/20 scrollbar-track-transparent">
       <div className="border-b-2 border-terminal-green pb-4 mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-bold uppercase tracking-widest text-terminal-green flex items-center gap-2">
-          <span>🤝</span> Reputation
+          <span>🤝</span> Репутация
         </h2>
         <button
           onClick={() => characterId && syncReputation(characterId)}
           className="text-xs border border-terminal-green px-2 py-1 text-terminal-green hover:bg-terminal-green/10 transition-colors"
         >
-          Refresh
+          Обновить
         </button>
       </div>
 
@@ -175,7 +186,7 @@ export const ReputationView: React.FC = () => {
         data-testid="reputation-totals"
         className="mb-4 flex flex-wrap items-center gap-4 text-sm text-terminal-green"
       >
-        <span className="font-bold">{factionCount} factions</span>
+        <span className="font-bold">Фракций: {factionCount}</span>
         {entry?.characterName && (
           <span className="text-terminal-green/40">— {entry.characterName}</span>
         )}
@@ -188,12 +199,12 @@ export const ReputationView: React.FC = () => {
       )}
 
       {isLoading && factions.length === 0 && (
-        <div className="text-terminal-green/60 mb-4">Loading reputation…</div>
+        <div className="text-terminal-green/60 mb-4">Загружаю репутацию...</div>
       )}
 
       {/* Empty-state: no factions to show (and not currently loading / erroring). */}
       {!isLoading && factions.length === 0 && !error && (
-        <div className="text-terminal-green/60">No factions defined yet.</div>
+        <div className="text-terminal-green/60">Фракции пока не заданы.</div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

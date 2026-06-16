@@ -2,10 +2,10 @@ import React from 'react';
 
 // Ideology icons and colors
 const IDEOLOGY_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
-  democracy: { icon: '\u{1F5F3}', color: '#38bdf8', label: 'Democracy' },
-  autocracy: { icon: '\u{1F451}', color: '#f59e0b', label: 'Autocracy' },
-  theocracy: { icon: '\u{26EA}', color: '#a855f7', label: 'Theocracy' },
-  tribal: { icon: '\u{1F3D5}', color: '#22c55e', label: 'Tribal' },
+  democracy: { icon: '\u{1F5F3}', color: '#38bdf8', label: 'Демократия' },
+  autocracy: { icon: '\u{1F451}', color: '#f59e0b', label: 'Автократия' },
+  theocracy: { icon: '\u{26EA}', color: '#a855f7', label: 'Теократия' },
+  tribal: { icon: '\u{1F3D5}', color: '#22c55e', label: 'Племенной строй' },
 };
 
 // Resource icons
@@ -16,6 +16,16 @@ const RESOURCE_ICONS: Record<string, { icon: string; color: string }> = {
   gold: { icon: '\u{1F4B0}', color: '#fcd34d' },
   manpower: { icon: '\u{1F465}', color: '#3b82f6' },
 };
+
+const RESOURCE_LABELS: Record<string, string> = {
+  food: 'еда',
+  metal: 'металл',
+  oil: 'нефть',
+  gold: 'золото',
+  manpower: 'люди',
+};
+
+const formatResourceName = (resource: string): string => RESOURCE_LABELS[resource] ?? resource.replace(/_/g, ' ');
 
 interface NationData {
   id?: string;
@@ -75,7 +85,7 @@ export const NationCard: React.FC<NationCardProps> = ({
           <div className="flex items-center gap-2">
             <span className="text-lg">{ideology.icon}</span>
             <span className="text-terminal-green-bright font-bold">{data.name}</span>
-            {isPlayer && <span className="text-terminal-amber text-xs">(YOU)</span>}
+            {isPlayer && <span className="text-terminal-amber text-xs">(ВЫ)</span>}
           </div>
           <span
             className="px-2 py-0.5 rounded text-xs"
@@ -94,13 +104,13 @@ export const NationCard: React.FC<NationCardProps> = ({
         <div className="flex gap-4 text-sm">
           {data.gdp !== undefined && (
             <div>
-              <span className="text-terminal-green/60">GDP:</span>{' '}
+              <span className="text-terminal-green/60">ВВП:</span>{' '}
               <span className="text-terminal-amber">{data.gdp.toLocaleString()}</span>
             </div>
           )}
           {data.controlledRegions && (
             <div>
-              <span className="text-terminal-green/60">Regions:</span>{' '}
+              <span className="text-terminal-green/60">Регионы:</span>{' '}
               <span className="text-terminal-cyan">{data.controlledRegions.length}</span>
             </div>
           )}
@@ -125,22 +135,22 @@ export const NationCard: React.FC<NationCardProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-terminal-green-bright font-bold text-lg">{data.name}</span>
-                {isPlayer && <span className="text-terminal-amber text-xs border border-terminal-amber px-1 rounded">PLAYER</span>}
+                {isPlayer && <span className="text-terminal-amber text-xs border border-terminal-amber px-1 rounded">ИГРОК</span>}
               </div>
               {data.leader && (
-                <div className="text-terminal-green/70 text-sm">Led by {data.leader}</div>
+                <div className="text-terminal-green/70 text-sm">Лидер: {data.leader}</div>
               )}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-terminal-green/60 text-xs uppercase">Ideology</div>
+            <div className="text-terminal-green/60 text-xs uppercase">Идеология</div>
             <div style={{ color: ideology.color }} className="font-bold">{ideology.label}</div>
           </div>
         </div>
 
         {data.resources && (
           <div className="bg-terminal-green-dim/10 rounded p-3 mb-3">
-            <div className="text-terminal-green/60 text-xs uppercase mb-2">Resources</div>
+            <div className="text-terminal-green/60 text-xs uppercase mb-2">Ресурсы</div>
             <div className="grid grid-cols-3 gap-3">
               {Object.entries(data.resources).map(([resource, amount]) => {
                 const config = RESOURCE_ICONS[resource] || { icon: '\u{1F4E6}', color: '#666' };
@@ -149,7 +159,7 @@ export const NationCard: React.FC<NationCardProps> = ({
                     <span>{config.icon}</span>
                     <div>
                       <div className="text-terminal-green-bright font-bold">{amount?.toLocaleString() || 0}</div>
-                      <div className="text-terminal-green/50 text-xs capitalize">{resource}</div>
+                      <div className="text-terminal-green/50 text-xs">{formatResourceName(resource)}</div>
                     </div>
                   </div>
                 );
@@ -161,18 +171,18 @@ export const NationCard: React.FC<NationCardProps> = ({
         {data.gdp !== undefined && (
           <div className="flex items-center gap-4 mb-3 text-sm">
             <div className="bg-terminal-amber/10 px-3 py-2 rounded">
-              <div className="text-terminal-green/60 text-xs">GDP</div>
+              <div className="text-terminal-green/60 text-xs">ВВП</div>
               <div className="text-terminal-amber font-bold">{data.gdp.toLocaleString()}</div>
             </div>
             {data.controlledRegions && (
               <div className="bg-terminal-cyan/10 px-3 py-2 rounded">
-                <div className="text-terminal-green/60 text-xs">Territories</div>
+                <div className="text-terminal-green/60 text-xs">Территории</div>
                 <div className="text-terminal-cyan font-bold">{data.controlledRegions.length}</div>
               </div>
             )}
             {data.alliances && data.alliances.length > 0 && (
               <div className="bg-terminal-purple/10 px-3 py-2 rounded">
-                <div className="text-terminal-green/60 text-xs">Alliances</div>
+                <div className="text-terminal-green/60 text-xs">Союзы</div>
                 <div className="text-terminal-purple font-bold">{data.alliances.length}</div>
               </div>
             )}
@@ -181,18 +191,18 @@ export const NationCard: React.FC<NationCardProps> = ({
 
         {showPrivate && (data.aggression !== undefined || data.trust !== undefined || data.paranoia !== undefined) && (
           <div className="border-t border-terminal-green-dim pt-3">
-            <div className="text-terminal-green/60 text-xs uppercase mb-2">Personality Profile</div>
+            <div className="text-terminal-green/60 text-xs uppercase mb-2">Профиль личности</div>
             <div className="space-y-2">
-              {data.aggression !== undefined && renderTraitBar('Aggression', data.aggression, '#ef4444')}
-              {data.trust !== undefined && renderTraitBar('Trust', data.trust, '#22c55e')}
-              {data.paranoia !== undefined && renderTraitBar('Paranoia', data.paranoia, '#a855f7')}
+              {data.aggression !== undefined && renderTraitBar('Агрессия', data.aggression, '#ef4444')}
+              {data.trust !== undefined && renderTraitBar('Доверие', data.trust, '#22c55e')}
+              {data.paranoia !== undefined && renderTraitBar('Паранойя', data.paranoia, '#a855f7')}
             </div>
           </div>
         )}
 
         {data.publicIntent && (
           <div className="mt-3 pt-3 border-t border-terminal-green-dim">
-            <div className="text-terminal-green/60 text-xs uppercase mb-1">Public Stance</div>
+            <div className="text-terminal-green/60 text-xs uppercase mb-1">Публичная позиция</div>
             <div className="text-terminal-green italic">"{data.publicIntent}"</div>
           </div>
         )}
@@ -214,7 +224,7 @@ export const NationCard: React.FC<NationCardProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-terminal-green-bright font-bold">{data.name}</span>
-            {isPlayer && <span className="text-terminal-amber text-xs">(PLAYER)</span>}
+            {isPlayer && <span className="text-terminal-amber text-xs">(ИГРОК)</span>}
           </div>
           <span className="text-sm" style={{ color: ideology.color }}>{ideology.label}</span>
         </div>
@@ -222,7 +232,7 @@ export const NationCard: React.FC<NationCardProps> = ({
 
       {data.leader && (
         <div className="text-sm mb-3">
-          <span className="text-terminal-green/60">Leader:</span>{' '}
+          <span className="text-terminal-green/60">Лидер:</span>{' '}
           <span className="text-terminal-green">{data.leader}</span>
         </div>
       )}
@@ -231,13 +241,13 @@ export const NationCard: React.FC<NationCardProps> = ({
         {data.gdp !== undefined && (
           <div className="bg-terminal-amber/10 p-2 rounded text-center">
             <div className="text-terminal-amber font-bold">{data.gdp.toLocaleString()}</div>
-            <div className="text-terminal-green/60 text-xs">GDP</div>
+            <div className="text-terminal-green/60 text-xs">ВВП</div>
           </div>
         )}
         {data.controlledRegions && (
           <div className="bg-terminal-cyan/10 p-2 rounded text-center">
             <div className="text-terminal-cyan font-bold">{data.controlledRegions.length}</div>
-            <div className="text-terminal-green/60 text-xs">Regions</div>
+            <div className="text-terminal-green/60 text-xs">Регионы</div>
           </div>
         )}
       </div>
@@ -274,7 +284,7 @@ export const NationList: React.FC<NationListProps> = ({ nations, variant = 'grid
   if (nations.length === 0) {
     return (
       <div className="text-center text-terminal-green/60 py-4">
-        No nations found in this world.
+        Нации в этом мире не найдены.
       </div>
     );
   }

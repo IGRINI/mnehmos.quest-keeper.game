@@ -13,68 +13,68 @@ interface EnvironmentFormData {
 }
 
 const TIME_OF_DAY_OPTIONS = [
-  { value: 'dawn', label: 'Dawn' },
-  { value: 'morning', label: 'Morning' },
-  { value: 'noon', label: 'Noon' },
-  { value: 'afternoon', label: 'Afternoon' },
-  { value: 'dusk', label: 'Dusk' },
-  { value: 'evening', label: 'Evening' },
-  { value: 'night', label: 'Night' },
-  { value: 'midnight', label: 'Midnight' },
+  { value: 'dawn', label: 'Рассвет' },
+  { value: 'morning', label: 'Утро' },
+  { value: 'noon', label: 'Полдень' },
+  { value: 'afternoon', label: 'После полудня' },
+  { value: 'dusk', label: 'Закат' },
+  { value: 'evening', label: 'Вечер' },
+  { value: 'night', label: 'Ночь' },
+  { value: 'midnight', label: 'Полночь' },
 ];
 
 const SEASON_OPTIONS = [
-  { value: 'spring', label: 'Spring' },
-  { value: 'summer', label: 'Summer' },
-  { value: 'autumn', label: 'Autumn' },
-  { value: 'winter', label: 'Winter' },
+  { value: 'spring', label: 'Весна' },
+  { value: 'summer', label: 'Лето' },
+  { value: 'autumn', label: 'Осень' },
+  { value: 'winter', label: 'Зима' },
 ];
 
 const WEATHER_OPTIONS = [
-  { value: 'clear', label: 'Clear Skies' },
-  { value: 'cloudy', label: 'Cloudy' },
-  { value: 'overcast', label: 'Overcast' },
-  { value: 'light_rain', label: 'Light Rain' },
-  { value: 'heavy_rain', label: 'Heavy Rain' },
-  { value: 'thunderstorm', label: 'Thunderstorm' },
-  { value: 'fog', label: 'Foggy' },
-  { value: 'snow', label: 'Snow' },
-  { value: 'blizzard', label: 'Blizzard' },
-  { value: 'windy', label: 'Windy' },
+  { value: 'clear', label: 'Ясное небо' },
+  { value: 'cloudy', label: 'Облачно' },
+  { value: 'overcast', label: 'Пасмурно' },
+  { value: 'light_rain', label: 'Легкий дождь' },
+  { value: 'heavy_rain', label: 'Сильный дождь' },
+  { value: 'thunderstorm', label: 'Гроза' },
+  { value: 'fog', label: 'Туман' },
+  { value: 'snow', label: 'Снег' },
+  { value: 'blizzard', label: 'Метель' },
+  { value: 'windy', label: 'Ветрено' },
 ];
 
 const TEMPERATURE_OPTIONS = [
-  { value: 'freezing', label: 'Freezing' },
-  { value: 'cold', label: 'Cold' },
-  { value: 'cool', label: 'Cool' },
-  { value: 'mild', label: 'Mild' },
-  { value: 'warm', label: 'Warm' },
-  { value: 'hot', label: 'Hot' },
-  { value: 'scorching', label: 'Scorching' },
+  { value: 'freezing', label: 'Мороз' },
+  { value: 'cold', label: 'Холодно' },
+  { value: 'cool', label: 'Прохладно' },
+  { value: 'mild', label: 'Умеренно' },
+  { value: 'warm', label: 'Тепло' },
+  { value: 'hot', label: 'Жарко' },
+  { value: 'scorching', label: 'Пекло' },
 ];
 
 const LIGHTING_OPTIONS = [
-  { value: 'bright_daylight', label: 'Bright Daylight' },
-  { value: 'dim_golden_light', label: 'Dim Golden Light' },
-  { value: 'fading_orange_light', label: 'Fading Orange Light' },
-  { value: 'moonlight', label: 'Moonlight' },
-  { value: 'starlight', label: 'Starlight Only' },
-  { value: 'pitch_black', label: 'Pitch Black' },
-  { value: 'torchlight', label: 'Torchlight' },
-  { value: 'candlelight', label: 'Candlelight' },
-  { value: 'magical_glow', label: 'Magical Glow' },
-  { value: 'dark_and_ominous', label: 'Dark and Ominous' },
+  { value: 'bright_daylight', label: 'Яркий дневной свет' },
+  { value: 'dim_golden_light', label: 'Тусклый золотой свет' },
+  { value: 'fading_orange_light', label: 'Гаснущий оранжевый свет' },
+  { value: 'moonlight', label: 'Лунный свет' },
+  { value: 'starlight', label: 'Только звезды' },
+  { value: 'pitch_black', label: 'Кромешная тьма' },
+  { value: 'torchlight', label: 'Свет факелов' },
+  { value: 'candlelight', label: 'Свет свечей' },
+  { value: 'magical_glow', label: 'Магическое сияние' },
+  { value: 'dark_and_ominous', label: 'Мрачно и зловеще' },
 ];
 
 const MOON_PHASE_OPTIONS = [
-  { value: 'new_moon', label: 'New Moon' },
-  { value: 'waxing_crescent', label: 'Waxing Crescent' },
-  { value: 'first_quarter', label: 'First Quarter' },
-  { value: 'waxing_gibbous', label: 'Waxing Gibbous' },
-  { value: 'full_moon', label: 'Full Moon' },
-  { value: 'waning_gibbous', label: 'Waning Gibbous' },
-  { value: 'third_quarter', label: 'Third Quarter' },
-  { value: 'waning_crescent', label: 'Waning Crescent' },
+  { value: 'new_moon', label: 'Новолуние' },
+  { value: 'waxing_crescent', label: 'Растущий серп' },
+  { value: 'first_quarter', label: 'Первая четверть' },
+  { value: 'waxing_gibbous', label: 'Растущая луна' },
+  { value: 'full_moon', label: 'Полнолуние' },
+  { value: 'waning_gibbous', label: 'Убывающая луна' },
+  { value: 'third_quarter', label: 'Третья четверть' },
+  { value: 'waning_crescent', label: 'Убывающий серп' },
 ];
 
 // Quick presets for common scenarios
@@ -160,7 +160,7 @@ export const WorldEnvironmentForm: React.FC<WorldEnvironmentFormProps> = ({ onCl
     e.preventDefault();
 
     if (!activeWorldId) {
-      setMessage({ type: 'error', text: 'No active world selected' });
+      setMessage({ type: 'error', text: 'Активный мир не выбран' });
       return;
     }
 
@@ -188,7 +188,7 @@ export const WorldEnvironmentForm: React.FC<WorldEnvironmentFormProps> = ({ onCl
       // Refresh state from server
       await syncState(true);
 
-      setMessage({ type: 'success', text: 'Environment updated successfully!' });
+      setMessage({ type: 'success', text: 'Окружение обновлено.' });
 
       // Close form after short delay on success
       if (onClose) {
@@ -196,7 +196,7 @@ export const WorldEnvironmentForm: React.FC<WorldEnvironmentFormProps> = ({ onCl
       }
     } catch (error: any) {
       console.error('[WorldEnvironmentForm] Failed to update environment:', error);
-      setMessage({ type: 'error', text: error.message || 'Failed to update environment' });
+      setMessage({ type: 'error', text: error.message || 'Не удалось обновить окружение' });
     } finally {
       setIsSubmitting(false);
     }
@@ -236,47 +236,47 @@ export const WorldEnvironmentForm: React.FC<WorldEnvironmentFormProps> = ({ onCl
     <div className="bg-terminal-black/90 border border-terminal-green p-4 rounded-sm">
       <h3 className="text-sm font-bold mb-4 border-b border-terminal-green pb-2 uppercase tracking-widest text-terminal-green-bright flex items-center gap-2">
         <span>🌤️</span>
-        Set Environment
+        Настроить окружение
       </h3>
 
       {/* Quick Presets */}
       <div className="mb-4">
-        <div className="text-terminal-green/70 uppercase tracking-wider text-xs mb-2">Quick Presets</div>
+        <div className="text-terminal-green/70 uppercase tracking-wider text-xs mb-2">Быстрые пресеты</div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => applyPreset('dawn')}
             className="px-3 py-1 text-xs bg-terminal-green/10 border border-terminal-green-dim hover:bg-terminal-green/20 transition-colors"
           >
-            🌅 Dawn
+            🌅 Рассвет
           </button>
           <button
             type="button"
             onClick={() => applyPreset('noon')}
             className="px-3 py-1 text-xs bg-terminal-green/10 border border-terminal-green-dim hover:bg-terminal-green/20 transition-colors"
           >
-            ☀️ Noon
+            ☀️ Полдень
           </button>
           <button
             type="button"
             onClick={() => applyPreset('dusk')}
             className="px-3 py-1 text-xs bg-terminal-green/10 border border-terminal-green-dim hover:bg-terminal-green/20 transition-colors"
           >
-            🌆 Dusk
+            🌆 Закат
           </button>
           <button
             type="button"
             onClick={() => applyPreset('night')}
             className="px-3 py-1 text-xs bg-terminal-green/10 border border-terminal-green-dim hover:bg-terminal-green/20 transition-colors"
           >
-            🌙 Night
+            🌙 Ночь
           </button>
           <button
             type="button"
             onClick={() => applyPreset('storm')}
             className="px-3 py-1 text-xs bg-terminal-green/10 border border-terminal-green-dim hover:bg-terminal-green/20 transition-colors"
           >
-            ⛈️ Storm
+            ⛈️ Гроза
           </button>
         </div>
       </div>
@@ -286,55 +286,55 @@ export const WorldEnvironmentForm: React.FC<WorldEnvironmentFormProps> = ({ onCl
         <div className="mb-3">
           <label className="text-terminal-green/70 uppercase tracking-wider text-xs flex items-center gap-2 mb-1">
             <span className="text-sm">📅</span>
-            Date (optional)
+            Дата (необязательно)
           </label>
           <input
             type="text"
             value={formData.date}
             onChange={(e) => handleChange('date', e.target.value)}
-            placeholder="e.g., 15th of Midsummer, Year 1421"
+            placeholder="Например: 15-й день середины лета, 1421 год"
             className="w-full bg-terminal-black border border-terminal-green-dim text-terminal-green p-2 text-sm focus:outline-none focus:border-terminal-green placeholder-terminal-green/30"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <SelectField
-            label="Time of Day"
+            label="Время суток"
             icon="🕒"
             value={formData.timeOfDay}
             options={TIME_OF_DAY_OPTIONS}
             onChange={(v) => handleChange('timeOfDay', v)}
           />
           <SelectField
-            label="Season"
+            label="Сезон"
             icon="🍂"
             value={formData.season}
             options={SEASON_OPTIONS}
             onChange={(v) => handleChange('season', v)}
           />
           <SelectField
-            label="Weather"
+            label="Погода"
             icon="☁️"
             value={formData.weatherConditions}
             options={WEATHER_OPTIONS}
             onChange={(v) => handleChange('weatherConditions', v)}
           />
           <SelectField
-            label="Temperature"
+            label="Температура"
             icon="🌡️"
             value={formData.temperature}
             options={TEMPERATURE_OPTIONS}
             onChange={(v) => handleChange('temperature', v)}
           />
           <SelectField
-            label="Lighting"
+            label="Освещение"
             icon="💡"
             value={formData.lighting}
             options={LIGHTING_OPTIONS}
             onChange={(v) => handleChange('lighting', v)}
           />
           <SelectField
-            label="Moon Phase"
+            label="Фаза луны"
             icon="🌙"
             value={formData.moonPhase}
             options={MOON_PHASE_OPTIONS}
@@ -356,7 +356,7 @@ export const WorldEnvironmentForm: React.FC<WorldEnvironmentFormProps> = ({ onCl
             disabled={isSubmitting || !activeWorldId}
             className="flex-1 px-4 py-2 bg-terminal-green text-terminal-black font-bold uppercase text-sm hover:bg-terminal-green-bright transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Updating...' : 'Apply Environment'}
+            {isSubmitting ? 'Обновляю...' : 'Применить окружение'}
           </button>
           {onClose && (
             <button
@@ -364,14 +364,14 @@ export const WorldEnvironmentForm: React.FC<WorldEnvironmentFormProps> = ({ onCl
               onClick={onClose}
               className="px-4 py-2 border border-terminal-green text-terminal-green font-bold uppercase text-sm hover:bg-terminal-green/10 transition-colors"
             >
-              Cancel
+              Отмена
             </button>
           )}
         </div>
 
         {!activeWorldId && (
           <div className="mt-2 text-xs text-yellow-500">
-            No world selected. Please select a world first.
+            Мир не выбран. Сначала выберите мир.
           </div>
         )}
       </form>

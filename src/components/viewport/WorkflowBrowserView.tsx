@@ -51,11 +51,11 @@ const RunResultPanel: React.FC<RunResultPanelProps> = ({ run }) => {
       }`}
     >
       <div className="font-bold uppercase tracking-wider mb-1">
-        {run.autoExecuted ? 'Run complete' : 'Preview (dry-run)'}
+        {run.autoExecuted ? 'Запуск завершен' : 'Предпросмотр без запуска'}
       </div>
       {run.autoExecuted && (
         <div className="text-xs mb-2">
-          Executed steps: {run.executedSteps ?? steps.length} · Failures: {run.failureCount ?? 0}
+          Выполнено шагов: {run.executedSteps ?? steps.length} · Ошибок: {run.failureCount ?? 0}
         </div>
       )}
       {steps.length > 0 && (
@@ -63,9 +63,9 @@ const RunResultPanel: React.FC<RunResultPanelProps> = ({ run }) => {
           {steps.map((step, i) => (
             <li key={i} className="flex items-center gap-2">
               <span className="text-terminal-green/40 shrink-0">#{i + 1}</span>
-              <span className="truncate">{step.tool ?? 'step'}</span>
+              <span className="truncate">{step.tool ?? 'шаг'}</span>
               {step.success === false || step.error ? (
-                <span className="text-terminal-red shrink-0">✗ {step.error ?? 'failed'}</span>
+                <span className="text-terminal-red shrink-0">✗ {step.error ?? 'ошибка'}</span>
               ) : step.success === true || step.resolved === true ? (
                 // ✓ only on an AFFIRMATIVE outcome: executed-success or preview-resolved.
                 <span className="text-terminal-green shrink-0">✓</span>
@@ -213,13 +213,13 @@ export const WorkflowBrowserView: React.FC = () => {
       <div className="w-72 shrink-0 border-r border-terminal-green/20 flex flex-col overflow-hidden">
         <div className="border-b-2 border-terminal-green p-4 flex items-center justify-between">
           <h2 className="text-lg font-bold uppercase tracking-widest text-terminal-green flex items-center gap-2">
-            <span>🔁</span> Workflows
+            <span>🔁</span> Сценарии
           </h2>
           <button
             onClick={() => loadTemplates()}
             className="text-xs border border-terminal-green px-2 py-1 text-terminal-green hover:bg-terminal-green/10 transition-colors"
           >
-            Refresh
+            Обновить
           </button>
         </div>
 
@@ -229,17 +229,17 @@ export const WorkflowBrowserView: React.FC = () => {
               data-testid="workflow-no-character"
               className="text-xs text-terminal-green/50 border border-terminal-green/20 rounded p-2 mb-2"
             >
-              No active character — a workflow may create one.
+              Активный персонаж не выбран; сценарий может создать нового.
             </div>
           )}
 
           {isLoading && templates.length === 0 && (
-            <div className="text-terminal-green/60 text-sm">Loading workflows…</div>
+            <div className="text-terminal-green/60 text-sm">Загружаю сценарии...</div>
           )}
 
           {!isLoading && templates.length === 0 && (
             <div data-testid="workflow-empty" className="text-terminal-green/60 text-sm">
-              No workflow templates available.
+              Шаблоны сценариев недоступны.
             </div>
           )}
 
@@ -265,8 +265,8 @@ export const WorkflowBrowserView: React.FC = () => {
         {!template && (
           <div className="h-full flex items-center justify-center text-terminal-green/60">
             <div className="text-center space-y-2">
-              <p className="text-xl">SELECT A WORKFLOW</p>
-              <p className="text-sm">Choose a template from the list to view its steps.</p>
+              <p className="text-xl">ВЫБЕРИТЕ СЦЕНАРИЙ</p>
+              <p className="text-sm">Выберите шаблон из списка, чтобы увидеть его шаги.</p>
             </div>
           </div>
         )}
@@ -282,7 +282,7 @@ export const WorkflowBrowserView: React.FC = () => {
             {/* Steps */}
             <div className="mb-6">
               <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-2">
-                Steps
+                Шаги
               </div>
               <ol className="space-y-2">
                 {template.steps.map((step, i) => (
@@ -296,7 +296,7 @@ export const WorkflowBrowserView: React.FC = () => {
                     </span>
                     <div className="min-w-0">
                       <div className="text-sm text-terminal-green font-bold truncate">
-                        {step.tool ?? 'step'}
+                        {step.tool ?? 'шаг'}
                       </div>
                       {step.description && (
                         <div className="text-xs text-terminal-green/60">{step.description}</div>
@@ -311,7 +311,7 @@ export const WorkflowBrowserView: React.FC = () => {
             {requiredParams.length > 0 && (
               <div className="mb-6">
                 <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-2">
-                  Parameters
+                  Параметры
                 </div>
                 <div className="space-y-2">
                   {requiredParams.map((key) => (
@@ -340,7 +340,7 @@ export const WorkflowBrowserView: React.FC = () => {
                 disabled={isLoading}
                 className="text-sm border border-terminal-green/60 px-4 py-2 text-terminal-green hover:bg-terminal-green/10 transition-colors rounded disabled:opacity-40"
               >
-                Preview steps
+                Предпросмотр шагов
               </button>
 
               {!confirmingRun && (
@@ -350,7 +350,7 @@ export const WorkflowBrowserView: React.FC = () => {
                   disabled={isLoading}
                   className="text-sm border border-terminal-green bg-terminal-green/10 px-4 py-2 text-terminal-green font-bold hover:bg-terminal-green/20 transition-colors rounded disabled:opacity-40"
                 >
-                  Run workflow
+                  Запустить сценарий
                 </button>
               )}
             </div>
@@ -359,7 +359,7 @@ export const WorkflowBrowserView: React.FC = () => {
             {confirmingRun && (
               <div className="mt-4 border border-terminal-red/50 bg-terminal-red/10 rounded p-3">
                 <div className="text-sm text-terminal-red font-bold mb-2">
-                  This will create/modify game entities. Confirm?
+                  Сценарий создаст или изменит игровые сущности. Подтвердить?
                 </div>
                 <div className="flex items-center gap-3">
                   <button
@@ -368,14 +368,14 @@ export const WorkflowBrowserView: React.FC = () => {
                     disabled={isLoading}
                     className="text-sm border border-terminal-red bg-terminal-red/20 px-4 py-2 text-terminal-red font-bold hover:bg-terminal-red/30 transition-colors rounded disabled:opacity-40"
                   >
-                    Execute
+                    Выполнить
                   </button>
                   <button
                     data-testid="workflow-run-cancel"
                     onClick={handleCancelRun}
                     className="text-sm border border-terminal-green/60 px-4 py-2 text-terminal-green hover:bg-terminal-green/10 transition-colors rounded"
                   >
-                    Cancel
+                    Отмена
                   </button>
                 </div>
               </div>

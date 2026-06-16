@@ -4,6 +4,7 @@ import { useGameStateStore } from '../../stores/gameStateStore';
 import { SpellSlotsDisplay } from './SpellSlotsDisplay';
 import { mcpManager } from '../../services/mcpClient';
 import { useCombatStore } from '../../stores/combatStore';
+import { getAbilityLabel } from './displayLabels';
 
 interface SpellBookViewProps {
   characterId: string;
@@ -79,7 +80,7 @@ export const SpellBookView: React.FC<SpellBookViewProps> = ({
 
     if (!activeEncounterId) {
       // TODO: Implement OOC casting or just chat output
-      alert(`Casting "${spellName}" requires an active combat encounter to resolve automatically.\n\nPlease manage spell slots manually for out-of-combat casting.`);
+      alert(`Для автоматического применения "${spellName}" нужна активная боевая сцена.\n\nВне боя управляй ячейками заклинаний вручную.`);
       return;
     }
 
@@ -102,7 +103,7 @@ export const SpellBookView: React.FC<SpellBookViewProps> = ({
       
     } catch (error: any) {
       console.error('Failed to cast spell:', error);
-      alert(`Failed to cast ${spellName}: ${error?.message || 'Unknown error'}`);
+      alert(`Не удалось применить ${spellName}: ${error?.message || 'неизвестная ошибка'}`);
     }
   };
 
@@ -111,7 +112,7 @@ export const SpellBookView: React.FC<SpellBookViewProps> = ({
       {/* Header Stats - Terminal Themed */}
       <div className="flex justify-around bg-black/60 p-3 border-b border-terminal-green/30">
         <div className="text-center">
-          <div className="text-xs text-terminal-green/60 uppercase tracking-wider">Spell Attack</div>
+          <div className="text-xs text-terminal-green/60 uppercase tracking-wider">Атака заклинанием</div>
           <div className="text-xl font-bold text-terminal-green-bright">
             {calculatedStats.attackBonus !== null 
               ? (calculatedStats.attackBonus >= 0 ? `+${calculatedStats.attackBonus}` : calculatedStats.attackBonus) 
@@ -119,12 +120,12 @@ export const SpellBookView: React.FC<SpellBookViewProps> = ({
           </div>
         </div>
         <div className="text-center">
-          <div className="text-xs text-terminal-green/60 uppercase tracking-wider">Save DC</div>
+          <div className="text-xs text-terminal-green/60 uppercase tracking-wider">Сл спасброска</div>
           <div className="text-xl font-bold text-terminal-green-bright">{calculatedStats.saveDC ?? '--'}</div>
         </div>
         <div className="text-center">
-          <div className="text-xs text-terminal-green/60 uppercase tracking-wider">Ability</div>
-          <div className="text-xl font-bold text-terminal-green-bright capitalize">{calculatedStats.ability || '--'}</div>
+          <div className="text-xs text-terminal-green/60 uppercase tracking-wider">Характеристика</div>
+          <div className="text-xl font-bold text-terminal-green-bright capitalize">{calculatedStats.ability ? getAbilityLabel(calculatedStats.ability) : '--'}</div>
         </div>
       </div>
 
@@ -151,7 +152,7 @@ export const SpellBookView: React.FC<SpellBookViewProps> = ({
                 }`}
                 onClick={() => setActiveTab('prepared')}
               >
-                Prepared ({preparedSpells.length})
+                Подготовленные ({preparedSpells.length})
               </button>
             )}
             <button
@@ -162,7 +163,7 @@ export const SpellBookView: React.FC<SpellBookViewProps> = ({
               }`}
               onClick={() => setActiveTab('known')}
             >
-              Known Spells ({knownSpells.length})
+              Известные заклинания ({knownSpells.length})
             </button>
           </div>
 
@@ -170,7 +171,7 @@ export const SpellBookView: React.FC<SpellBookViewProps> = ({
             {/* Cantrips Section */}
             {cantripsKnown.length > 0 && (
               <div className="bg-black/40 rounded p-3 border border-terminal-green/30">
-                <h4 className="text-sm font-bold text-terminal-green/70 mb-2 uppercase">Cantrips (At Will)</h4>
+                <h4 className="text-sm font-bold text-terminal-green/70 mb-2 uppercase">Заговоры (без ячеек)</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {cantripsKnown.map((spell, idx) => (
                     <div 
@@ -179,7 +180,7 @@ export const SpellBookView: React.FC<SpellBookViewProps> = ({
                       onClick={() => handleCast(spell)}
                     >
                       <span className="text-terminal-green">{spell}</span>
-                      <span className="text-xs text-terminal-green-bright opacity-0 group-hover:opacity-100 transition-opacity">Cast</span>
+                      <span className="text-xs text-terminal-green-bright opacity-0 group-hover:opacity-100 transition-opacity">Применить</span>
                     </div>
                   ))}
                 </div>
@@ -189,7 +190,7 @@ export const SpellBookView: React.FC<SpellBookViewProps> = ({
             {/* Spells Section */}
             <div className="bg-black/40 rounded p-3 border border-terminal-green/30">
               <h4 className="text-sm font-bold text-terminal-green/70 mb-2 uppercase">
-                {activeTab === 'prepared' ? 'Prepared Spells' : 'Known Spells'}
+                {activeTab === 'prepared' ? 'Подготовленные заклинания' : 'Известные заклинания'}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {(activeTab === 'prepared' ? preparedSpells : knownSpells).map((spell, idx) => (
@@ -202,13 +203,13 @@ export const SpellBookView: React.FC<SpellBookViewProps> = ({
                         handleCast(spell);
                       }}
                     >
-                      Cast
+                      Применить
                     </button>
                   </div>
                 ))}
                 {(activeTab === 'prepared' ? preparedSpells : knownSpells).length === 0 && (
                   <div className="col-span-2 text-terminal-green/40 text-center py-4 italic">
-                    No spells found.
+                    Заклинаний нет.
                   </div>
                 )}
               </div>

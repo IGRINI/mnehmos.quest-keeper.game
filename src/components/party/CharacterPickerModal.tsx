@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePartyStore, MemberRole, CharacterType } from '../../stores/partyStore';
+import { getClassLabel, getRaceLabel } from '../character/displayLabels';
+import { getCharacterTypeLabel } from './displayLabels';
 
 interface CharacterPickerModalProps {
   isOpen: boolean;
@@ -19,7 +21,7 @@ const ROLE_OPTIONS: { value: MemberRole; label: string; description: string }[] 
 const CHARACTER_TYPE_FILTERS: { value: CharacterType | 'all'; label: string }[] = [
   { value: 'all', label: 'Все' },
   { value: 'pc', label: 'Игроки' },
-  { value: 'npc', label: 'NPCs' },
+  { value: 'npc', label: 'НПС' },
   { value: 'neutral', label: 'Нейтральные' },
   { value: 'enemy', label: 'Враги' },
 ];
@@ -142,13 +144,13 @@ export const CharacterPickerModal: React.FC<CharacterPickerModalProps> = ({
   const getTypeLabel = (type: CharacterType) => {
     switch (type) {
       case 'pc':
-        return 'PC';
+        return getCharacterTypeLabel(type);
       case 'npc':
-        return 'NPC';
+        return getCharacterTypeLabel(type);
       case 'neutral':
-        return 'Нейтральный';
+        return getCharacterTypeLabel(type);
       case 'enemy':
-        return 'Враг';
+        return getCharacterTypeLabel(type);
       default:
         return type;
     }
@@ -165,7 +167,7 @@ export const CharacterPickerModal: React.FC<CharacterPickerModalProps> = ({
               onClick={onClose}
               className="w-8 h-8 rounded-full border border-terminal-green/50 text-terminal-green hover:bg-terminal-green/20 transition-colors flex items-center justify-center"
             >
-              X
+              ×
             </button>
           </div>
         </div>
@@ -231,8 +233,8 @@ export const CharacterPickerModal: React.FC<CharacterPickerModalProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-terminal-green truncate">{char.name}</div>
                       <div className="text-xs text-terminal-green/60">
-                        Ур. {char.level} {char.class}
-                        {char.race && ` · ${char.race}`}
+                        Ур. {char.level} {getClassLabel(char.class)}
+                        {char.race && ` · ${getRaceLabel(char.race)}`}
                       </div>
                     </div>
 

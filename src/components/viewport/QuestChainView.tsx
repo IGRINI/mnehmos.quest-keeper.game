@@ -12,25 +12,33 @@ import {
 // never drift from the engine's derived states.
 const UNLOCK_META: Record<UnlockState, { label: string; icon: string; cls: string }> = {
   completed: {
-    label: 'Completed',
+    label: 'Завершено',
     icon: '✓',
     cls: 'bg-terminal-green text-terminal-black',
   },
   active: {
-    label: 'Active',
+    label: 'Активно',
     icon: '▶',
     cls: 'bg-terminal-green/20 text-terminal-green border border-terminal-green',
   },
   available: {
-    label: 'Available',
+    label: 'Доступно',
     icon: '○',
     cls: 'bg-terminal-black text-terminal-green border border-terminal-green/60',
   },
   locked: {
-    label: 'Locked',
+    label: 'Закрыто',
     icon: '🔒',
     cls: 'bg-terminal-black text-terminal-green/40 border border-terminal-green/20',
   },
+};
+
+const SKILL_LABELS: Record<string, string> = {
+  combat: 'Бой',
+  magic: 'Магия',
+  crafting: 'Ремесло',
+  gathering: 'Сбор',
+  social: 'Общение',
 };
 
 interface ChainQuestNodeProps {
@@ -83,9 +91,9 @@ const ChainQuestNodeCard: React.FC<ChainQuestNodeProps> = ({
           completed the gate is moot, so we don't show stale "Requires:" text. */}
       {dimmed && node.skillRequirements.length > 0 && (
         <div className="text-xs text-terminal-green/50 mb-1">
-          Requires:{' '}
+          Требуется:{' '}
           {node.skillRequirements
-            .map((r) => `${r.skill} Lv${r.level}`)
+            .map((r) => `${SKILL_LABELS[r.skill] ?? 'Навык'} ур. ${r.level}`)
             .join(', ')}
         </div>
       )}
@@ -96,7 +104,7 @@ const ChainQuestNodeCard: React.FC<ChainQuestNodeProps> = ({
       {node.branches.length > 0 && branchesReachable && (
         <div className="mt-3 border-t border-terminal-green/20 pt-3">
           <div className="text-xs text-terminal-green/60 uppercase tracking-wider mb-2">
-            Choose your path
+            Выберите путь
           </div>
           <div className="flex flex-col gap-2">
             {node.branches.map((branch) => (
@@ -172,8 +180,8 @@ export const QuestChainView: React.FC = () => {
     return (
       <div className="h-full w-full flex items-center justify-center p-8 text-terminal-green/60">
         <div className="text-center space-y-4">
-          <p className="text-xl">NO CHARACTER SELECTED</p>
-          <p className="text-sm">Select a character to view quest chains.</p>
+          <p className="text-xl">ПЕРСОНАЖ НЕ ВЫБРАН</p>
+          <p className="text-sm">Выберите персонажа, чтобы посмотреть цепочки квестов.</p>
         </div>
       </div>
     );
@@ -185,13 +193,13 @@ export const QuestChainView: React.FC = () => {
     <div className="h-full w-full overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-terminal-green/20 scrollbar-track-transparent">
       <div className="border-b-2 border-terminal-green pb-4 mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold uppercase tracking-widest text-terminal-green flex items-center gap-2">
-          <span>🔗</span> Quest Chains
+          <span>🔗</span> Цепочки квестов
         </h2>
         <button
           onClick={() => characterId && listChains()}
           className="text-xs border border-terminal-green px-2 py-1 text-terminal-green hover:bg-terminal-green/10 transition-colors"
         >
-          Refresh
+          Обновить
         </button>
       </div>
 
@@ -202,11 +210,11 @@ export const QuestChainView: React.FC = () => {
       )}
 
       {isLoading && graphs.length === 0 && (
-        <div className="text-terminal-green/60 mb-4">Loading chains…</div>
+        <div className="text-terminal-green/60 mb-4">Загружаю цепочки...</div>
       )}
 
       {!isLoading && graphs.length === 0 && !error && (
-        <div className="text-terminal-green/60">No quest chains discovered yet.</div>
+        <div className="text-terminal-green/60">Цепочки квестов пока не обнаружены.</div>
       )}
 
       <div className="space-y-8">
@@ -219,7 +227,7 @@ export const QuestChainView: React.FC = () => {
           return (
             <section key={chainKey} data-testid="chain-section">
               <h3 className="text-lg font-bold uppercase tracking-wider text-terminal-green/80 mb-3">
-                {graph.chainId ?? 'Quest'}
+                {graph.chainId ?? 'Квест'}
               </h3>
               <div className="space-y-3">
                 {graph.quests.map((node) => (

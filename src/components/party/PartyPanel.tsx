@@ -3,6 +3,7 @@ import { usePartyStore, PartyMemberWithCharacter, MemberRole } from '../../store
 import { useGameStateStore } from '../../stores/gameStateStore';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { ConditionList } from '../common/ConditionBadge'; // Import ConditionList
+import { getClassLabel, getRaceLabel } from '../character/displayLabels';
 
 interface PartyPanelProps {
   onAddMember?: () => void;
@@ -189,7 +190,7 @@ export const PartyPanel: React.FC<PartyPanelProps> = ({
                 )}
               </div>
               <div className="text-xs text-terminal-green/60">
-                Ур.{character.level} {character.race ? `${character.race} ` : ''}{character.class}
+                Ур.{character.level} {character.race ? `${getRaceLabel(character.race)} ` : ''}{getClassLabel(character.class)}
               </div>
               {character.conditions && character.conditions.length > 0 && (
                 <div className="mt-1">

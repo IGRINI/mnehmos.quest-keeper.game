@@ -7,11 +7,56 @@ import { useUIStore, ActiveTab, ALL_TABS } from '../../stores/uiStore';
 import { setPlaytestMode, isPlaytestModeEnabled } from '../../services/llm/contextBuilder';
 import { extractEmbeddedJson, extractMcpJsonPayload } from '../../utils/mcpUtils';
 import type { CampaignSession } from '../../stores/sessionStore';
+import { getClassLabel, getConditionLabel, getItemLabel, getRaceLabel } from '../character/displayLabels';
 
 // Slash command result interface
 interface CommandResult {
   content: string;
   type?: 'text' | 'info' | 'error' | 'success';
+}
+
+const SKILL_LABELS: Record<string, string> = {
+  perception: 'Восприятия',
+  stealth: 'Скрытности',
+  athletics: 'Атлетики',
+  acrobatics: 'Акробатики',
+  arcana: 'Магии',
+  history: 'Истории',
+  investigation: 'Анализа',
+  nature: 'Природы',
+  religion: 'Религии',
+  insight: 'Проницательности',
+  medicine: 'Медицины',
+  survival: 'Выживания',
+  deception: 'Обмана',
+  intimidation: 'Запугивания',
+  performance: 'Выступления',
+  persuasion: 'Убеждения',
+  animal_handling: 'Обращения с животными',
+  sleight_of_hand: 'Ловкости рук',
+};
+
+const ABILITY_LABELS: Record<string, string> = {
+  str: 'Сила',
+  dex: 'Ловкость',
+  con: 'Телосложение',
+  int: 'Интеллект',
+  wis: 'Мудрость',
+  cha: 'Харизма',
+};
+
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  weapon: 'оружие',
+  armor: 'доспех',
+  consumable: 'расходник',
+  quest: 'квестовый',
+  artifact: 'артефакт',
+  tool: 'инструмент',
+  misc: 'разное',
+};
+
+function formatItemType(type: string): string {
+  return ITEM_TYPE_LABELS[type.toLowerCase()] || type;
 }
 
 // Helper to categorize tools
@@ -157,7 +202,7 @@ export const ChatInput: React.FC = () => {
 
   // Command Hints Rotation
   const COMMAND_HINTS = [
-    "ВВЕДИ_КОМАНДУ... (Shift+Enter для новой строки)",
+    "ВВЕДИ_КОМАНДУ... (⇧+Ввод для новой строки)",
     "Напиши /new, чтобы начать новую кампанию",
     "Напиши /start, чтобы продолжить последнюю сессию",
     "Напиши /help, чтобы увидеть список команд",
@@ -188,7 +233,7 @@ export const ChatInput: React.FC = () => {
   // Calculate placeholder text
   const placeholderText = isLoading
     ? "ОБРАБОТКА..."
-    : (input.trim() === '' ? COMMAND_HINTS[hintIndex] : "ВВЕДИ_КОМАНДУ... (Shift+Enter для новой строки)");
+    : (input.trim() === '' ? COMMAND_HINTS[hintIndex] : "ВВЕДИ_КОМАНДУ... (⇧+Ввод для новой строки)");
 
   // Reusable LLM Submission function
   const submitToLLM = useCallback(async (injectedPrompt?: string) => {
@@ -318,7 +363,7 @@ export const ChatInput: React.FC = () => {
       addMessage({
         id: Date.now().toString() + '-err',
         sender: 'system',
-        content: `Ошибка LLM: ${error.message}`,
+      content: `Ошибка модели: ${error.message}`,
         timestamp: Date.now(),
         type: 'error',
       });
@@ -418,7 +463,7 @@ export const ChatInput: React.FC = () => {
   
       case 'help': {
         return {
-          content: `## Команды Quest Keeper AI:
+          content: `## Команды ИИ-Хранителя квестов:
   
   ### 📂 Сессии и кампании
   | Команда | Описание |
@@ -482,7 +527,7 @@ export const ChatInput: React.FC = () => {
   | \`/stealth\` | Проверка Скрытности |
   | \`/athletics\` | Проверка Атлетики |
   | \`/str\`, \`/dex\` и т.д. | Проверка характеристики |
-  | \`/save dex\` | Спасбросок, например DEX |
+  | \`/save dex\` | Спасбросок, например ЛВК |
   | Добавь \`adv\` или \`dis\` | Преимущество или помеха |
 
   ### 🔒 Секреты
@@ -508,7 +553,7 @@ export const ChatInput: React.FC = () => {
         if (activeChar) {
           status += `### Активный персонаж\n`;
           status += `**${activeChar.name}** - ур. ${activeChar.level} ${activeChar.race ? `${activeChar.race} ` : ''}${activeChar.class || ''}\n`;
-          status += `HP: ${activeChar.hp?.current || 0}/${activeChar.hp?.max || 0}\n\n`;
+          status += `ОЗ: ${activeChar.hp?.current || 0}/${activeChar.hp?.max || 0}\n\n`;
         } else {
           status += `### Активный персонаж\n*Персонаж не выбран*\n\n`;
         }
@@ -552,13 +597,13 @@ export const ChatInput: React.FC = () => {
         const encounterId = combatState.activeEncounterId;
   
         let debug = `## Отладочная информация\n\n`;
-        debug += `### IDs\n`;
-        debug += `- ID активного персонажа: \`${activeChar?.id || 'none'}\`\n`;
-        debug += `- ID активной сцены боя: \`${encounterId || 'none'}\`\n\n`;
+        debug += `### Идентификаторы\n`;
+        debug += `- ID активного персонажа: \`${activeChar?.id || 'нет'}\`\n`;
+        debug += `- ID активной сцены боя: \`${encounterId || 'нет'}\`\n\n`;
   
         debug += `### Статус MCP\n`;
-        debug += `- Game State Client: ${mcpManager.gameStateClient.isConnected() ? '✓ Подключено' : '✗ Отключено'}\n`;
-        debug += `- Combat Client: ${mcpManager.combatClient.isConnected() ? '✓ Подключено' : '✗ Отключено'}\n\n`;
+        debug += `- Клиент состояния игры: ${mcpManager.gameStateClient.isConnected() ? '✓ Подключено' : '✗ Отключено'}\n`;
+        debug += `- Клиент боя: ${mcpManager.combatClient.isConnected() ? '✓ Подключено' : '✗ Отключено'}\n\n`;
   
         debug += `### Размеры хранилищ\n`;
         debug += `- Группа: ${gameState.party.length}\n`;
@@ -583,7 +628,7 @@ export const ChatInput: React.FC = () => {
         
         if (newState) {
           return { 
-            content: `🧪 **Режим тестирования включен**\n\nAI-Мастер теперь проверяет механики. Попробуй:\n- \`test combat\` - полный тест боя\n- \`test aoe\` - тест зонального урона\n- \`test turns\` - тест порядка ходов\n\nВведи \`/playtest\` еще раз, чтобы выключить режим.`,
+            content: `🧪 **Режим тестирования включен**\n\nИИ-Мастер теперь проверяет механики. Попробуй:\n- «проверь бой» — полный тест боя\n- «проверь зону урона» — тест зонального урона\n- «проверь ходы» — тест порядка ходов\n\nВведи \`/playtest\` еще раз, чтобы выключить режим.`,
             type: 'success'
           };
         } else {
@@ -618,7 +663,7 @@ export const ChatInput: React.FC = () => {
           const chars = parsed.characters;
 
           if (!Array.isArray(chars) || chars.length === 0) {
-            return { content: `*Персонажи не найдены*\n\nПопроси AI создать персонажа, например: "Создай воина по имени Валерос"` };
+            return { content: `*Персонажи не найдены*\n\nПопроси ИИ создать персонажа, например: "Создай воина по имени Валерос"` };
           }
   
           let output = `## Персонажи (${chars.length})\n\n`;
@@ -626,8 +671,8 @@ export const ChatInput: React.FC = () => {
             output += `### ${char.name}\n`;
             output += `- **ID:** \`${char.id}\`\n`;
             output += `- **Уровень:** ${char.level || 1}\n`;
-            output += `- **HP:** ${char.hp || 0}/${char.maxHp || 0}\n`;
-            output += `- **AC:** ${char.ac || 10}\n\n`;
+            output += `- **ОЗ:** ${char.hp || 0}/${char.maxHp || 0}\n`;
+            output += `- **КД:** ${char.ac || 10}\n\n`;
           }
           return { content: output };
         } catch (error: any) {
@@ -664,15 +709,15 @@ export const ChatInput: React.FC = () => {
   
           let output = `## ${char.name}\n\n`;
           output += `**ID:** \`${char.id}\`\n`;
-          output += `**Раса:** ${char.race || 'неизвестно'}\n`;
-          output += `**Класс:** ${char.class || char.characterClass || 'Adventurer'}\n`;
+          output += `**Раса:** ${getRaceLabel(char.race) || 'неизвестно'}\n`;
+          output += `**Класс:** ${getClassLabel(char.class || char.characterClass) || 'Искатель приключений'}\n`;
           output += `**Уровень:** ${char.level || 1}\n`;
-          output += `**HP:** ${char.hp || 0}/${char.maxHp || 0}\n`;
-          output += `**AC:** ${char.ac || 10}\n\n`;
+          output += `**ОЗ:** ${char.hp || 0}/${char.maxHp || 0}\n`;
+          output += `**КД:** ${char.ac || 10}\n\n`;
   
           if (char.stats) {
             output += `### Характеристики\n`;
-            output += `| STR | DEX | CON | INT | WIS | CHA |\n`;
+            output += `| СИЛ | ЛВК | ТЕЛ | ИНТ | МДР | ХАР |\n`;
             output += `|-----|-----|-----|-----|-----|-----|\n`;
             output += `| ${char.stats.str || 10} | ${char.stats.dex || 10} | ${char.stats.con || 10} | ${char.stats.int || 10} | ${char.stats.wis || 10} | ${char.stats.cha || 10} |\n`;
           }
@@ -680,14 +725,14 @@ export const ChatInput: React.FC = () => {
           if (char.inventory && char.inventory.length > 0) {
             output += `\n### Инвентарь\n`;
             for (const item of char.inventory) {
-              output += `- ${item.name}${item.quantity > 1 ? ` (x${item.quantity})` : ''}${item.equipped ? ' [E]' : ''}\n`;
+              output += `- ${getItemLabel(item.name)}${item.quantity > 1 ? ` (x${item.quantity})` : ''}${item.equipped ? ' [надето]' : ''}\n`;
             }
           }
   
           if (char.conditions && char.conditions.length > 0) {
             output += `\n### Состояния\n`;
             for (const cond of char.conditions) {
-              output += `- ${cond}\n`;
+              output += `- ${getConditionLabel(cond)}\n`;
             }
           }
   
@@ -705,7 +750,7 @@ export const ChatInput: React.FC = () => {
           const activeParty = partyState.getActiveParty();
           
           if (!activeParty || activeParty.members.length === 0) {
-            return { content: `*В группе никого нет*\n\nСоздай персонажей через AI.` };
+            return { content: `*В группе никого нет*\n\nСоздай персонажей через ИИ.` };
           }
   
           let output = `## ${activeParty.name} (${activeParty.members.length} участник(ов))\n\n`;
@@ -714,23 +759,23 @@ export const ChatInput: React.FC = () => {
             const isActive = member.characterId === gameState.activeCharacter?.id;
             const roleIcon = member.role === 'leader' ? '★ ' : member.isActive ? '▶ ' : '';
             output += `### ${roleIcon}${char.name} ${isActive ? '(активный)' : ''}\n`;
-            output += `**${char.race || 'неизвестно'}** ${char.class || 'Adventurer'}, ур. ${char.level || 1}\n`;
-            output += `HP: ${char.hp || 0}/${char.maxHp || 0} | AC: ${char.ac || 10}\n\n`;
+            output += `**${getRaceLabel(char.race) || 'неизвестно'}** ${getClassLabel(char.class) || 'Искатель приключений'}, ур. ${char.level || 1}\n`;
+            output += `ОЗ: ${char.hp || 0}/${char.maxHp || 0} | КД: ${char.ac || 10}\n\n`;
           }
           return { content: output };
         } catch (error: any) {
           // Fallback to gameState.party if partyStore fails
           const party = gameState.party;
           if (party.length === 0) {
-            return { content: `*В группе никого нет*\n\nСоздай персонажей через AI.` };
+            return { content: `*В группе никого нет*\n\nСоздай персонажей через ИИ.` };
           }
   
           let output = `## Группа (${party.length})\n\n`;
           for (const member of party) {
             const isActive = member.id === gameState.activeCharacter?.id;
             output += `### ${member.name} ${isActive ? '(активный)' : ''}\n`;
-            output += `**${member.race || 'неизвестно'}** ${member.class || 'Adventurer'}, ур. ${member.level || 1}\n`;
-            output += `HP: ${member.hp?.current || 0}/${member.hp?.max || 0}\n\n`;
+            output += `**${getRaceLabel(member.race) || 'неизвестно'}** ${getClassLabel(member.class) || 'Искатель приключений'}, ур. ${member.level || 1}\n`;
+            output += `ОЗ: ${member.hp?.current || 0}/${member.hp?.max || 0}\n\n`;
           }
           return { content: output };
         }
@@ -770,13 +815,13 @@ export const ChatInput: React.FC = () => {
           }
   
           let output = `## 🎒 Инвентарь (${items.length} предмет(ов))\n`;
-          output += `**Вес:** ${data.totalWeight?.toFixed(1) || 0} / ${data.capacity || 100} lbs\n\n`;
+          output += `**Вес:** ${data.totalWeight?.toFixed(1) || 0} / ${data.capacity || 100} фунт.\n\n`;
           output += `| Предмет | Тип | Кол-во | Вес | Надето |\n`;
           output += `|------|------|-----|--------|----------|\n`;
           for (const entry of items) {
             const item = entry.item || entry;
-            const name = item.name || entry.itemId || 'неизвестно';
-            const type = item.type || '-';
+            const name = getItemLabel(item.name || entry.itemId || 'неизвестно');
+            const type = item.type ? formatItemType(item.type) : '-';
             const qty = entry.quantity || 1;
             const weight = item.weight ? `${(item.weight * qty).toFixed(1)}` : '-';
             const equipped = entry.equipped ? '✓' : '-';
@@ -789,7 +834,7 @@ export const ChatInput: React.FC = () => {
       }
   
       case 'items': {
-        return { content: `Шаблоны предметов создаются инструментом \`create_item_template\`.\n\nПопроси AI: "Создай шаблон длинного меча"` };
+        return { content: `Шаблоны предметов создаются инструментом \`create_item_template\`.\n\nПопроси ИИ: "Создай шаблон длинного меча"` };
       }
   
       case 'quests':
@@ -821,13 +866,13 @@ export const ChatInput: React.FC = () => {
           const quests = logData.quests;
 
           if (!Array.isArray(quests) || quests.length === 0) {
-            return { content: `*Активных квестов нет*\n\nПопроси AI создать квест.` };
+            return { content: `*Активных квестов нет*\n\nПопроси ИИ создать квест.` };
           }
   
           let output = `## Журнал квестов (${quests.length})\n\n`;
           for (const quest of quests) {
             output += `### ${quest.name}\n`;
-            output += `**Статус:** ${quest.status || 'active'}\n`;
+            output += `**Статус:** ${quest.status || 'активен'}\n`;
             output += `${quest.description || ''}\n\n`;
   
             if (quest.objectives && quest.objectives.length > 0) {
@@ -848,7 +893,7 @@ export const ChatInput: React.FC = () => {
       case 'combat': {
         const encounterId = combatState.activeEncounterId;
         if (!encounterId) {
-          return { content: `*Активного боя нет*\n\nЧтобы начать бой, попроси AI: "Начни бой с двумя гоблинами"` };
+          return { content: `*Активного боя нет*\n\nЧтобы начать бой, попроси ИИ: "Начни бой с двумя гоблинами"` };
         }
   
         try {
@@ -866,7 +911,7 @@ export const ChatInput: React.FC = () => {
           output += `**ID сцены боя:** \`${encounterId}\`\n\n`;
   
           output += `### Порядок инициативы\n`;
-          output += `| # | Имя | HP | Состояния |\n`;
+          output += `| # | Имя | ОЗ | Состояния |\n`;
           output += `|---|------|----|-----------|\n`;
   
           const participants = encounter.participants || [];
@@ -896,12 +941,12 @@ export const ChatInput: React.FC = () => {
             const name = turnOrder[i];
             const entity = combatants.find(c => c.name === name);
             const hp = entity?.metadata?.hp;
-            output += `${i + 1}. **${name}** - ${hp?.current || 0}/${hp?.max || 0} HP\n`;
+            output += `${i + 1}. **${name}** - ${hp?.current || 0}/${hp?.max || 0} ОЗ\n`;
           }
         } else {
           for (let i = 0; i < combatants.length; i++) {
             const c = combatants[i];
-            output += `${i + 1}. **${c.name}** - ${c.metadata?.hp?.current || 0}/${c.metadata?.hp?.max || 0} HP\n`;
+            output += `${i + 1}. **${c.name}** - ${c.metadata?.hp?.current || 0}/${c.metadata?.hp?.max || 0} ОЗ\n`;
           }
         }
         return { content: output };
@@ -932,7 +977,7 @@ export const ChatInput: React.FC = () => {
           const worlds = listData.worlds;
 
           if (!Array.isArray(worlds) || worlds.length === 0) {
-            return { content: `*Миры еще не созданы*\n\nПопроси AI: "Создай новый мир Эльдория"` };
+            return { content: `*Миры еще не созданы*\n\nПопроси ИИ: "Создай новый мир Эльдория"` };
           }
 
           let output = `## Миры (${worlds.length})\n\n`;
@@ -1110,10 +1155,10 @@ export const ChatInput: React.FC = () => {
             return { content: `Ошибка проверки навыка: не удалось разобрать результат броска`, type: 'error' };
           }
 
-          const skillName = command.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          const skillName = SKILL_LABELS[command] || command.replace(/_/g, ' ');
           let output = `## 🎲 Проверка ${skillName}\n\n`;
           output += `Чистый d20: **${data.total}**\n\n`;
-          output += `*Добавь модификатор характеристики и proficiency вручную: авто-бонус сейчас недоступен.*\n`;
+          output += `*Добавь модификатор характеристики и бонус мастерства вручную: авто-бонус сейчас недоступен.*\n`;
           if (advantage) output += `⬆️ Преимущество\n`;
           if (disadvantage) output += `⬇️ Помеха\n`;
 
@@ -1151,9 +1196,10 @@ export const ChatInput: React.FC = () => {
             return { content: `Ошибка проверки характеристики: не удалось разобрать результат броска`, type: 'error' };
           }
 
-          let output = `## 🎲 Проверка ${command.toUpperCase()}\n\n`;
+          const abilityName = ABILITY_LABELS[command] || command.toUpperCase();
+          let output = `## 🎲 Проверка: ${abilityName}\n\n`;
           output += `Чистый d20: **${data.total}**\n`;
-          output += `\n*Добавь модификатор ${command.toUpperCase()} вручную: авто-бонус сейчас недоступен.*\n`;
+          output += `\n*Добавь модификатор характеристики вручную: авто-бонус сейчас недоступен.*\n`;
           if (advantage) output += `⬆️ Преимущество\n`;
           if (disadvantage) output += `⬇️ Помеха\n`;
 
@@ -1191,9 +1237,10 @@ export const ChatInput: React.FC = () => {
             return { content: `Ошибка спасброска: не удалось разобрать результат броска`, type: 'error' };
           }
 
-          let output = `## 🛡️ Спасбросок ${ability.toUpperCase()}\n\n`;
+          const abilityName = ABILITY_LABELS[ability] || ability.toUpperCase();
+          let output = `## 🛡️ Спасбросок: ${abilityName}\n\n`;
           output += `Чистый d20: **${data.total}**\n`;
-          output += `\n*Добавь бонус спасброска ${ability.toUpperCase()} вручную: авто-бонус сейчас недоступен.*\n`;
+          output += `\n*Добавь бонус спасброска вручную: авто-бонус сейчас недоступен.*\n`;
           if (advantage) output += `⬆️ Преимущество\n`;
           if (disadvantage) output += `⬇️ Помеха\n`;
 
@@ -1207,7 +1254,7 @@ export const ChatInput: React.FC = () => {
       case 'rest':
       case 'camp': {
         (await import('../../stores/hudStore')).useHudStore.getState().toggleRestPanel();
-        return { content: `⛺ **Меню отдыха открыто.** Выбери Short Rest или Long Rest.` };
+        return { content: `⛺ **Меню отдыха открыто.** Выбери короткий или долгий отдых.` };
       }
 
       case 'shortrest': {

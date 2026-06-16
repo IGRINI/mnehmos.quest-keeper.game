@@ -22,37 +22,37 @@ export const MODEL_REGISTRY: Record<string, ModelDefinition> = {
     baseArchetype: 'humanoid',
     defaultSize: 'Medium',
     defaultColor: '#c0c0c0',
-    description: 'Armored warrior with helmet'
+    description: 'Бронированный воин в шлеме'
   },
   wizard: {
     baseArchetype: 'humanoid',
     defaultSize: 'Medium',
     defaultColor: '#4a148c',
-    description: 'Robed figure with staff'
+    description: 'Фигура в мантии с посохом'
   },
   rogue: {
     baseArchetype: 'humanoid',
     defaultSize: 'Medium',
     defaultColor: '#37474f',
-    description: 'Hooded, crouched figure'
+    description: 'Сгорбленная фигура в капюшоне'
   },
   cleric: {
     baseArchetype: 'humanoid',
     defaultSize: 'Medium',
     defaultColor: '#ffd700',
-    description: 'Robed with religious symbol'
+    description: 'Фигура в мантии с религиозным символом'
   },
   goblin: {
     baseArchetype: 'humanoid',
     defaultSize: 'Small',
     defaultColor: '#558b2f',
-    description: 'Small hunched humanoid'
+    description: 'Маленький сгорбленный гуманоид'
   },
   orc: {
     baseArchetype: 'humanoid',
     defaultSize: 'Medium',
     defaultColor: '#4e342e',
-    description: 'Bulky tusked humanoid'
+    description: 'Массивный клыкастый гуманоид'
   },
 
   // ===== BEASTS (5) =====
@@ -60,31 +60,31 @@ export const MODEL_REGISTRY: Record<string, ModelDefinition> = {
     baseArchetype: 'quadruped',
     defaultSize: 'Medium',
     defaultColor: '#616161',
-    description: 'Four-legged canine'
+    description: 'Четвероногий хищник'
   },
   bear: {
     baseArchetype: 'beast',
     defaultSize: 'Large',
     defaultColor: '#5d4037',
-    description: 'Heavy bulky beast'
+    description: 'Крупный массивный зверь'
   },
   horse: {
     baseArchetype: 'quadruped',
     defaultSize: 'Large',
     defaultColor: '#8d6e63',
-    description: 'Ridable mount'
+    description: 'Ездовое животное'
   },
   boar: {
     baseArchetype: 'quadruped',
     defaultSize: 'Medium',
     defaultColor: '#6d4c41',
-    description: 'Tusked quadruped'
+    description: 'Клыкастое четвероногое'
   },
   giant_rat: {
     baseArchetype: 'quadruped',
     defaultSize: 'Small',
     defaultColor: '#795548',
-    description: 'Oversized rodent'
+    description: 'Крупный грызун'
   },
 
   // ===== MONSTERS (8) =====
@@ -92,49 +92,49 @@ export const MODEL_REGISTRY: Record<string, ModelDefinition> = {
     baseArchetype: 'avian',
     defaultSize: 'Large',
     defaultColor: '#8b0000',
-    description: 'Winged serpent with legs'
+    description: 'Крылатый змей с лапами'
   },
   skeleton: {
     baseArchetype: 'humanoid',
     defaultSize: 'Medium',
     defaultColor: '#efebe9',
-    description: 'Bony humanoid'
+    description: 'Костяной гуманоид'
   },
   zombie: {
     baseArchetype: 'beast',
     defaultSize: 'Medium',
     defaultColor: '#4e6157',
-    description: 'Shambling undead'
+    description: 'Шаркающая нежить'
   },
   spider: {
     baseArchetype: 'arachnid',
     defaultSize: 'Large',
     defaultColor: '#1a1a1a',
-    description: '8-legged arachnid'
+    description: 'Восьминогое паукообразное'
   },
   slime: {
     baseArchetype: 'amorphous',
     defaultSize: 'Medium',
     defaultColor: '#00e676',
-    description: 'Amorphous blob'
+    description: 'Бесформенная масса'
   },
   troll: {
     baseArchetype: 'beast',
     defaultSize: 'Large',
     defaultColor: '#33691e',
-    description: 'Large hunched monster'
+    description: 'Крупное сгорбленное чудовище'
   },
   beholder: {
     baseArchetype: 'amorphous',
     defaultSize: 'Large',
     defaultColor: '#7b1fa2',
-    description: 'Floating eye sphere'
+    description: 'Парящая глазастая сфера'
   },
   mimic: {
     baseArchetype: 'amorphous',
     defaultSize: 'Medium',
     defaultColor: '#5d4037',
-    description: 'Box with teeth'
+    description: 'Сундук с зубами'
   },
 
   // ===== ELEMENTALS (4) =====
@@ -142,25 +142,25 @@ export const MODEL_REGISTRY: Record<string, ModelDefinition> = {
     baseArchetype: 'amorphous',
     defaultSize: 'Large',
     defaultColor: '#ff5722',
-    description: 'Flame humanoid'
+    description: 'Пламенный гуманоид'
   },
   water_elemental: {
     baseArchetype: 'amorphous',
     defaultSize: 'Large',
     defaultColor: '#03a9f4',
-    description: 'Watery blob'
+    description: 'Водяная масса'
   },
   earth_elemental: {
     baseArchetype: 'beast',
     defaultSize: 'Large',
     defaultColor: '#795548',
-    description: 'Rocky humanoid'
+    description: 'Каменный гуманоид'
   },
   air_elemental: {
     baseArchetype: 'amorphous',
     defaultSize: 'Large',
     defaultColor: '#b3e5fc',
-    description: 'Wispy vortex'
+    description: 'Туманный вихрь'
   },
 
   // ===== UNIQUE (2) =====
@@ -168,13 +168,13 @@ export const MODEL_REGISTRY: Record<string, ModelDefinition> = {
     baseArchetype: 'beast',
     defaultSize: 'Huge',
     defaultColor: '#33691e',
-    description: 'Walking tree'
+    description: 'Ходячее дерево'
   },
   ghost: {
     baseArchetype: 'humanoid',
     defaultSize: 'Medium',
     defaultColor: '#e0e0e0',
-    description: 'Translucent humanoid'
+    description: 'Полупрозрачный гуманоид'
   }
 };
 

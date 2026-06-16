@@ -20,6 +20,58 @@ const BIOME_COLORS: Record<string, string> = {
   volcanic: '#dc2626',
 };
 
+const BIOME_LABELS: Record<string, string> = {
+  ocean: 'океан',
+  deep_ocean: 'глубокий океан',
+  coast: 'побережье',
+  beach: 'пляж',
+  desert: 'пустыня',
+  grassland: 'луг',
+  forest: 'лес',
+  taiga: 'тайга',
+  tundra: 'тундра',
+  snow: 'снег',
+  mountain: 'горы',
+  highland: 'нагорье',
+  swamp: 'топь',
+  jungle: 'джунгли',
+  savanna: 'саванна',
+  volcanic: 'вулканический',
+};
+
+const WORLD_VALUE_LABELS: Record<string, string> = {
+  dawn: 'рассвет',
+  morning: 'утро',
+  noon: 'полдень',
+  afternoon: 'после полудня',
+  dusk: 'закат',
+  evening: 'вечер',
+  night: 'ночь',
+  midnight: 'полночь',
+  clear: 'ясно',
+  cloudy: 'облачно',
+  overcast: 'пасмурно',
+  light_rain: 'легкий дождь',
+  heavy_rain: 'сильный дождь',
+  thunderstorm: 'гроза',
+  fog: 'туман',
+  snow: 'снег',
+  blizzard: 'метель',
+  windy: 'ветрено',
+  spring: 'весна',
+  summer: 'лето',
+  autumn: 'осень',
+  fall: 'осень',
+  winter: 'зима',
+  freezing: 'мороз',
+  cold: 'холодно',
+  cool: 'прохладно',
+  mild: 'умеренно',
+  warm: 'тепло',
+  hot: 'жарко',
+  scorching: 'пекло',
+};
+
 // Weather icons
 const WEATHER_ICONS: Record<string, string> = {
   clear: '☀️',
@@ -90,41 +142,44 @@ export const WorldStateCard: React.FC<WorldStateCardProps> = ({ data, variant = 
     ? TIME_ICONS[data.environment.time_of_day] || '⏰'
     : '';
 
+  const formatBiomeName = (value: string): string => BIOME_LABELS[value] ?? value.replace('_', ' ');
+  const formatWorldValue = (value: string): string => WORLD_VALUE_LABELS[value] ?? value.replace('_', ' ');
+
   if (variant === 'compact') {
     return (
       <div className="bg-terminal-black/80 border border-terminal-green rounded p-3 my-2 font-mono">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-lg">🗺️</span>
-          <span className="text-terminal-green-bright font-bold">World State</span>
+          <span className="text-terminal-green-bright font-bold">Состояние мира</span>
           {data.seed && <span className="text-terminal-green/50 text-xs">({data.seed})</span>}
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex items-center gap-1">
-            <span className="text-terminal-green/60">Size:</span>
+            <span className="text-terminal-green/60">Размер:</span>
             <span className="text-terminal-green">{width}x{height}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-terminal-green/60">Regions:</span>
+            <span className="text-terminal-green/60">Регионы:</span>
             <span className="text-terminal-amber">{regions}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-terminal-green/60">Structures:</span>
+            <span className="text-terminal-green/60">Сооружения:</span>
             <span className="text-terminal-cyan">{structures}</span>
           </div>
           {rivers > 0 && (
             <div className="flex items-center gap-1">
-              <span className="text-terminal-green/60">Rivers:</span>
-              <span className="text-blue-400">{rivers} tiles</span>
+              <span className="text-terminal-green/60">Реки:</span>
+              <span className="text-blue-400">{rivers} тайл.</span>
             </div>
           )}
         </div>
 
         {data.environment && (
           <div className="mt-2 pt-2 border-t border-terminal-green-dim flex flex-wrap gap-2 text-xs">
-            {timeIcon && <span>{timeIcon} {data.environment.time_of_day}</span>}
-            {weatherIcon && <span>{weatherIcon} {data.environment.weather}</span>}
-            {data.environment.season && <span>🍂 {data.environment.season}</span>}
+            {timeIcon && <span>{timeIcon} {formatWorldValue(data.environment.time_of_day ?? '')}</span>}
+            {weatherIcon && <span>{weatherIcon} {formatWorldValue(data.environment.weather ?? '')}</span>}
+            {data.environment.season && <span>🍂 {formatWorldValue(data.environment.season)}</span>}
           </div>
         )}
       </div>
@@ -136,33 +191,33 @@ export const WorldStateCard: React.FC<WorldStateCardProps> = ({ data, variant = 
       <div className="bg-terminal-black/80 border border-terminal-green rounded p-4 my-2 font-mono">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">🌍</span>
-          <span className="text-terminal-green-bright font-bold">World Map Overview</span>
-          {data.seed && <span className="text-terminal-green/50 text-xs">Seed: {data.seed}</span>}
+          <span className="text-terminal-green-bright font-bold">Обзор карты мира</span>
+          {data.seed && <span className="text-terminal-green/50 text-xs">Сид: {data.seed}</span>}
         </div>
 
         {/* World Stats */}
         <div className="grid grid-cols-4 gap-2 mb-4 text-sm">
           <div className="bg-terminal-green/10 p-2 rounded text-center">
-            <div className="text-terminal-green/60 text-xs uppercase">Size</div>
+            <div className="text-terminal-green/60 text-xs uppercase">Размер</div>
             <div className="text-terminal-green-bright font-bold">{width}x{height}</div>
           </div>
           <div className="bg-terminal-amber/10 p-2 rounded text-center">
-            <div className="text-terminal-green/60 text-xs uppercase">Regions</div>
+            <div className="text-terminal-green/60 text-xs uppercase">Регионы</div>
             <div className="text-terminal-amber font-bold">{regions}</div>
           </div>
           <div className="bg-terminal-cyan/10 p-2 rounded text-center">
-            <div className="text-terminal-green/60 text-xs uppercase">Structures</div>
+            <div className="text-terminal-green/60 text-xs uppercase">Сооружения</div>
             <div className="text-terminal-cyan font-bold">{structures}</div>
           </div>
           <div className="bg-blue-500/10 p-2 rounded text-center">
-            <div className="text-terminal-green/60 text-xs uppercase">Rivers</div>
+            <div className="text-terminal-green/60 text-xs uppercase">Реки</div>
             <div className="text-blue-400 font-bold">{rivers}</div>
           </div>
         </div>
 
         {/* Biome Distribution */}
         <div className="mb-3">
-          <div className="text-terminal-green/70 text-xs uppercase mb-2">Biome Distribution</div>
+          <div className="text-terminal-green/70 text-xs uppercase mb-2">Распределение биомов</div>
           <div className="space-y-1">
             {Object.entries(data.biomeDistribution)
               .sort(([, a], [, b]) => (b as number) - (a as number))
@@ -173,7 +228,7 @@ export const WorldStateCard: React.FC<WorldStateCardProps> = ({ data, variant = 
                     className="w-3 h-3 rounded-sm"
                     style={{ backgroundColor: BIOME_COLORS[biome] || '#666' }}
                   />
-                  <span className="text-terminal-green/80 capitalize w-20">{biome.replace('_', ' ')}</span>
+                  <span className="text-terminal-green/80 w-20">{formatBiomeName(biome)}</span>
                   <div className="flex-1 bg-terminal-green-dim/30 rounded-full h-2 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
@@ -199,7 +254,7 @@ export const WorldStateCard: React.FC<WorldStateCardProps> = ({ data, variant = 
         <div className="flex items-center gap-2">
           <span className="text-xl">🗺️</span>
           <span className="text-terminal-green-bright font-bold text-lg">
-            {data.name || `World-${data.seed || 'Unknown'}`}
+            {data.name || `Мир-${data.seed || 'Неизвестно'}`}
           </span>
         </div>
         {data.worldId && (
@@ -208,27 +263,27 @@ export const WorldStateCard: React.FC<WorldStateCardProps> = ({ data, variant = 
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <StatBox label="Dimensions" value={`${width}x${height}`} icon="📐" />
-        <StatBox label="Regions" value={regions.toString()} icon="🏞️" color="amber" />
-        <StatBox label="Structures" value={structures.toString()} icon="🏰" color="cyan" />
-        {rivers > 0 && <StatBox label="River Tiles" value={rivers.toString()} icon="🌊" color="blue" />}
+        <StatBox label="Размеры" value={`${width}x${height}`} icon="📐" />
+        <StatBox label="Регионы" value={regions.toString()} icon="🏞️" color="amber" />
+        <StatBox label="Сооружения" value={structures.toString()} icon="🏰" color="cyan" />
+        {rivers > 0 && <StatBox label="Тайлы рек" value={rivers.toString()} icon="🌊" color="blue" />}
       </div>
 
       {data.environment && (
         <div className="border-t border-terminal-green-dim pt-3">
-          <div className="text-terminal-green/70 text-xs uppercase mb-2">Environment</div>
+          <div className="text-terminal-green/70 text-xs uppercase mb-2">Окружение</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
             {data.environment.time_of_day && (
-              <EnvironmentItem label="Time" value={data.environment.time_of_day} icon={timeIcon} />
+              <EnvironmentItem label="Время" value={formatWorldValue(data.environment.time_of_day)} icon={timeIcon} />
             )}
             {data.environment.weather && (
-              <EnvironmentItem label="Weather" value={data.environment.weather} icon={weatherIcon} />
+              <EnvironmentItem label="Погода" value={formatWorldValue(data.environment.weather)} icon={weatherIcon} />
             )}
             {data.environment.season && (
-              <EnvironmentItem label="Season" value={data.environment.season} icon="🍂" />
+              <EnvironmentItem label="Сезон" value={formatWorldValue(data.environment.season)} icon="🍂" />
             )}
             {data.environment.temperature && (
-              <EnvironmentItem label="Temp" value={data.environment.temperature} icon="🌡️" />
+              <EnvironmentItem label="Темп." value={formatWorldValue(data.environment.temperature)} icon="🌡️" />
             )}
           </div>
         </div>
@@ -236,7 +291,7 @@ export const WorldStateCard: React.FC<WorldStateCardProps> = ({ data, variant = 
 
       {data.biomeDistribution && (
         <div className="border-t border-terminal-green-dim pt-3 mt-3">
-          <div className="text-terminal-green/70 text-xs uppercase mb-2">Biome Distribution</div>
+          <div className="text-terminal-green/70 text-xs uppercase mb-2">Распределение биомов</div>
           <div className="flex flex-wrap gap-1">
             {Object.entries(data.biomeDistribution)
               .sort(([, a], [, b]) => (b as number) - (a as number))
@@ -250,7 +305,7 @@ export const WorldStateCard: React.FC<WorldStateCardProps> = ({ data, variant = 
                     border: `1px solid ${BIOME_COLORS[biome] || '#666'}50`
                   }}
                 >
-                  {biome.replace('_', ' ')}: {percentage}%
+                  {formatBiomeName(biome)}: {percentage}%
                 </span>
               ))}
           </div>

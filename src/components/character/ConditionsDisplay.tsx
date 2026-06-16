@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { CharacterCondition } from '../../stores/gameStateStore';
+import { getConditionLabel } from './displayLabels';
 
 // Standard D&D 5e conditions for quick selection
 const STANDARD_CONDITIONS = [
@@ -70,13 +71,13 @@ export const ConditionsDisplay: React.FC<ConditionsDisplayProps> = ({
   return (
     <div className="border border-terminal-green/30 p-4 rounded">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-lg font-bold text-terminal-green">CONDITIONS</h3>
+        <h3 className="text-lg font-bold text-terminal-green">СОСТОЯНИЯ</h3>
         {!readOnly && (
           <button
             onClick={() => setIsAdding(!isAdding)}
             className="text-xs px-2 py-1 border border-terminal-green text-terminal-green hover:bg-terminal-green/10 transition-colors rounded"
           >
-            {isAdding ? 'Cancel' : '+ Add'}
+            {isAdding ? 'Отмена' : '+ Добавить'}
           </button>
         )}
       </div>
@@ -84,7 +85,7 @@ export const ConditionsDisplay: React.FC<ConditionsDisplayProps> = ({
       {/* Add Condition Panel */}
       {isAdding && (
         <div className="mb-4 p-3 bg-terminal-green/5 border border-terminal-green/20 rounded">
-          <div className="text-xs text-terminal-green/60 mb-2 uppercase">Quick Add:</div>
+          <div className="text-xs text-terminal-green/60 mb-2 uppercase">Быстро добавить:</div>
           <div className="flex flex-wrap gap-1 mb-3">
             {STANDARD_CONDITIONS.map((cond) => (
               <button
@@ -97,7 +98,7 @@ export const ConditionsDisplay: React.FC<ConditionsDisplayProps> = ({
                     : 'bg-terminal-green/20 text-terminal-green hover:bg-terminal-green/30'
                 }`}
               >
-                {cond}
+                {getConditionLabel(cond)}
               </button>
             ))}
           </div>
@@ -107,7 +108,7 @@ export const ConditionsDisplay: React.FC<ConditionsDisplayProps> = ({
               type="text"
               value={customCondition}
               onChange={(e) => setCustomCondition(e.target.value)}
-              placeholder="Custom condition..."
+              placeholder="Свое состояние..."
               className="flex-1 bg-gray-900 border border-terminal-green/30 text-terminal-green px-2 py-1 text-sm rounded focus:outline-none focus:border-terminal-green"
               onKeyDown={(e) => e.key === 'Enter' && handleAddCustom()}
             />
@@ -116,7 +117,7 @@ export const ConditionsDisplay: React.FC<ConditionsDisplayProps> = ({
               disabled={!customCondition.trim()}
               className="px-3 py-1 bg-terminal-green text-black text-sm font-bold rounded hover:bg-terminal-green-bright disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add
+              Добавить
             </button>
           </div>
         </div>
@@ -124,7 +125,7 @@ export const ConditionsDisplay: React.FC<ConditionsDisplayProps> = ({
 
       {/* Conditions List */}
       {conditions.length === 0 ? (
-        <div className="text-terminal-green/40 italic text-sm">No active conditions</div>
+        <div className="text-terminal-green/40 italic text-sm">Активных состояний нет</div>
       ) : (
         <div className="flex flex-wrap gap-2">
           {conditions.map((condition, idx) => (
@@ -132,22 +133,22 @@ export const ConditionsDisplay: React.FC<ConditionsDisplayProps> = ({
               key={`${condition.name}-${idx}`}
               className={`group relative inline-flex items-center gap-1 px-2 py-1 rounded text-white text-sm ${getConditionColor(condition.name)}`}
             >
-              <span>{condition.name}</span>
+              <span>{getConditionLabel(condition.name)}</span>
               {condition.duration && condition.duration > 0 && (
-                <span className="text-xs opacity-75">({condition.duration}r)</span>
+                <span className="text-xs opacity-75">({condition.duration} р.)</span>
               )}
               {!readOnly && (
                 <button
                   onClick={() => handleRemove(condition.name)}
                   className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-white/80 hover:text-white"
-                  title="Remove condition"
+                  title="Убрать состояние"
                 >
                   ×
                 </button>
               )}
               {condition.source && (
                 <span className="absolute -bottom-5 left-0 text-[10px] text-terminal-green/60 opacity-0 group-hover:opacity-100 whitespace-nowrap">
-                  from: {condition.source}
+                  источник: {condition.source}
                 </span>
               )}
             </div>

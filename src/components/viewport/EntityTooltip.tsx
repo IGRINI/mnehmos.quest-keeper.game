@@ -7,12 +7,12 @@ interface EntityTooltipProps {
 }
 
 const getHealthStatus = (current: number, max: number): { text: string; color: string } => {
-  if (max === 0) return { text: 'Unknown', color: 'text-gray-400' };
+  if (max === 0) return { text: 'Неизвестно', color: 'text-gray-400' };
   const pct = current / max;
-  if (pct >= 0.9) return { text: 'Healthy', color: 'text-green-400' };
-  if (pct >= 0.5) return { text: 'Wounded', color: 'text-yellow-400' };
-  if (pct >= 0.1) return { text: 'Bloodied', color: 'text-orange-500' };
-  return { text: 'Critical', color: 'text-red-500 font-bold' };
+  if (pct >= 0.9) return { text: 'Здоров', color: 'text-green-400' };
+  if (pct >= 0.5) return { text: 'Ранен', color: 'text-yellow-400' };
+  if (pct >= 0.1) return { text: 'При смерти', color: 'text-orange-500' };
+  return { text: 'Критично', color: 'text-red-500 font-bold' };
 };
 
 export const EntityTooltip: React.FC<EntityTooltipProps> = ({ entity }) => {
@@ -38,11 +38,11 @@ export const EntityTooltip: React.FC<EntityTooltipProps> = ({ entity }) => {
         <div className="border-b border-terminal-green/50 pb-1 mb-2">
           <div className="font-bold text-sm text-glow flex justify-between items-center">
             <span>{name}</span>
-            {isRich && <span className="text-[10px] bg-terminal-green/20 px-1 rounded ml-2">LVL ?</span>}
+            {isRich && <span className="text-[10px] bg-terminal-green/20 px-1 rounded ml-2">УР. ?</span>}
           </div>
           <div className="text-[10px] text-terminal-green/70 uppercase tracking-wider flex justify-between">
             <span>{creatureType}</span>
-            <span>{isRich ? 'PLAYER' : 'NPC'}</span>
+            <span>{isRich ? 'ИГРОК' : 'НПС'}</span>
           </div>
         </div>
 
@@ -50,7 +50,7 @@ export const EntityTooltip: React.FC<EntityTooltipProps> = ({ entity }) => {
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 mb-2">
           {/* Health */}
           <div className="flex justify-between items-center col-span-2">
-            <span className="text-terminal-green/70">HP:</span>
+            <span className="text-terminal-green/70">ОЗ:</span>
             {isRich ? (
               <span className={hp.current < hp.max / 2 ? "text-red-500 font-bold" : ""}>
                 {hp.current} <span className="text-xs text-terminal-green/50">/ {hp.max}</span>
@@ -64,11 +64,11 @@ export const EntityTooltip: React.FC<EntityTooltipProps> = ({ entity }) => {
           
           {/* AC / Speed */}
           <div className="flex justify-between">
-            <span className="text-terminal-green/70">AC:</span>
+            <span className="text-terminal-green/70">КД:</span>
             <span>{isRich || ac < 10 ? ac : '?'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-terminal-green/70">SPD:</span>
+            <span className="text-terminal-green/70">СКР:</span>
             <span>30</span>{/* Placeholder, get from metadata if avail */}
           </div>
         </div>
@@ -77,27 +77,27 @@ export const EntityTooltip: React.FC<EntityTooltipProps> = ({ entity }) => {
         {isRich && stats && (
           <div className="grid grid-cols-6 gap-0.5 mb-2 text-[9px] text-center border-t border-terminal-green/30 pt-1">
             <div>
-              <div className="text-terminal-green/50">STR</div>
+              <div className="text-terminal-green/50">СИЛ</div>
               <div>{stats.str}</div>
             </div>
             <div>
-              <div className="text-terminal-green/50">DEX</div>
+              <div className="text-terminal-green/50">ЛОВ</div>
               <div>{stats.dex}</div>
             </div>
             <div>
-              <div className="text-terminal-green/50">CON</div>
+              <div className="text-terminal-green/50">ТЕЛ</div>
               <div>{stats.con}</div>
             </div>
             <div>
-              <div className="text-terminal-green/50">INT</div>
+              <div className="text-terminal-green/50">ИНТ</div>
               <div>{stats.int}</div>
             </div>
             <div>
-              <div className="text-terminal-green/50">WIS</div>
+              <div className="text-terminal-green/50">МДР</div>
               <div>{stats.wis}</div>
             </div>
             <div>
-              <div className="text-terminal-green/50">CHA</div>
+              <div className="text-terminal-green/50">ХАР</div>
               <div>{stats.cha}</div>
             </div>
           </div>

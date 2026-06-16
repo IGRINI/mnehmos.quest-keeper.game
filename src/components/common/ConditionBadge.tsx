@@ -22,9 +22,45 @@ const CONDITION_COLORS: Record<string, string> = {
   'concentrating': 'bg-blue-500',
 };
 
+const CONDITION_LABELS: Record<string, string> = {
+  'blinded': 'Ослеплен',
+  'charmed': 'Очарован',
+  'deafened': 'Оглох',
+  'frightened': 'Испуган',
+  'grappled': 'Схвачен',
+  'incapacitated': 'Недееспособен',
+  'invisible': 'Невидим',
+  'paralyzed': 'Парализован',
+  'petrified': 'Окаменел',
+  'poisoned': 'Отравлен',
+  'prone': 'Лежит',
+  'restrained': 'Опутан',
+  'stunned': 'Оглушен',
+  'unconscious': 'Без сознания',
+  'exhaustion': 'Истощение',
+  'blessed': 'Благословлен',
+  'hasted': 'Ускорен',
+  'concentrating': 'Концентрация',
+};
+
 function getConditionColor(conditionName: string): string {
   const lower = conditionName.toLowerCase();
   return CONDITION_COLORS[lower] || 'bg-terminal-green/40';
+}
+
+function getConditionLabel(conditionName: string): string {
+  const lower = conditionName.toLowerCase();
+  return CONDITION_LABELS[lower] || conditionName;
+}
+
+function getDurationLabel(duration?: number): string {
+  if (typeof duration !== 'number' || duration <= 0) return 'Постоянно';
+
+  const mod10 = duration % 10;
+  const mod100 = duration % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${duration} раунд`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${duration} раунда`;
+  return `${duration} раундов`;
 }
 
 interface ConditionBadgeProps {
@@ -33,6 +69,7 @@ interface ConditionBadgeProps {
 }
 
 export const ConditionBadge: React.FC<ConditionBadgeProps> = ({ condition, size = 'md' }) => {
+  const displayName = getConditionLabel(condition.name);
   const baseClasses = "inline-flex items-center font-medium rounded text-white transition-colors duration-200";
   const sizeClasses = size === 'sm' 
     ? "px-1 text-[10px] leading-tight" 
@@ -41,11 +78,11 @@ export const ConditionBadge: React.FC<ConditionBadgeProps> = ({ condition, size 
   return (
     <span
       className={`${baseClasses} ${sizeClasses} ${getConditionColor(condition.name)}`}
-      title={condition.source ? `Source: ${condition.source}\nDuration: ${condition.duration || 'Permanent'}` : undefined}
+      title={condition.source ? `Источник: ${condition.source}\nДлительность: ${getDurationLabel(condition.duration)}` : undefined}
     >
-      {condition.name}
+      {displayName}
       {condition.duration && condition.duration > 0 && (
-        <span className="ml-1 opacity-75">({condition.duration}r)</span>
+        <span className="ml-1 opacity-75">({condition.duration} р.)</span>
       )}
     </span>
   );

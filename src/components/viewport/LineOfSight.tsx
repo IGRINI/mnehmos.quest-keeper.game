@@ -29,9 +29,9 @@ export const LineOfSight: React.FC = () => {
             minWidth: '220px'
           }}
         >
-          <div className="text-sm font-bold mb-1">👁️ LINE OF SIGHT</div>
-          <div className="text-xs opacity-80">Click an entity to view</div>
-          <div className="text-xs opacity-80">their sight lines</div>
+          <div className="text-sm font-bold mb-1">👁️ ЛИНИЯ ВИДИМОСТИ</div>
+          <div className="text-xs opacity-80">Выберите существо,</div>
+          <div className="text-xs opacity-80">чтобы увидеть линии обзора</div>
         </div>
       </Html>
     );

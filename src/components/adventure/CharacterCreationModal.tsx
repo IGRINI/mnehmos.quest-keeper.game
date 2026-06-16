@@ -5,6 +5,7 @@ import { usePartyStore } from '../../stores/partyStore';
 import { parseMcpResponse, extractEmbeddedJson } from '../../utils/mcpUtils';
 import { generateBackgroundStory } from '../../utils/aiBackgroundGenerator';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { getAbilityShortLabel, getClassLabel, getRaceLabel, getTraitLabel } from '../character/displayLabels';
 
 interface CharacterCreationModalProps {
     isOpen: boolean;
@@ -27,30 +28,30 @@ const RACES = {
 
 // D&D 5e Class data
 const CLASSES = {
-    fighter: { name: 'Fighter', hitDie: 10, primaryStat: 'str', saves: ['str', 'con'], icon: '⚔️', description: 'Masters of martial combat and battlefield tactics.' },
-    wizard: { name: 'Wizard', hitDie: 6, primaryStat: 'int', saves: ['int', 'wis'], icon: '🔮', description: 'Scholarly spellcasters who bend reality through arcane study.' },
-    rogue: { name: 'Rogue', hitDie: 8, primaryStat: 'dex', saves: ['dex', 'int'], icon: '🗡️', description: 'Stealthy experts in deception, traps, and deadly precision.' },
-    cleric: { name: 'Cleric', hitDie: 8, primaryStat: 'wis', saves: ['wis', 'cha'], icon: '✝️', description: 'Divine agents who channel the power of their gods.' },
-    ranger: { name: 'Ranger', hitDie: 10, primaryStat: 'dex', saves: ['str', 'dex'], icon: '🏹', description: 'Wilderness warriors skilled in tracking and survival.' },
-    paladin: { name: 'Paladin', hitDie: 10, primaryStat: 'str', saves: ['wis', 'cha'], icon: '🛡️', description: 'Holy warriors bound by sacred oaths.' },
-    barbarian: { name: 'Barbarian', hitDie: 12, primaryStat: 'str', saves: ['str', 'con'], icon: '🪓', description: 'Fierce warriors who channel primal rage in battle.' },
-    druid: { name: 'Druid', hitDie: 8, primaryStat: 'wis', saves: ['int', 'wis'], icon: '🌿', description: 'Nature priests who shapeshift and command the elements.' },
-    bard: { name: 'Bard', hitDie: 8, primaryStat: 'cha', saves: ['dex', 'cha'], icon: '🎵', description: 'Magical performers who inspire allies with song and story.' },
-    monk: { name: 'Monk', hitDie: 8, primaryStat: 'dex', saves: ['str', 'dex'], icon: '👊', description: 'Martial artists who harness ki for supernatural feats.' },
-    sorcerer: { name: 'Sorcerer', hitDie: 6, primaryStat: 'cha', saves: ['con', 'cha'], icon: '⚡', description: 'Innate spellcasters with magic in their blood.' },
-    warlock: { name: 'Warlock', hitDie: 8, primaryStat: 'cha', saves: ['wis', 'cha'], icon: '👁️', description: 'Occultists who bargain with otherworldly patrons for power.' },
+    fighter: { name: 'Fighter', hitDie: 10, primaryStat: 'str', saves: ['str', 'con'], icon: '⚔️', description: 'Мастера оружия, строя и тактики боя.' },
+    wizard: { name: 'Wizard', hitDie: 6, primaryStat: 'int', saves: ['int', 'wis'], icon: '🔮', description: 'Ученые заклинатели, меняющие реальность через арканное знание.' },
+    rogue: { name: 'Rogue', hitDie: 8, primaryStat: 'dex', saves: ['dex', 'int'], icon: '🗡️', description: 'Скрытные специалисты по обману, ловушкам и точным ударам.' },
+    cleric: { name: 'Cleric', hitDie: 8, primaryStat: 'wis', saves: ['wis', 'cha'], icon: '✝️', description: 'Проводники божественной силы и воли своих богов.' },
+    ranger: { name: 'Ranger', hitDie: 10, primaryStat: 'dex', saves: ['str', 'dex'], icon: '🏹', description: 'Воины дикой местности, мастера следопытства и выживания.' },
+    paladin: { name: 'Paladin', hitDie: 10, primaryStat: 'str', saves: ['wis', 'cha'], icon: '🛡️', description: 'Святые воины, связанные нерушимыми клятвами.' },
+    barbarian: { name: 'Barbarian', hitDie: 12, primaryStat: 'str', saves: ['str', 'con'], icon: '🪓', description: 'Яростные бойцы, обращающие первобытную ярость в силу.' },
+    druid: { name: 'Druid', hitDie: 8, primaryStat: 'wis', saves: ['int', 'wis'], icon: '🌿', description: 'Жрецы природы, меняющие облик и повелевающие стихиями.' },
+    bard: { name: 'Bard', hitDie: 8, primaryStat: 'cha', saves: ['dex', 'cha'], icon: '🎵', description: 'Магические артисты, вдохновляющие союзников песнями и историями.' },
+    monk: { name: 'Monk', hitDie: 8, primaryStat: 'dex', saves: ['str', 'dex'], icon: '👊', description: 'Мастера боевых искусств, направляющие ки на сверхъестественные приемы.' },
+    sorcerer: { name: 'Sorcerer', hitDie: 6, primaryStat: 'cha', saves: ['con', 'cha'], icon: '⚡', description: 'Прирожденные заклинатели с магией в крови.' },
+    warlock: { name: 'Warlock', hitDie: 8, primaryStat: 'cha', saves: ['wis', 'cha'], icon: '👁️', description: 'Оккультисты, заключившие сделку с потусторонним покровителем.' },
 } as const;
 
 // Portrait colors for character tokens
 const PORTRAIT_COLORS = [
-    { name: 'Emerald', bg: '#065f46', border: '#10b981' },
-    { name: 'Ruby', bg: '#7f1d1d', border: '#ef4444' },
-    { name: 'Sapphire', bg: '#1e3a8a', border: '#3b82f6' },
-    { name: 'Amethyst', bg: '#581c87', border: '#a855f7' },
-    { name: 'Gold', bg: '#78350f', border: '#f59e0b' },
-    { name: 'Silver', bg: '#374151', border: '#9ca3af' },
-    { name: 'Copper', bg: '#7c2d12', border: '#ea580c' },
-    { name: 'Jade', bg: '#064e3b', border: '#34d399' },
+    { name: 'Emerald', label: 'Изумруд', bg: '#065f46', border: '#10b981' },
+    { name: 'Ruby', label: 'Рубин', bg: '#7f1d1d', border: '#ef4444' },
+    { name: 'Sapphire', label: 'Сапфир', bg: '#1e3a8a', border: '#3b82f6' },
+    { name: 'Amethyst', label: 'Аметист', bg: '#581c87', border: '#a855f7' },
+    { name: 'Gold', label: 'Золото', bg: '#78350f', border: '#f59e0b' },
+    { name: 'Silver', label: 'Серебро', bg: '#374151', border: '#9ca3af' },
+    { name: 'Copper', label: 'Медь', bg: '#7c2d12', border: '#ea580c' },
+    { name: 'Jade', label: 'Нефрит', bg: '#064e3b', border: '#34d399' },
 ];
 
 type StatName = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
@@ -188,7 +189,7 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({ 
             const classData = CLASSES[charClass];
             
             const generatedStory = await generateBackgroundStory({
-                name: name || 'Unknown Hero',
+                name: name || 'Безымянный герой',
                 race: raceData.name,
                 characterClass: classData.name,
                 level,
@@ -519,16 +520,16 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({ 
             
             // Build behavior string with all extra info
             const behaviorParts = [
-                `${raceData.name} ${classData.name}`,
-                `Speed: ${raceData.speed}ft`,
+                `${getRaceLabel(raceData.name)} ${getClassLabel(classData.name)}`,
+                `Скорость: ${raceData.speed} футов`,
             ];
             if (raceData.traits) {
-                behaviorParts.push(`Traits: ${raceData.traits.join(', ')}`);
+                behaviorParts.push(`Черты: ${raceData.traits.map(getTraitLabel).join(', ')}`);
             }
             if (background.trim()) {
-                behaviorParts.push(`Background: ${background.trim()}`);
+                behaviorParts.push(`Предыстория: ${background.trim()}`);
             }
-            behaviorParts.push(`Portrait: ${portraitColor.name}`);
+            behaviorParts.push(`Цвет: ${portraitColor.label}`);
 
             console.log('[CharacterCreation] Creating character:', {
                 name, race: raceData.name, class: classData.name, level,
@@ -646,10 +647,10 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({ 
                                     : 'border border-terminal-green/30 hover:border-terminal-green/60 hover:bg-terminal-green/5'
                             }`}
                         >
-                            <div className="font-bold text-sm">{data.name}</div>
+                            <div className="font-bold text-sm">{getRaceLabel(data.name)}</div>
                             <div className="text-xs text-terminal-green/60 mt-1">
                                 {Object.entries(data.bonuses || {}).map(([stat, bonus]) => 
-                                    `+${bonus} ${stat.toUpperCase()}`
+                                    `+${bonus} ${getAbilityShortLabel(stat)}`
                                 ).join(', ') || '+1 ко всем'}
                             </div>
                         </button>
@@ -675,7 +676,7 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({ 
                                         : 'border border-amber-500/50 text-amber-400 hover:bg-amber-500/20'
                                 }`}
                             >
-                                {STAT_ICONS[stat]} +1 {stat.toUpperCase()}
+                                {STAT_ICONS[stat]} +1 {getAbilityShortLabel(stat)}
                             </button>
                         ))}
                     </div>
@@ -700,14 +701,14 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({ 
                             }`}
                         >
                             <div className="text-xl">{data.icon}</div>
-                            <div className="font-bold text-xs mt-1">{data.name}</div>
+                            <div className="font-bold text-xs mt-1">{getClassLabel(data.name)}</div>
                         </button>
                     ))}
                 </div>
                 <div className="flex justify-between text-xs text-terminal-green/60 mt-2 px-1">
-                    <span>Кость HP: d{CLASSES[charClass].hitDie}</span>
-                    <span>Основная: {CLASSES[charClass].primaryStat.toUpperCase()}</span>
-                    <span>Спасброски: {CLASSES[charClass].saves.map(s => s.toUpperCase()).join(', ')}</span>
+                    <span>Кость ОЗ: d{CLASSES[charClass].hitDie}</span>
+                    <span>Основная: {getAbilityShortLabel(CLASSES[charClass].primaryStat)}</span>
+                    <span>Спасброски: {CLASSES[charClass].saves.map(getAbilityShortLabel).join(', ')}</span>
                 </div>
             </div>
 
@@ -979,11 +980,11 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({ 
                                 border: `3px solid ${color.border}`,
                                 boxShadow: portraitColor.name === color.name ? `0 0 20px ${color.border}` : 'none'
                             }}
-                            title={color.name}
+                            title={color.label}
                         />
                     ))}
                 </div>
-                <p className="text-xs text-terminal-green/50 mt-2">Выбрано: {portraitColor.name}</p>
+                <p className="text-xs text-terminal-green/50 mt-2">Выбрано: {portraitColor.label}</p>
             </div>
 
             {/* Character Portrait Preview */}
@@ -1061,7 +1062,7 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({ 
                     <div className="flex flex-wrap gap-2">
                         {RACES[race].traits?.map(trait => (
                             <span key={trait} className="px-3 py-1 bg-terminal-green/10 border border-terminal-green/30 rounded-full text-xs">
-                                {trait}
+                                {getTraitLabel(trait)}
                             </span>
                         ))}
                     </div>
@@ -1097,10 +1098,10 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({ 
                     <div className="flex-1">
                         <h3 className="text-2xl font-bold text-white">{name || 'Безымянный герой'}</h3>
                         <p className="text-terminal-green/80">
-                            Ур. {level} {RACES[race].name} {CLASSES[charClass].name}
+                            Ур. {level} {getRaceLabel(RACES[race].name)} {getClassLabel(CLASSES[charClass].name)}
                         </p>
                         <p className="text-xs text-terminal-green/50 mt-1">
-                            Скорость: {RACES[race].speed} ft
+                            Скорость: {RACES[race].speed} футов
                         </p>
                     </div>
                 </div>
@@ -1121,7 +1122,7 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({ 
                 <div className="grid grid-cols-6 gap-2 mt-4">
                     {STAT_NAMES.map(stat => (
                         <div key={stat} className="bg-black/40 rounded-lg p-2 text-center">
-                            <div className="text-xs text-terminal-green/60">{stat.toUpperCase()}</div>
+                            <div className="text-xs text-terminal-green/60">{getAbilityShortLabel(stat)}</div>
                             <div className="text-lg font-bold">{finalStats[stat]}</div>
                             <div className="text-xs text-cyan-400">{formatModifier(calculateModifier(finalStats[stat]))}</div>
                         </div>
@@ -1135,7 +1136,7 @@ export const CharacterCreationModal: React.FC<CharacterCreationModalProps> = ({ 
                         <div className="flex flex-wrap gap-1">
                             {RACES[race].traits?.map(trait => (
                                 <span key={trait} className="px-2 py-0.5 bg-terminal-green/10 rounded text-xs">
-                                    {trait}
+                                    {getTraitLabel(trait)}
                                 </span>
                             ))}
                         </div>

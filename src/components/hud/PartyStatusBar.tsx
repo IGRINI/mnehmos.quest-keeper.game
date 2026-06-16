@@ -47,7 +47,7 @@ export const PartyStatusBar: React.FC = () => {
   return (
     <div className="flex flex-col gap-2 p-4 animate-fade-in-up">
        {/* Header */}
-       <div className="text-[10px] text-terminal-green-dim font-mono font-bold tracking-widest uppercase mb-2 pl-1">Party Roster</div>
+       <div className="text-[10px] text-terminal-green-dim font-mono font-bold tracking-widest uppercase mb-2 pl-1">Состав группы</div>
        
        {partyMembers.map((char: CharacterStats) => {
          const isActive = char.id === activeCharacterId;
@@ -74,7 +74,7 @@ export const PartyStatusBar: React.FC = () => {
                             {char.name}
                         </span>
                     </div>
-                    <span className="text-[10px] text-terminal-green-dim flex-shrink-0">LVL {char.level}</span>
+                    <span className="text-[10px] text-terminal-green-dim flex-shrink-0">УР {char.level}</span>
                 </div>
                 
                 {/* HP Bar */}
@@ -85,8 +85,8 @@ export const PartyStatusBar: React.FC = () => {
                     />
                 </div>
                 <div className="flex justify-between text-[10px] uppercase tracking-wider">
-                    <span className="text-terminal-green">HP {char.hp.current}/{char.hp.max}</span>
-                    <span className="text-terminal-green-dim">AC {char.armorClass || 10}</span>
+                    <span className="text-terminal-green">ОЗ {char.hp.current}/{char.hp.max}</span>
+                    <span className="text-terminal-green-dim">КД {char.armorClass || 10}</span>
                 </div>
                 {char.conditions && char.conditions.length > 0 && (
                   <div className="mt-2 text-left">

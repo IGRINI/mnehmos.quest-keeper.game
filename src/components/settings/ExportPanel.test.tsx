@@ -54,7 +54,7 @@ describe('ExportPanel', () => {
     render(<ExportPanel />);
     expect(screen.getByTestId('export-adventure-log-btn')).toBeInTheDocument();
     expect(
-      screen.getByText(/export adventure log/i)
+      screen.getByText(/экспорт журнала/i)
     ).toBeInTheDocument();
   });
 
@@ -200,7 +200,7 @@ describe('ExportPanel', () => {
       expect(
         screen.getByTestId('export-character-pdf-btn')
       ).toBeInTheDocument();
-      expect(screen.getByText(/character sheet \(pdf\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/экспорт листа персонажа/i)).toBeInTheDocument();
     });
 
     it('disables the button (empty state) when there is no active character', () => {

@@ -3,6 +3,7 @@
  * Now also supports returning structured data for rich visualizations
  */
 
+import { getItemLabel } from './itemDisplayLabels';
 
 
 // Visualization type indicators for components
@@ -22,6 +23,260 @@ export interface FormattedResponse {
         type: VisualizationType;
         data: any;
     };
+}
+
+const ABILITY_SHORT_LABELS = {
+    str: 'СИЛ',
+    dex: 'ЛВК',
+    con: 'ТЕЛ',
+    int: 'ИНТ',
+    wis: 'МДР',
+    cha: 'ХАР',
+} as const;
+
+const ABILITY_FULL_LABELS = {
+    str: 'Сила',
+    dex: 'Ловкость',
+    con: 'Телосложение',
+    int: 'Интеллект',
+    wis: 'Мудрость',
+    cha: 'Харизма',
+} as const;
+
+const ITEM_TYPE_LABELS: Record<string, string> = {
+    weapon: 'оружие',
+    armor: 'доспехи',
+    consumable: 'расходники',
+    quest: 'квестовые',
+    artifact: 'артефакты',
+    tool: 'инструменты',
+    misc: 'разное',
+};
+
+const SECRET_TYPE_LABELS: Record<string, string> = {
+    npc: 'НПС',
+    location: 'локация',
+    item: 'предмет',
+    quest: 'квест',
+    plot: 'сюжет',
+    mechanic: 'механика',
+    custom: 'другое',
+    general: 'общее',
+};
+
+const WORLD_VALUE_LABELS: Record<string, string> = {
+    dawn: 'рассвет',
+    morning: 'утро',
+    noon: 'полдень',
+    afternoon: 'день',
+    evening: 'вечер',
+    dusk: 'сумерки',
+    night: 'ночь',
+    midnight: 'полночь',
+    clear: 'ясно',
+    sunny: 'солнечно',
+    cloudy: 'облачно',
+    overcast: 'пасмурно',
+    rain: 'дождь',
+    rainy: 'дождливо',
+    storm: 'буря',
+    stormy: 'шторм',
+    snow: 'снег',
+    snowy: 'снежно',
+    fog: 'туман',
+    foggy: 'туманно',
+    windy: 'ветрено',
+    spring: 'весна',
+    summer: 'лето',
+    autumn: 'осень',
+    fall: 'осень',
+    winter: 'зима',
+    freezing: 'мороз',
+    cold: 'холодно',
+    cool: 'прохладно',
+    mild: 'умеренно',
+    warm: 'тепло',
+    hot: 'жарко',
+    scorching: 'зной',
+    new: 'новолуние',
+    waxing_crescent: 'растущий серп',
+    first_quarter: 'первая четверть',
+    waxing_gibbous: 'растущая луна',
+    full: 'полнолуние',
+    waning_gibbous: 'убывающая луна',
+    last_quarter: 'последняя четверть',
+    waning_crescent: 'убывающий серп',
+};
+
+const BIOME_LABELS: Record<string, string> = {
+    forest: 'лес',
+    plains: 'равнины',
+    grassland: 'луга',
+    desert: 'пустыня',
+    mountain: 'горы',
+    mountains: 'горы',
+    hills: 'холмы',
+    swamp: 'болото',
+    tundra: 'тундра',
+    ocean: 'океан',
+    coast: 'побережье',
+    river: 'река',
+    lake: 'озеро',
+    jungle: 'джунгли',
+    taiga: 'тайга',
+    savanna: 'саванна',
+    wasteland: 'пустошь',
+    volcanic: 'вулканическая зона',
+    arctic: 'арктика',
+    wetland: 'топи',
+};
+
+const REGION_TYPE_LABELS: Record<string, string> = {
+    region: 'регион',
+    province: 'провинция',
+    wilderness: 'дикая местность',
+    settlement: 'поселение',
+    forest: 'лес',
+    plains: 'равнины',
+    mountain: 'горы',
+    coastal: 'побережье',
+    desert: 'пустыня',
+    swamp: 'болото',
+    urban: 'городская зона',
+    rural: 'сельская зона',
+    frontier: 'пограничье',
+    island: 'остров',
+    valley: 'долина',
+};
+
+const STRUCTURE_TYPE_LABELS: Record<string, string> = {
+    city: 'город',
+    town: 'городок',
+    village: 'деревня',
+    castle: 'замок',
+    ruins: 'руины',
+    dungeon: 'подземелье',
+    temple: 'храм',
+    fort: 'форт',
+    fortress: 'крепость',
+    camp: 'лагерь',
+    mine: 'рудник',
+    farm: 'ферма',
+    port: 'порт',
+    harbor: 'гавань',
+    bridge: 'мост',
+    tower: 'башня',
+    shrine: 'святилище',
+};
+
+const IDEOLOGY_LABELS: Record<string, string> = {
+    democracy: 'демократия',
+    autocracy: 'автократия',
+    theocracy: 'теократия',
+    tribal: 'племенной строй',
+    monarchy: 'монархия',
+    republic: 'республика',
+    empire: 'империя',
+    oligarchy: 'олигархия',
+    feudal: 'феодализм',
+    communism: 'коммунизм',
+    socialism: 'социализм',
+    anarchism: 'анархия',
+};
+
+const SEVERITY_LABELS: Record<string, string> = {
+    low: 'низкая',
+    medium: 'средняя',
+    high: 'высокая',
+    critical: 'критическая',
+};
+
+const REVEAL_CONDITION_LABELS: Record<string, string> = {
+    discovery: 'обнаружение',
+    location: 'локация',
+    conversation: 'разговор',
+    quest_complete: 'завершение квеста',
+    quest_completed: 'завершение квеста',
+    item_acquired: 'получение предмета',
+    item_used: 'использование предмета',
+    npc_met: 'встреча с НПС',
+    combat_won: 'победа в бою',
+    time: 'время',
+    manual: 'вручную',
+};
+
+function formatKnownLabel(value: string | undefined, labels: Record<string, string>): string {
+    if (!value) return 'неизвестно';
+    return labels[value.toLowerCase()] || value;
+}
+
+function formatItemName(item: string | { name?: string } | null | undefined): string {
+    const name = typeof item === 'string' ? item : item?.name;
+    return getItemLabel(name || 'Предмет');
+}
+
+function formatWorldValue(value: any, labels: Record<string, string> = WORLD_VALUE_LABELS): string {
+    if (value === null || value === undefined) return 'неизвестно';
+    const raw = typeof value === 'string' ? value : value.current;
+    if (raw === null || raw === undefined) return 'неизвестно';
+    return formatKnownLabel(String(raw), labels);
+}
+
+function localizePreformattedCombatText(text: string): string {
+    return text
+        .replace(/COMBAT ENCOUNTER STARTED!/g, 'БОЕВАЯ СХВАТКА НАЧАЛАСЬ!')
+        .replace(/COMBAT STATUS - ROUND/g, 'СТАТУС БОЯ — РАУНД')
+        .replace(/COMBAT ENDED/g, 'БОЙ ЗАВЕРШЕН')
+        .replace(/Encounter ID:/g, 'ID схватки:')
+        .replace(/INITIATIVE ORDER:/g, 'ПОРЯДОК ИНИЦИАТИВЫ:')
+        .replace(/CURRENT TURN:/g, 'ТЕКУЩИЙ ХОД:')
+        .replace(/ACTION REQUIRED: This is an ENEMY turn!/g, 'ТРЕБУЕТСЯ ДЕЙСТВИЕ: сейчас ход врага!')
+        .replace(/PLAYER TURN:/g, 'ХОД ИГРОКА:')
+        .replace(/PLAYER TURN/g, 'ХОД ИГРОКА')
+        .replace(/ENEMY TURN - ACT NOW!/g, 'ХОД ВРАГА — ДЕЙСТВУЙ СЕЙЧАС!')
+        .replace(/TURN ADVANCED/g, 'ХОД ПЕРЕДАН')
+        .replace(/ROUND (\d+) BEGINS/g, 'РАУНД $1 НАЧИНАЕТСЯ')
+        .replace(/VICTORY!/g, 'ПОБЕДА!')
+        .replace(/DEFEAT\.\.\./g, 'ПОРАЖЕНИЕ...')
+        .replace(/FLED FROM BATTLE/g, 'ОТСТУПЛЕНИЕ ИЗ БОЯ')
+        .replace(/Combat concluded\./g, 'Бой завершен.')
+        .replace(/Experience gained:/g, 'Получено опыта:')
+        .replace(/Loot found:/g, 'Найдена добыча:')
+        .replace(/Continue narrating the aftermath\./g, 'Продолжай описывать последствия.')
+        .replace(/DEAD/g, 'МЕРТВ')
+        .replace(/Wounded/g, 'Ранен')
+        .replace(/\[ENEMY\]/g, '[ВРАГ]')
+        .replace(/\[ALLY\]/g, '[СОЮЗНИК]')
+        .replace(/\bInit:/g, 'Иниц.:')
+        .replace(/\bHP:/g, 'ОЗ:')
+        .replace(/\bAC:/g, 'КД:')
+        .replace(/HIT!/g, 'ПОПАДАНИЕ!')
+        .replace(/strikes/g, 'бьет')
+        .replace(/DAMAGE:/g, 'УРОН:')
+        .replace(/points/g, 'ед.')
+        .replace(/MISS!/g, 'ПРОМАХ!')
+        .replace(/attack fails to connect\./g, 'атака не достигает цели.')
+        .replace(/HEALED!/g, 'ИСЦЕЛЕНИЕ!')
+        .replace(/recovers/g, 'восстанавливает')
+        .replace(/uses/g, 'использует')
+        .replace(/Effect:/g, 'Эффект:')
+        .replace(/Action completed:/g, 'Действие завершено:')
+        .replace(/is DEFEATED!/g, 'побежден!')
+        .replace(/NEXT STEP: Check whose turn it is using get_encounter_state, then:/g, 'СЛЕДУЮЩИЙ ШАГ: проверь чей ход через get_encounter_state, затем:')
+        .replace(/NEXT: Call advance_turn to proceed to next combatant\./g, 'ДАЛЬШЕ: вызови advance_turn, чтобы перейти к следующему участнику.')
+        .replace(/If enemy turn: Use execute_combat_action then advance_turn/g, 'Если ход врага: используй execute_combat_action, затем advance_turn')
+        .replace(/If player turn: Present options and wait for input/g, 'Если ход игрока: предложи варианты и дождись ввода')
+        .replace(/Narrate (.*?)'s action dramatically/g, 'Драматично опиши действие $1')
+        .replace(/Roleplay (.*?)'s action with dramatic narration/g, 'Отыграй действие $1 с драматичным описанием')
+        .replace(/Call execute_combat_action \(attack\/ability\/move\)/g, 'Вызови execute_combat_action (attack/ability/move)')
+        .replace(/Call execute_combat_action/g, 'Вызови execute_combat_action')
+        .replace(/Call advance_turn to proceed/g, 'Вызови advance_turn для продолжения')
+        .replace(/Call advance_turn/g, 'Вызови advance_turn')
+        .replace(/DO NOT ask permission - execute the enemy action NOW!/g, 'Не спрашивай разрешения — выполни действие врага сейчас!')
+        .replace(/DO NOT wait for permission!/g, 'Не жди разрешения!')
+        .replace(/Present options and wait for player input\./g, 'Предложи варианты и дождись ввода игрока.')
+        .replace(/After player chooses: execute_combat_action then advance_turn/g, 'После выбора игрока: execute_combat_action, затем advance_turn')
+        .replace(/Present options to the player and wait for their decision\./g, 'Предложи варианты игроку и дождись решения.');
 }
 
 
@@ -57,7 +312,7 @@ function processFormattedCombatResponse(text: string): string {
     }
     
     // Strip the STATE_JSON block from display
-    return text.replace(/\n*<!-- STATE_JSON[\s\S]*?STATE_JSON -->\n*/g, '').trim();
+    return localizePreformattedCombatText(text.replace(/\n*<!-- STATE_JSON[\s\S]*?STATE_JSON -->\n*/g, '').trim());
 }
 
 interface Character {
@@ -108,22 +363,22 @@ interface DetailedInventoryItem {
  */
 export function formatCharacterList(data: any): string {
     if (!data.characters || data.characters.length === 0) {
-        return '> No characters found in the database.';
+        return '> Персонажи в базе не найдены.';
     }
 
     const characters: Character[] = data.characters;
     
-    let markdown = `## 🎭 Characters (${data.count})\n\n`;
+    let markdown = `## 🎭 Персонажи (${data.count})\n\n`;
     
     characters.forEach((char, index) => {
         const statLine = char.stats 
-            ? `💪 **STR** ${char.stats.str} | 🏃 **DEX** ${char.stats.dex} | ❤️ **CON** ${char.stats.con} | 🧠 **INT** ${char.stats.int} | 🦉 **WIS** ${char.stats.wis} | 💬 **CHA** ${char.stats.cha}`
+            ? `💪 **${ABILITY_SHORT_LABELS.str}** ${char.stats.str} | 🏃 **${ABILITY_SHORT_LABELS.dex}** ${char.stats.dex} | ❤️ **${ABILITY_SHORT_LABELS.con}** ${char.stats.con} | 🧠 **${ABILITY_SHORT_LABELS.int}** ${char.stats.int} | 🦉 **${ABILITY_SHORT_LABELS.wis}** ${char.stats.wis} | 💬 **${ABILITY_SHORT_LABELS.cha}** ${char.stats.cha}`
             : '';
 
         markdown += `### ${index + 1}. ${char.name}\n\n`;
-        markdown += `**Level ${char.level}** | `;
-        markdown += `HP: \`${char.hp}/${char.maxHp}\` | `;
-        markdown += `AC: \`${char.ac}\`\n\n`;
+        markdown += `**Уровень ${char.level}** | `;
+        markdown += `ОЗ: \`${char.hp}/${char.maxHp}\` | `;
+        markdown += `КД: \`${char.ac}\`\n\n`;
         
         if (statLine) {
             markdown += `${statLine}\n\n`;
@@ -145,24 +400,24 @@ export function formatCharacterList(data: any): string {
 export function formatCharacter(char: Character): string {
     let markdown = `## 🎭 ${char.name}\n\n`;
     
-    markdown += `**Level ${char.level}** | `;
-    markdown += `HP: \`${char.hp}/${char.maxHp}\` | `;
-    markdown += `AC: \`${char.ac}\`\n\n`;
+    markdown += `**Уровень ${char.level}** | `;
+    markdown += `ОЗ: \`${char.hp}/${char.maxHp}\` | `;
+    markdown += `КД: \`${char.ac}\`\n\n`;
     
     if (char.stats) {
-        markdown += `### 📊 Ability Scores\n\n`;
-        markdown += `| Ability | Score | Modifier |\n`;
+        markdown += `### 📊 Характеристики\n\n`;
+        markdown += `| Характеристика | Значение | Модификатор |\n`;
         markdown += `|---------|-------|----------|\n`;
-        markdown += `| 💪 Strength | ${char.stats.str} | ${formatModifier(char.stats.str)} |\n`;
-        markdown += `| 🏃 Dexterity | ${char.stats.dex} | ${formatModifier(char.stats.dex)} |\n`;
-        markdown += `| ❤️ Constitution | ${char.stats.con} | ${formatModifier(char.stats.con)} |\n`;
-        markdown += `| 🧠 Intelligence | ${char.stats.int} | ${formatModifier(char.stats.int)} |\n`;
-        markdown += `| 🦉 Wisdom | ${char.stats.wis} | ${formatModifier(char.stats.wis)} |\n`;
-        markdown += `| 💬 Charisma | ${char.stats.cha} | ${formatModifier(char.stats.cha)} |\n\n`;
+        markdown += `| 💪 ${ABILITY_FULL_LABELS.str} | ${char.stats.str} | ${formatModifier(char.stats.str)} |\n`;
+        markdown += `| 🏃 ${ABILITY_FULL_LABELS.dex} | ${char.stats.dex} | ${formatModifier(char.stats.dex)} |\n`;
+        markdown += `| ❤️ ${ABILITY_FULL_LABELS.con} | ${char.stats.con} | ${formatModifier(char.stats.con)} |\n`;
+        markdown += `| 🧠 ${ABILITY_FULL_LABELS.int} | ${char.stats.int} | ${formatModifier(char.stats.int)} |\n`;
+        markdown += `| 🦉 ${ABILITY_FULL_LABELS.wis} | ${char.stats.wis} | ${formatModifier(char.stats.wis)} |\n`;
+        markdown += `| 💬 ${ABILITY_FULL_LABELS.cha} | ${char.stats.cha} | ${formatModifier(char.stats.cha)} |\n\n`;
     }
     
     if (char.behavior) {
-        markdown += `### 📖 Behavior\n\n`;
+        markdown += `### 📖 Поведение\n\n`;
         markdown += `> ${char.behavior}\n\n`;
     }
 
@@ -175,24 +430,24 @@ export function formatCharacter(char: Character): string {
  */
 export function formatInventory(data: any, itemCache?: Map<string, Item>): string {
     if (!data.items || data.items.length === 0) {
-        return '> 🎒 Inventory is empty.';
+        return '> 🎒 Инвентарь пуст.';
     }
 
     const items: InventoryItem[] = data.items;
     const capacity = data.capacity || 100;
     const usedSlots = items.reduce((sum, item) => sum + item.quantity, 0);
 
-    let markdown = `## 🎒 Inventory (${usedSlots}/${capacity})\n\n`;
+    let markdown = `## 🎒 Инвентарь (${usedSlots}/${capacity})\n\n`;
 
     // Group items by equipped status
     const equippedItems = items.filter(item => item.equipped);
     const unequippedItems = items.filter(item => !item.equipped);
 
     if (equippedItems.length > 0) {
-        markdown += `### ⚔️ Equipped\n\n`;
+        markdown += `### ⚔️ Надето\n\n`;
         equippedItems.forEach(item => {
             const detail = itemCache?.get(item.itemId);
-            const name = detail?.name || guessItemName(item.itemId);
+            const name = formatItemName(detail?.name || guessItemName(item.itemId));
             const icon = getItemIcon(detail?.type || 'misc');
             
             markdown += `- ${icon} **${name}**`;
@@ -204,10 +459,10 @@ export function formatInventory(data: any, itemCache?: Map<string, Item>): strin
     }
 
     if (unequippedItems.length > 0) {
-        markdown += `### 📦 Unequipped\n\n`;
+        markdown += `### 📦 В рюкзаке\n\n`;
         unequippedItems.forEach(item => {
             const detail = itemCache?.get(item.itemId);
-            const name = detail?.name || guessItemName(item.itemId);
+            const name = formatItemName(detail?.name || guessItemName(item.itemId));
             const icon = getItemIcon(detail?.type || 'misc');
             
             markdown += `- ${icon} **${name}**`;
@@ -222,10 +477,10 @@ export function formatInventory(data: any, itemCache?: Map<string, Item>): strin
     if (data.currency) {
         const { gold = 0, silver = 0, copper = 0 } = data.currency;
         if (gold > 0 || silver > 0 || copper > 0) {
-            markdown += `### 💰 Currency\n\n`;
-            if (gold > 0) markdown += `- 🟡 **${gold}** gold\n`;
-            if (silver > 0) markdown += `- ⚪ **${silver}** silver\n`;
-            if (copper > 0) markdown += `- 🟤 **${copper}** copper\n`;
+            markdown += `### 💰 Монеты\n\n`;
+            if (gold > 0) markdown += `- 🟡 **${gold}** золота\n`;
+            if (silver > 0) markdown += `- ⚪ **${silver}** серебра\n`;
+            if (copper > 0) markdown += `- 🟤 **${copper}** меди\n`;
         }
     }
 
@@ -237,22 +492,22 @@ export function formatInventory(data: any, itemCache?: Map<string, Item>): strin
  */
 export function formatQuestLog(data: any): string {
     if (!data.quests || data.quests.length === 0) {
-        return '> 📜 No active quests.';
+        return '> 📜 Активных квестов нет.';
     }
 
-    let markdown = `## 📜 Quest Log\n\n`;
+    let markdown = `## 📜 Журнал квестов\n\n`;
 
     data.quests.forEach((quest: any, _index: number) => {
         const statusIcon = quest.status === 'completed' ? '✅' : quest.status === 'failed' ? '❌' : '🔄';
         
-        markdown += `### ${statusIcon} ${quest.title || 'Untitled Quest'}\n\n`;
+        markdown += `### ${statusIcon} ${quest.title || 'Безымянный квест'}\n\n`;
         
         if (quest.description) {
             markdown += `${quest.description}\n\n`;
         }
 
         if (quest.objectives && quest.objectives.length > 0) {
-            markdown += `**Objectives:**\n\n`;
+            markdown += `**Цели:**\n\n`;
             quest.objectives.forEach((obj: any) => {
                 const done = obj.completed || obj.current >= obj.required;
                 const checkbox = done ? '[x]' : '[ ]';
@@ -263,11 +518,11 @@ export function formatQuestLog(data: any): string {
         }
 
         if (quest.rewards) {
-            markdown += `**Rewards:**\n`;
-            if (quest.rewards.experience) markdown += `- 🌟 ${quest.rewards.experience} XP\n`;
-            if (quest.rewards.gold) markdown += `- 💰 ${quest.rewards.gold} gold\n`;
+            markdown += `**Награды:**\n`;
+            if (quest.rewards.experience) markdown += `- 🌟 ${quest.rewards.experience} опыта\n`;
+            if (quest.rewards.gold) markdown += `- 💰 ${quest.rewards.gold} золота\n`;
             if (quest.rewards.items && quest.rewards.items.length > 0) {
-                markdown += `- 🎁 Items: ${quest.rewards.items.join(', ')}\n`;
+                markdown += `- 🎁 Предметы: ${quest.rewards.items.map(formatItemName).join(', ')}\n`;
             }
             markdown += `\n`;
         }
@@ -283,15 +538,15 @@ export function formatQuestLog(data: any): string {
  */
 export function formatEncounter(data: any): string {
     if (!data) {
-        return '> ⚔️ No active encounter.';
+        return '> ⚔️ Активной схватки нет.';
     }
 
-    let markdown = `## ⚔️ Combat Encounter\n\n`;
+    let markdown = `## ⚔️ Боевая схватка\n\n`;
     
-    markdown += `**Round:** ${data.round || 1}\n\n`;
+    markdown += `**Раунд:** ${data.round || 1}\n\n`;
 
     if (data.participants && data.participants.length > 0) {
-        markdown += `### 🎯 Initiative Order\n\n`;
+        markdown += `### 🎯 Порядок инициативы\n\n`;
         
         const sorted = [...data.participants].sort((a, b) => (b.initiative || 0) - (a.initiative || 0));
         
@@ -301,7 +556,7 @@ export function formatEncounter(data: any): string {
             const statusIcon = p.hp <= 0 ? '💀' : p.hp < p.maxHp / 2 ? '🩹' : '💚';
             
             markdown += `${marker}**${index + 1}.** ${p.name} ${statusIcon}\n`;
-            markdown += `　　Initiative: \`${p.initiative || 0}\` | HP: \`${p.hp}/${p.maxHp}\``;
+            markdown += `　　Инициатива: \`${p.initiative || 0}\` | ОЗ: \`${p.hp}/${p.maxHp}\``;
             
             if (p.conditions && p.conditions.length > 0) {
                 markdown += ` | 🎭 ${p.conditions.join(', ')}`;
@@ -321,26 +576,26 @@ export function formatItem(data: any): string {
     const item: Item = data.item || data;
 
     if (!item || !item.name) {
-        return '> Item not found.';
+        return '> Предмет не найден.';
     }
 
     const icon = getItemIcon(item.type);
-    let markdown = `## ${icon} ${item.name}\n\n`;
+    let markdown = `## ${icon} ${formatItemName(item)}\n\n`;
 
-    markdown += `| Property | Value |\n`;
+    markdown += `| Свойство | Значение |\n`;
     markdown += `|----------|-------|\n`;
-    markdown += `| **Type** | ${item.type} |\n`;
-    if (item.value !== undefined) markdown += `| **Value** | ${item.value} gold |\n`;
-    if (item.weight !== undefined) markdown += `| **Weight** | ${item.weight} lbs |\n`;
+    markdown += `| **Тип** | ${formatKnownLabel(item.type, ITEM_TYPE_LABELS)} |\n`;
+    if (item.value !== undefined) markdown += `| **Стоимость** | ${item.value} золота |\n`;
+    if (item.weight !== undefined) markdown += `| **Вес** | ${item.weight} фунт. |\n`;
     markdown += `\n`;
 
     if (item.description) {
-        markdown += `### 📖 Description\n\n`;
+        markdown += `### 📖 Описание\n\n`;
         markdown += `> ${item.description}\n\n`;
     }
 
     if (item.properties && Object.keys(item.properties).length > 0) {
-        markdown += `### ✨ Properties\n\n`;
+        markdown += `### ✨ Свойства\n\n`;
         for (const [key, value] of Object.entries(item.properties)) {
             const formattedValue = typeof value === 'object' ? JSON.stringify(value) : value;
             markdown += `- **${key}:** ${formattedValue}\n`;
@@ -363,10 +618,10 @@ export function formatItemList(data: any): string {
     const query = data.query;
 
     if (items.length === 0) {
-        return '> No items found.';
+        return '> Предметы не найдены.';
     }
 
-    let markdown = `## 📦 Items (${count})\n\n`;
+    let markdown = `## 📦 Предметы (${count})\n\n`;
 
     if (query && Object.keys(query).length > 0) {
         const filters = Object.entries(query)
@@ -374,7 +629,7 @@ export function formatItemList(data: any): string {
             .map(([k, v]) => `${k}: ${v}`)
             .join(', ');
         if (filters) {
-            markdown += `*Filtered by: ${filters}*\n\n`;
+            markdown += `*Фильтр: ${filters}*\n\n`;
         }
     }
 
@@ -396,12 +651,12 @@ export function formatItemList(data: any): string {
     sortedTypes.forEach(type => {
         const typeItems = byType[type];
         const icon = getItemIcon(type);
-        markdown += `### ${icon} ${type.charAt(0).toUpperCase() + type.slice(1)}s (${typeItems.length})\n\n`;
+        markdown += `### ${icon} ${formatKnownLabel(type, ITEM_TYPE_LABELS)} (${typeItems.length})\n\n`;
 
         typeItems.forEach(item => {
-            markdown += `- **${item.name}**`;
-            if (item.value !== undefined) markdown += ` • ${item.value}g`;
-            if (item.weight !== undefined) markdown += ` • ${item.weight}lb`;
+            markdown += `- **${formatItemName(item)}**`;
+            if (item.value !== undefined) markdown += ` • ${item.value} зм`;
+            if (item.weight !== undefined) markdown += ` • ${item.weight} фн`;
             if (item.description) markdown += `\n  > *${item.description.substring(0, 80)}${item.description.length > 80 ? '...' : ''}*`;
             markdown += `\n`;
         });
@@ -420,22 +675,22 @@ export function formatInventoryDetailed(data: any): string {
     const capacity = data.capacity || 100;
 
     if (items.length === 0) {
-        return '> 🎒 Inventory is empty.';
+        return '> 🎒 Инвентарь пуст.';
     }
 
-    let markdown = `## 🎒 Inventory\n\n`;
-    markdown += `**Weight:** ${totalWeight.toFixed(1)} / ${capacity} lbs\n\n`;
+    let markdown = `## 🎒 Инвентарь\n\n`;
+    markdown += `**Вес:** ${totalWeight.toFixed(1)} / ${capacity} фунт.\n\n`;
 
     // Group by equipped status
     const equippedItems = items.filter(i => i.equipped);
     const unequippedItems = items.filter(i => !i.equipped);
 
     if (equippedItems.length > 0) {
-        markdown += `### ⚔️ Equipped\n\n`;
+        markdown += `### ⚔️ Надето\n\n`;
         equippedItems.forEach(inv => {
             const icon = getItemIcon(inv.item.type);
             const slot = inv.slot ? ` [${inv.slot}]` : '';
-            markdown += `- ${icon} **${inv.item.name}**${slot}`;
+            markdown += `- ${icon} **${formatItemName(inv.item)}**${slot}`;
             if (inv.quantity > 1) markdown += ` ×${inv.quantity}`;
             if (inv.item.description) markdown += `\n  > *${inv.item.description}*`;
             markdown += `\n`;
@@ -454,12 +709,12 @@ export function formatInventoryDetailed(data: any): string {
 
         for (const [type, typeItems] of Object.entries(byType)) {
             const icon = getItemIcon(type);
-            markdown += `### ${icon} ${type.charAt(0).toUpperCase() + type.slice(1)}s\n\n`;
+            markdown += `### ${icon} ${formatKnownLabel(type, ITEM_TYPE_LABELS)}\n\n`;
 
             typeItems.forEach(inv => {
-                markdown += `- **${inv.item.name}**`;
+                markdown += `- **${formatItemName(inv.item)}**`;
                 if (inv.quantity > 1) markdown += ` ×${inv.quantity}`;
-                if (inv.item.value) markdown += ` • ${inv.item.value}g`;
+                if (inv.item.value) markdown += ` • ${inv.item.value} зм`;
                 if (inv.item.description) markdown += `\n  > *${inv.item.description}*`;
                 markdown += `\n`;
             });
@@ -471,10 +726,10 @@ export function formatInventoryDetailed(data: any): string {
     if (data.currency) {
         const { gold = 0, silver = 0, copper = 0 } = data.currency;
         if (gold > 0 || silver > 0 || copper > 0) {
-            markdown += `### 💰 Currency\n\n`;
-            if (gold > 0) markdown += `- 🟡 **${gold}** gold\n`;
-            if (silver > 0) markdown += `- ⚪ **${silver}** silver\n`;
-            if (copper > 0) markdown += `- 🟤 **${copper}** copper\n`;
+            markdown += `### 💰 Монеты\n\n`;
+            if (gold > 0) markdown += `- 🟡 **${gold}** золота\n`;
+            if (silver > 0) markdown += `- ⚪ **${silver}** серебра\n`;
+            if (copper > 0) markdown += `- 🟤 **${copper}** меди\n`;
         }
     }
 
@@ -485,11 +740,11 @@ export function formatInventoryDetailed(data: any): string {
  * Format item transfer result
  */
 export function formatTransfer(data: any): string {
-    let markdown = `## 🔄 Item Transferred\n\n`;
-    markdown += `**${data.item || 'Item'}** ×${data.quantity || 1}\n\n`;
-    markdown += `From: \`${data.from?.substring(0, 8) || 'Unknown'}...\`\n`;
-    markdown += `To: \`${data.to?.substring(0, 8) || 'Unknown'}...\`\n\n`;
-    markdown += `> ${data.message || 'Transfer complete.'}\n`;
+    let markdown = `## 🔄 Предмет передан\n\n`;
+    markdown += `**${formatItemName(data.item)}** ×${data.quantity || 1}\n\n`;
+    markdown += `От: \`${data.from?.substring(0, 8) || 'неизвестно'}...\`\n`;
+    markdown += `Кому: \`${data.to?.substring(0, 8) || 'неизвестно'}...\`\n\n`;
+    markdown += `> ${data.message || 'Передача завершена.'}\n`;
     return markdown;
 }
 
@@ -497,17 +752,17 @@ export function formatTransfer(data: any): string {
  * Format item use result
  */
 export function formatUseItem(data: any): string {
-    let markdown = `## 🧪 Item Used\n\n`;
+    let markdown = `## 🧪 Предмет использован\n\n`;
 
     if (data.item) {
-        markdown += `**${data.item.name}** was consumed.\n\n`;
+        markdown += `**${formatItemName(data.item)}** израсходован.\n\n`;
         if (data.item.description) {
             markdown += `> *${data.item.description}*\n\n`;
         }
     }
 
     if (data.effect) {
-        markdown += `### ✨ Effect\n\n`;
+        markdown += `### ✨ Эффект\n\n`;
         if (typeof data.effect === 'object') {
             for (const [key, value] of Object.entries(data.effect)) {
                 markdown += `- **${key}:** ${value}\n`;
@@ -518,7 +773,7 @@ export function formatUseItem(data: any): string {
         markdown += `\n`;
     }
 
-    markdown += `Target: \`${data.target?.substring(0, 8) || 'self'}...\`\n`;
+    markdown += `Цель: \`${data.target?.substring(0, 8) || 'себя'}...\`\n`;
 
     return markdown;
 }
@@ -533,10 +788,10 @@ export function formatUseItem(data: any): string {
 export function formatWorld(data: any): FormattedResponse {
     const world = data.world || data;
 
-    let markdown = `## 🌍 ${world.name || 'World'}\n\n`;
+    let markdown = `## 🌍 ${world.name || 'Мир'}\n\n`;
 
-    if (world.seed) markdown += `**Seed:** \`${world.seed}\`\n`;
-    if (world.width && world.height) markdown += `**Size:** ${world.width}×${world.height}\n`;
+    if (world.seed) markdown += `**Сид:** \`${world.seed}\`\n`;
+    if (world.width && world.height) markdown += `**Размер:** ${world.width}×${world.height}\n`;
     if (world.id) markdown += `**ID:** \`${world.id.substring(0, 12)}...\`\n`;
 
     markdown += `\n`;
@@ -544,12 +799,12 @@ export function formatWorld(data: any): FormattedResponse {
     // Environment info
     if (world.environment) {
         const env = world.environment;
-        markdown += `### 🌤️ Environment\n\n`;
-        if (env.timeOfDay || env.time_of_day) markdown += `- **Time:** ${env.timeOfDay || env.time_of_day}\n`;
-        if (env.weather || env.weatherConditions) markdown += `- **Weather:** ${env.weather || env.weatherConditions}\n`;
-        if (env.season) markdown += `- **Season:** ${typeof env.season === 'string' ? env.season : env.season.current}\n`;
-        if (env.temperature) markdown += `- **Temperature:** ${typeof env.temperature === 'string' ? env.temperature : env.temperature.current}\n`;
-        if (env.moonPhase || env.moon_phase) markdown += `- **Moon:** ${env.moonPhase || env.moon_phase}\n`;
+        markdown += `### 🌤️ Окружение\n\n`;
+        if (env.timeOfDay || env.time_of_day) markdown += `- **Время:** ${formatWorldValue(env.timeOfDay || env.time_of_day)}\n`;
+        if (env.weather || env.weatherConditions) markdown += `- **Погода:** ${formatWorldValue(env.weather || env.weatherConditions)}\n`;
+        if (env.season) markdown += `- **Сезон:** ${formatWorldValue(env.season)}\n`;
+        if (env.temperature) markdown += `- **Температура:** ${formatWorldValue(env.temperature)}\n`;
+        if (env.moonPhase || env.moon_phase) markdown += `- **Луна:** ${formatWorldValue(env.moonPhase || env.moon_phase)}\n`;
         markdown += `\n`;
     }
 
@@ -569,21 +824,21 @@ export function formatWorldList(data: any): FormattedResponse {
     const worlds = data.worlds || [];
     const count = data.count ?? worlds.length;
 
-    let markdown = `## 🌍 Worlds (${count})\n\n`;
+    let markdown = `## 🌍 Миры (${count})\n\n`;
 
     if (worlds.length === 0) {
-        markdown += `> No worlds found. Create one with \`generate_world\` or \`create_world\`.\n`;
+        markdown += `> Миры не найдены. Создай мир через \`generate_world\` или \`create_world\`.\n`;
         return { markdown };
     }
 
-    markdown += `| Name | Size | Seed | ID |\n`;
+    markdown += `| Название | Размер | Сид | ID |\n`;
     markdown += `|------|------|------|----|\n`;
 
     worlds.forEach((world: any) => {
-        const name = world.name || 'Unnamed';
-        const size = world.width && world.height ? `${world.width}×${world.height}` : 'N/A';
-        const seed = world.seed || 'N/A';
-        const id = world.id?.substring(0, 8) || 'N/A';
+        const name = world.name || 'Без названия';
+        const size = world.width && world.height ? `${world.width}×${world.height}` : 'нет';
+        const seed = world.seed || 'нет';
+        const id = world.id?.substring(0, 8) || 'нет';
         markdown += `| ${name} | ${size} | \`${seed}\` | \`${id}...\` |\n`;
     });
 
@@ -599,34 +854,34 @@ export function formatWorldList(data: any): FormattedResponse {
  * Format world map overview (from get_world_map_overview)
  */
 export function formatWorldMapOverview(data: any): FormattedResponse {
-    let markdown = `## 🗺️ World Map Overview\n\n`;
+    let markdown = `## 🗺️ Обзор карты мира\n\n`;
 
-    if (data.seed) markdown += `**Seed:** \`${data.seed}\`\n`;
+    if (data.seed) markdown += `**Сид:** \`${data.seed}\`\n`;
     if (data.dimensions) {
-        markdown += `**Dimensions:** ${data.dimensions.width}×${data.dimensions.height}\n`;
+        markdown += `**Размеры:** ${data.dimensions.width}×${data.dimensions.height}\n`;
     }
     markdown += `\n`;
 
     // Biome distribution
     if (data.biomeDistribution) {
-        markdown += `### 🌿 Biome Distribution\n\n`;
+        markdown += `### 🌿 Распределение биомов\n\n`;
         const sorted = Object.entries(data.biomeDistribution)
             .sort(([, a], [, b]) => (b as number) - (a as number));
 
-        markdown += `| Biome | Coverage |\n`;
+        markdown += `| Биом | Покрытие |\n`;
         markdown += `|-------|----------|\n`;
         sorted.forEach(([biome, pct]) => {
             const bar = '█'.repeat(Math.round((pct as number) / 5)) + '░'.repeat(20 - Math.round((pct as number) / 5));
-            markdown += `| ${biome.replace(/_/g, ' ')} | ${bar} ${pct}% |\n`;
+            markdown += `| ${formatKnownLabel(biome, BIOME_LABELS)} | ${bar} ${pct}% |\n`;
         });
         markdown += `\n`;
     }
 
     // Stats
-    markdown += `### 📊 Statistics\n\n`;
-    if (data.regionCount !== undefined) markdown += `- **Regions:** ${data.regionCount}\n`;
-    if (data.structureCount !== undefined) markdown += `- **Structures:** ${data.structureCount}\n`;
-    if (data.riverTileCount !== undefined) markdown += `- **River Tiles:** ${data.riverTileCount}\n`;
+    markdown += `### 📊 Статистика\n\n`;
+    if (data.regionCount !== undefined) markdown += `- **Регионов:** ${data.regionCount}\n`;
+    if (data.structureCount !== undefined) markdown += `- **Построек:** ${data.structureCount}\n`;
+    if (data.riverTileCount !== undefined) markdown += `- **Клеток реки:** ${data.riverTileCount}\n`;
 
     return {
         markdown,
@@ -645,29 +900,29 @@ export function formatRegion(data: any): FormattedResponse {
 
     let markdown = `## 📍 ${region.name}\n\n`;
 
-    markdown += `**Type:** ${region.type}\n`;
-    if (region.dominantBiome) markdown += `**Biome:** ${region.dominantBiome.replace(/_/g, ' ')}\n`;
+    markdown += `**Тип:** ${formatKnownLabel(region.type, REGION_TYPE_LABELS)}\n`;
+    if (region.dominantBiome) markdown += `**Биом:** ${formatKnownLabel(region.dominantBiome, BIOME_LABELS)}\n`;
     if (region.capitalX !== undefined && region.capitalY !== undefined) {
-        markdown += `**Capital:** (${region.capitalX}, ${region.capitalY})\n`;
+        markdown += `**Столица:** (${region.capitalX}, ${region.capitalY})\n`;
     }
     markdown += `\n`;
 
     // Structures in region
     if (data.structures && data.structures.length > 0) {
-        markdown += `### 🏗️ Structures (${data.structures.length})\n\n`;
+        markdown += `### 🏗️ Постройки (${data.structures.length})\n\n`;
         data.structures.forEach((s: any) => {
             const icon = getStructureIcon(s.type);
             const x = s.x ?? s.location?.x;
             const y = s.y ?? s.location?.y;
-            markdown += `- ${icon} **${s.name}** (${s.type}) at (${x}, ${y})`;
-            if (s.population) markdown += ` - Pop: ${s.population.toLocaleString()}`;
+            markdown += `- ${icon} **${s.name}** (${formatKnownLabel(s.type, STRUCTURE_TYPE_LABELS)}) на (${x}, ${y})`;
+            if (s.population) markdown += ` - Население: ${s.population.toLocaleString()}`;
             markdown += `\n`;
         });
         markdown += `\n`;
     }
 
     if (data.tileCount) {
-        markdown += `**Area:** ${data.tileCount} tiles\n`;
+        markdown += `**Площадь:** ${data.tileCount} клеток\n`;
     }
 
     return {
@@ -694,39 +949,39 @@ export function formatNation(data: any): FormattedResponse {
 
     let markdown = `## ${ideologyIcons[nation.ideology] || '🏴'} ${nation.name}\n\n`;
 
-    markdown += `**Leader:** ${nation.leader}\n`;
-    markdown += `**Ideology:** ${nation.ideology}\n`;
-    markdown += `**GDP:** $${nation.gdp?.toLocaleString() || 0}\n\n`;
+    markdown += `**Лидер:** ${nation.leader}\n`;
+    markdown += `**Идеология:** ${formatKnownLabel(nation.ideology, IDEOLOGY_LABELS)}\n`;
+    markdown += `**ВВП:** $${nation.gdp?.toLocaleString() || 0}\n\n`;
 
     // Personality traits
-    markdown += `### 🧠 Personality\n\n`;
-    markdown += `| Trait | Value |\n`;
+    markdown += `### 🧠 Характер\n\n`;
+    markdown += `| Черта | Значение |\n`;
     markdown += `|-------|-------|\n`;
-    markdown += `| ⚔️ Aggression | ${nation.aggression}/100 |\n`;
-    markdown += `| 🤝 Trust | ${nation.trust}/100 |\n`;
-    markdown += `| 👁️ Paranoia | ${nation.paranoia}/100 |\n`;
+    markdown += `| ⚔️ Агрессия | ${nation.aggression}/100 |\n`;
+    markdown += `| 🤝 Доверие | ${nation.trust}/100 |\n`;
+    markdown += `| 👁️ Паранойя | ${nation.paranoia}/100 |\n`;
     markdown += `\n`;
 
     // Resources
     if (nation.resources) {
-        markdown += `### 📦 Resources\n\n`;
-        markdown += `- 🌾 Food: **${nation.resources.food}**\n`;
-        markdown += `- ⚙️ Metal: **${nation.resources.metal}**\n`;
-        markdown += `- 🛢️ Oil: **${nation.resources.oil}**\n`;
+        markdown += `### 📦 Ресурсы\n\n`;
+        markdown += `- 🌾 Еда: **${nation.resources.food}**\n`;
+        markdown += `- ⚙️ Металл: **${nation.resources.metal}**\n`;
+        markdown += `- 🛢️ Нефть: **${nation.resources.oil}**\n`;
         markdown += `\n`;
     }
 
     // Public intent
     if (nation.publicIntent) {
-        markdown += `### 📢 Declaration\n\n`;
+        markdown += `### 📢 Декларация\n\n`;
         markdown += `> *"${nation.publicIntent}"*\n\n`;
     }
 
     // Relations
     if (nation.relations && Object.keys(nation.relations).length > 0) {
-        markdown += `### 🤝 Relations\n\n`;
+        markdown += `### 🤝 Отношения\n\n`;
         for (const [id, rel] of Object.entries(nation.relations) as [string, any][]) {
-            const status = rel.alliance ? '🤝 Allied' : rel.truceUntil ? '⚖️ Truce' : '—';
+            const status = rel.alliance ? '🤝 союз' : rel.truceUntil ? '⚖️ перемирие' : '—';
             const opinion = rel.opinion > 0 ? `+${rel.opinion}` : rel.opinion;
             markdown += `- **${id.substring(0, 8)}...**: ${opinion} (${status})\n`;
         }
@@ -746,13 +1001,13 @@ export function formatNation(data: any): FormattedResponse {
  * Format strategy state (from get_strategy_state - with Fog of War)
  */
 export function formatStrategyState(data: any): FormattedResponse {
-    let markdown = `## ⚔️ Grand Strategy View\n\n`;
+    let markdown = `## ⚔️ Большая стратегия\n\n`;
 
     const nations = data.nations || [];
     const regions = data.regions || [];
 
     if (nations.length > 0) {
-        markdown += `### 🏴 Nations (${nations.length})\n\n`;
+        markdown += `### 🏴 Государства (${nations.length})\n\n`;
         nations.forEach((n: any) => {
             const ideologyIcons: Record<string, string> = {
                 democracy: '🗳️',
@@ -760,13 +1015,13 @@ export function formatStrategyState(data: any): FormattedResponse {
                 theocracy: '⛪',
                 tribal: '🏕️'
             };
-            markdown += `- ${ideologyIcons[n.ideology] || '🏴'} **${n.name}** (${n.leader}) - GDP: $${n.gdp?.toLocaleString() || '???'}\n`;
+            markdown += `- ${ideologyIcons[n.ideology] || '🏴'} **${n.name}** (${n.leader}) - ВВП: $${n.gdp?.toLocaleString() || '???'}\n`;
         });
         markdown += `\n`;
     }
 
     if (regions.length > 0) {
-        markdown += `### 📍 Regions (${regions.length})\n\n`;
+        markdown += `### 📍 Регионы (${regions.length})\n\n`;
         const byOwner: Record<string, any[]> = {};
         regions.forEach((r: any) => {
             const owner = r.ownerNationId || 'Unclaimed';
@@ -775,12 +1030,12 @@ export function formatStrategyState(data: any): FormattedResponse {
         });
 
         for (const [owner, regs] of Object.entries(byOwner)) {
-            const ownerLabel = owner === 'Unclaimed' ? '🏳️ Unclaimed' : `🏴 ${owner.substring(0, 8)}...`;
-            markdown += `**${ownerLabel}** (${regs.length} regions)\n`;
+            const ownerLabel = owner === 'Unclaimed' ? '🏳️ ничейные' : `🏴 ${owner.substring(0, 8)}...`;
+            markdown += `**${ownerLabel}** (${regs.length} регионов)\n`;
             regs.slice(0, 5).forEach((r: any) => {
-                markdown += `  - ${r.name} (${r.type})\n`;
+                markdown += `  - ${r.name} (${formatKnownLabel(r.type, REGION_TYPE_LABELS)})\n`;
             });
-            if (regs.length > 5) markdown += `  - ...and ${regs.length - 5} more\n`;
+            if (regs.length > 5) markdown += `  - ...и еще ${regs.length - 5}\n`;
             markdown += `\n`;
         }
     }
@@ -1018,9 +1273,9 @@ function getItemIcon(type: string): string {
 function guessItemName(itemId: string): string {
     // Known LOTR items by UUID prefix (from the Fellowship setup)
     const knownItems: Record<string, string> = {
-        '46575824': '💍 The One Ring',
-        '6d0b75e2': '🗡️ Sting',
-        '7d83ac9a': '🛡️ Mithril Coat',
+        '46575824': '💍 Единое Кольцо',
+        '6d0b75e2': '🗡️ Жало',
+        '7d83ac9a': '🛡️ Мифрильная кольчуга',
     };
 
     const prefix = itemId.substring(0, 8);
@@ -1028,7 +1283,7 @@ function guessItemName(itemId: string): string {
         return knownItems[prefix];
     }
 
-    return `Item ${prefix}`;
+    return `Предмет ${prefix}`;
 }
 
 // ============================================================================
@@ -1041,19 +1296,19 @@ function guessItemName(itemId: string): string {
 export function formatCreateSecret(data: any): string {
     const secret = data.secret || data;
 
-    let markdown = `## 🔒 Secret Created\n\n`;
-    markdown += `**Name:** ${secret.name}\n`;
-    markdown += `**Type:** ${secret.type} (${secret.category || 'general'})\n`;
-    markdown += `**Sensitivity:** ${secret.sensitivity?.toUpperCase() || 'MEDIUM'}\n\n`;
+    let markdown = `## 🔒 Секрет создан\n\n`;
+    markdown += `**Название:** ${secret.name}\n`;
+    markdown += `**Тип:** ${formatKnownLabel(secret.type, SECRET_TYPE_LABELS)} (${formatKnownLabel(secret.category || 'general', SECRET_TYPE_LABELS)})\n`;
+    markdown += `**Чувствительность:** ${secret.sensitivity?.toUpperCase() || 'СРЕДНЯЯ'}\n\n`;
 
-    markdown += `> Secret registered successfully. Hidden from player view.\n\n`;
+    markdown += `> Секрет успешно зарегистрирован и скрыт от игрока.\n\n`;
 
     // Censor the actual secret content
     markdown += `[censor]`;
     markdown += `ID: ${secret.id}\n`;
-    markdown += `Secret: ${secret.secretDescription}\n`;
+    markdown += `Секрет: ${secret.secretDescription}\n`;
     if (secret.leakPatterns?.length) {
-        markdown += `Leak Patterns: ${secret.leakPatterns.join(', ')}\n`;
+        markdown += `Паттерны утечек: ${secret.leakPatterns.join(', ')}\n`;
     }
     markdown += `[/censor]`;
 
@@ -1070,26 +1325,26 @@ export function formatCreateSecret(data: any): string {
 export function formatGetSecret(data: any): string {
     const secret = data.secret || data;
 
-    let markdown = `## 🔒 Secret Details\n\n`;
-    markdown += `**Name:** ${secret.name}\n`;
-    markdown += `**Type:** ${secret.type}\n`;
-    markdown += `**Status:** ${secret.revealed ? '🔓 Revealed' : '🔒 Hidden'}\n\n`;
+    let markdown = `## 🔒 Детали секрета\n\n`;
+    markdown += `**Название:** ${secret.name}\n`;
+    markdown += `**Тип:** ${formatKnownLabel(secret.type, SECRET_TYPE_LABELS)}\n`;
+    markdown += `**Статус:** ${secret.revealed ? '🔓 раскрыт' : '🔒 скрыт'}\n\n`;
 
     // Everything sensitive goes in censor block
     markdown += `[censor]`;
     markdown += `ID: ${secret.id}\n`;
-    markdown += `Public: ${secret.publicDescription}\n`;
-    markdown += `Secret: ${secret.secretDescription}\n`;
-    markdown += `Sensitivity: ${secret.sensitivity}\n`;
+    markdown += `Публичное описание: ${secret.publicDescription}\n`;
+    markdown += `Секрет: ${secret.secretDescription}\n`;
+    markdown += `Чувствительность: ${secret.sensitivity}\n`;
     if (secret.leakPatterns?.length) {
-        markdown += `Leak Patterns: ${secret.leakPatterns.join(', ')}\n`;
+        markdown += `Паттерны утечек: ${secret.leakPatterns.join(', ')}\n`;
     }
     if (secret.revealConditions?.length) {
-        markdown += `Reveal Conditions: ${JSON.stringify(secret.revealConditions)}\n`;
+        markdown += `Условия раскрытия: ${JSON.stringify(secret.revealConditions)}\n`;
     }
     if (secret.revealed) {
-        markdown += `Revealed At: ${secret.revealedAt}\n`;
-        markdown += `Revealed By: ${secret.revealedBy}\n`;
+        markdown += `Раскрыт в: ${secret.revealedAt}\n`;
+        markdown += `Раскрыл: ${secret.revealedBy}\n`;
     }
     markdown += `[/censor]`;
 
@@ -1103,10 +1358,10 @@ export function formatListSecrets(data: any): string {
     const secrets = data.secrets || [];
     const count = data.count || secrets.length;
 
-    let markdown = `## 🔒 Secrets Registry (${count})\n\n`;
+    let markdown = `## 🔒 Реестр секретов (${count})\n\n`;
 
     if (secrets.length === 0) {
-        return markdown + `> No secrets found for this world.`;
+        return markdown + `> Для этого мира секреты не найдены.`;
     }
 
     // Group by type if available
@@ -1115,7 +1370,7 @@ export function formatListSecrets(data: any): string {
     if (Object.keys(byType).length > 0) {
         for (const [type, typeSecrets] of Object.entries(byType)) {
             const items = typeSecrets as any[];
-            markdown += `### ${getSecretTypeIcon(type)} ${type.charAt(0).toUpperCase() + type.slice(1)} (${items.length})\n\n`;
+            markdown += `### ${getSecretTypeIcon(type)} ${formatKnownLabel(type, SECRET_TYPE_LABELS)} (${items.length})\n\n`;
 
             items.forEach((s: any) => {
                 const status = s.revealed ? '🔓' : '🔒';
@@ -1127,7 +1382,7 @@ export function formatListSecrets(data: any): string {
         secrets.forEach((s: any) => {
             const status = s.revealed ? '🔓' : '🔒';
             const icon = getSecretTypeIcon(s.type);
-            markdown += `- ${status} ${icon} **${s.name}** - ${s.type} [censor](${s.id?.substring(0, 8)})[/censor]\n`;
+            markdown += `- ${status} ${icon} **${s.name}** - ${formatKnownLabel(s.type, SECRET_TYPE_LABELS)} [censor](${s.id?.substring(0, 8)})[/censor]\n`;
         });
     }
 
@@ -1135,7 +1390,7 @@ export function formatListSecrets(data: any): string {
     const revealed = secrets.filter((s: any) => s.revealed).length;
     const hidden = count - revealed;
     markdown += `\n---\n`;
-    markdown += `**Stats:** ${hidden} hidden, ${revealed} revealed\n`;
+    markdown += `**Статистика:** скрыто ${hidden}, раскрыто ${revealed}\n`;
 
     return markdown;
 }
@@ -1144,17 +1399,17 @@ export function formatListSecrets(data: any): string {
  * Format get_secrets_for_context - FULLY CENSOR (this is LLM-only context)
  */
 export function formatSecretsForContext(data: any): string {
-    let markdown = `## 🔒 Secrets Context Loaded\n\n`;
-    markdown += `**Secrets Loaded:** ${data.secretCount || 0}\n`;
-    markdown += `**World:** [censor]${data.worldId}[/censor]\n\n`;
+    let markdown = `## 🔒 Контекст секретов загружен\n\n`;
+    markdown += `**Загружено секретов:** ${data.secretCount || 0}\n`;
+    markdown += `**Мир:** [censor]${data.worldId}[/censor]\n\n`;
 
-    markdown += `> Context injected into LLM system prompt.\n\n`;
+    markdown += `> Контекст добавлен в системную подсказку модели.\n\n`;
 
     // The entire context is DM-only
     markdown += `[censor]`;
-    markdown += `--- FULL SECRET CONTEXT (DM ONLY) ---\n`;
-    markdown += data.context || 'No context available';
-    markdown += `\n--- END SECRET CONTEXT ---`;
+    markdown += `--- ПОЛНЫЙ КОНТЕКСТ СЕКРЕТОВ (ТОЛЬКО ДЛЯ МАСТЕРА) ---\n`;
+    markdown += data.context || 'Контекст недоступен';
+    markdown += `\n--- КОНЕЦ КОНТЕКСТА СЕКРЕТОВ ---`;
     markdown += `[/censor]`;
 
     return markdown;
@@ -1164,22 +1419,22 @@ export function formatSecretsForContext(data: any): string {
  * Format check_for_leaks response - show leak detection results
  */
 export function formatCheckForLeaks(data: any): string {
-    let markdown = `## 🔍 Leak Detection\n\n`;
+    let markdown = `## 🔍 Проверка утечек\n\n`;
 
     if (data.clean) {
-        markdown += `✅ **No leaks detected**\n\n`;
-        markdown += `> Text is safe to display to player.`;
+        markdown += `✅ **Утечки не обнаружены**\n\n`;
+        markdown += `> Текст безопасно показывать игроку.`;
         return markdown;
     }
 
-    markdown += `⚠️ **Potential leaks found: ${data.leaks?.length || 0}**\n\n`;
+    markdown += `⚠️ **Найдены возможные утечки: ${data.leaks?.length || 0}**\n\n`;
 
     if (data.leaks?.length) {
-        markdown += `| Secret | Pattern | Severity |\n`;
+        markdown += `| Секрет | Паттерн | Критичность |\n`;
         markdown += `|--------|---------|----------|\n`;
 
         data.leaks.forEach((leak: any) => {
-            markdown += `| [censor]${leak.secretName}[/censor] | \`${leak.pattern}\` | ${leak.severity} |\n`;
+            markdown += `| [censor]${leak.secretName}[/censor] | \`${leak.pattern}\` | ${formatKnownLabel(leak.severity, SEVERITY_LABELS)} |\n`;
         });
         markdown += `\n`;
     }
@@ -1195,24 +1450,24 @@ export function formatCheckForLeaks(data: any): string {
  * Format check_reveal_conditions response
  */
 export function formatCheckRevealConditions(data: any): string {
-    let markdown = `## 🎯 Reveal Condition Check\n\n`;
+    let markdown = `## 🎯 Проверка условий раскрытия\n\n`;
 
     const toReveal = data.secretsToReveal || [];
 
     if (toReveal.length === 0) {
-        markdown += `> No secrets triggered by this event.\n`;
+        markdown += `> Это событие не раскрывает секреты.\n`;
         return markdown;
     }
 
-    markdown += `**Secrets Ready to Reveal:** ${toReveal.length}\n\n`;
+    markdown += `**Готово к раскрытию секретов:** ${toReveal.length}\n\n`;
 
     toReveal.forEach((s: any) => {
         markdown += `### 🔓 ${s.name}\n`;
-        markdown += `- Type: ${s.type}\n`;
-        markdown += `- [censor]Secret: ${s.secretDescription}[/censor]\n`;
+        markdown += `- Тип: ${formatKnownLabel(s.type, SECRET_TYPE_LABELS)}\n`;
+        markdown += `- [censor]Секрет: ${s.secretDescription}[/censor]\n`;
 
         if (s.matchedConditions?.length) {
-            markdown += `- Matched: ${s.matchedConditions.map((c: any) => c.type).join(', ')}\n`;
+            markdown += `- Сработало: ${s.matchedConditions.map((c: any) => formatKnownLabel(c.type, REVEAL_CONDITION_LABELS)).join(', ')}\n`;
         }
         markdown += `\n`;
     });
@@ -1230,22 +1485,22 @@ export function formatCheckRevealConditions(data: any): string {
 export function formatRevealSecret(data: any): string {
     // If already revealed, show that message
     if (data.message?.includes('already revealed')) {
-        let markdown = `## 🔓 Secret Already Revealed\n\n`;
-        markdown += `> This secret was previously revealed.\n\n`;
+        let markdown = `## 🔓 Секрет уже раскрыт\n\n`;
+        markdown += `> Этот секрет уже был раскрыт.\n\n`;
         markdown += `[censor]`;
-        markdown += `Revealed At: ${data.revealedAt}\n`;
-        markdown += `Revealed By: ${data.revealedBy}`;
+        markdown += `Раскрыт в: ${data.revealedAt}\n`;
+        markdown += `Раскрыл: ${data.revealedBy}`;
         markdown += `[/censor]`;
         return markdown;
     }
 
-    let markdown = `## 🔮 Secret Revealed!\n\n`;
+    let markdown = `## 🔮 Секрет раскрыт!\n\n`;
 
     if (data.partial) {
-        markdown += `*Partial reveal - hint only*\n\n`;
+        markdown += `*Частичное раскрытие — только намек*\n\n`;
     }
 
-    markdown += `**Triggered By:** ${data.triggeredBy}\n\n`;
+    markdown += `**Сработало от:** ${data.triggeredBy}\n\n`;
 
     // The spoilerMarkdown is safe to show - it's designed for player viewing
     if (data.spoilerMarkdown) {
@@ -1261,8 +1516,8 @@ export function formatRevealSecret(data: any): string {
 
     // DM-only details
     markdown += `\n[censor]`;
-    markdown += `Secret ID: ${data.secret?.id}\n`;
-    markdown += `Full Secret: ${data.secret?.secretDescription}`;
+    markdown += `ID секрета: ${data.secret?.id}\n`;
+    markdown += `Полный секрет: ${data.secret?.secretDescription}`;
     markdown += `[/censor]`;
 
     return markdown;
@@ -1272,16 +1527,16 @@ export function formatRevealSecret(data: any): string {
  * Format update_secret response
  */
 export function formatUpdateSecret(data: any): string {
-    let markdown = `## 🔒 Secret Updated\n\n`;
-    markdown += `✅ ${data.message || 'Secret updated successfully'}\n\n`;
+    let markdown = `## 🔒 Секрет обновлен\n\n`;
+    markdown += `✅ ${data.message || 'Секрет успешно обновлен'}\n\n`;
 
     if (data.secret) {
-        markdown += `**Name:** ${data.secret.name}\n`;
-        markdown += `**Type:** ${data.secret.type}\n\n`;
+        markdown += `**Название:** ${data.secret.name}\n`;
+        markdown += `**Тип:** ${formatKnownLabel(data.secret.type, SECRET_TYPE_LABELS)}\n\n`;
 
         markdown += `[censor]`;
         markdown += `ID: ${data.secret.id}\n`;
-        markdown += `Updated fields saved to database`;
+        markdown += `Обновленные поля сохранены в базе`;
         markdown += `[/censor]`;
     }
 
@@ -1292,10 +1547,10 @@ export function formatUpdateSecret(data: any): string {
  * Format delete_secret response
  */
 export function formatDeleteSecret(data: any): string {
-    let markdown = `## 🗑️ Secret Deleted\n\n`;
-    markdown += `✅ ${data.message || 'Secret removed from database'}\n\n`;
+    let markdown = `## 🗑️ Секрет удален\n\n`;
+    markdown += `✅ ${data.message || 'Секрет удален из базы'}\n\n`;
 
-    markdown += `[censor]Secret ID: ${data.secretId || 'unknown'}[/censor]`;
+    markdown += `[censor]ID секрета: ${data.secretId || 'неизвестно'}[/censor]`;
 
     return markdown;
 }
@@ -1329,24 +1584,24 @@ export function formatCreateEncounter(data: any): string {
     const encounterId = data.encounterId || data.encounter?.id;
     const participants = data.participants || data.encounter?.participants || [];
 
-    let output = `⚔️ COMBAT ENCOUNTER STARTED!\n`;
+    let output = `⚔️ БОЕВАЯ СХВАТКА НАЧАЛАСЬ!\n`;
     output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-    output += `Encounter ID: ${encounterId}\n\n`;
+    output += `ID схватки: ${encounterId}\n\n`;
 
     if (participants.length > 0) {
-        output += `📋 INITIATIVE ORDER:\n`;
+        output += `📋 ПОРЯДОК ИНИЦИАТИВЫ:\n`;
         const sorted = [...participants].sort((a: any, b: any) => (b.initiative || 0) - (a.initiative || 0));
         sorted.forEach((p: any, i: number) => {
             const hpStatus = p.hp <= 0 ? '💀' : p.hp < (p.maxHp || p.hp) / 2 ? '🩹' : '💚';
             const turnMarker = i === 0 ? '👉 ' : '   ';
-            output += `${turnMarker}${i + 1}. ${p.name} ${hpStatus} (Init: ${p.initiative || 0}, HP: ${p.hp}/${p.maxHp || p.hp})\n`;
+            output += `${turnMarker}${i + 1}. ${p.name} ${hpStatus} (Иниц.: ${p.initiative || 0}, ОЗ: ${p.hp}/${p.maxHp || p.hp})\n`;
         });
         output += `\n`;
     }
 
-    output += `⚡ NEXT STEP: Check whose turn it is using get_encounter_state, then:\n`;
-    output += `   - If enemy turn: Use execute_combat_action then advance_turn\n`;
-    output += `   - If player turn: Present options and wait for input\n`;
+    output += `⚡ СЛЕДУЮЩИЙ ШАГ: проверь чей ход через get_encounter_state, затем:\n`;
+    output += `   - Если ход врага: используй execute_combat_action, затем advance_turn\n`;
+    output += `   - Если ход игрока: предложи варианты и дождись ввода\n`;
 
     return output;
 }
@@ -1369,39 +1624,39 @@ export function formatGetEncounterState(data: any): string {
         currentParticipant?.type === 'enemy' ??
         !currentParticipant?.name?.toLowerCase().includes('player');
 
-    let output = `⚔️ COMBAT STATUS - ROUND ${round}\n`;
+    let output = `⚔️ СТАТУС БОЯ — РАУНД ${round}\n`;
     output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     // Current turn indicator - very prominent
     if (currentParticipant) {
         const icon = isEnemy ? '👹' : '🧙';
-        output += `${icon} CURRENT TURN: ${currentParticipant.name?.toUpperCase()}\n`;
-        output += `   HP: ${currentParticipant.hp}/${currentParticipant.maxHp || currentParticipant.hp}`;
-        if (currentParticipant.ac) output += ` | AC: ${currentParticipant.ac}`;
+        output += `${icon} ТЕКУЩИЙ ХОД: ${currentParticipant.name?.toUpperCase()}\n`;
+        output += `   ОЗ: ${currentParticipant.hp}/${currentParticipant.maxHp || currentParticipant.hp}`;
+        if (currentParticipant.ac) output += ` | КД: ${currentParticipant.ac}`;
         output += `\n\n`;
     }
 
     // Initiative order
-    output += `📋 INITIATIVE ORDER:\n`;
+    output += `📋 ПОРЯДОК ИНИЦИАТИВЫ:\n`;
     participants.forEach((p: any, i: number) => {
         const isCurrent = i === currentIndex || p.id === currentTurn.participantId;
-        const hpStatus = p.hp <= 0 ? '💀 DEAD' : p.hp < (p.maxHp || p.hp) / 2 ? '🩹 Wounded' : '💚';
+        const hpStatus = p.hp <= 0 ? '💀 МЕРТВ' : p.hp < (p.maxHp || p.hp) / 2 ? '🩹 Ранен' : '💚';
         const marker = isCurrent ? '👉 ' : '   ';
-        const enemyTag = (p.isEnemy || p.type === 'enemy') ? '[ENEMY]' : '[ALLY]';
+        const enemyTag = (p.isEnemy || p.type === 'enemy') ? '[ВРАГ]' : '[СОЮЗНИК]';
         output += `${marker}${i + 1}. ${p.name} ${hpStatus} ${enemyTag}\n`;
     });
     output += `\n`;
 
     // Clear action guidance
     if (isEnemy && currentParticipant) {
-        output += `⚡ ACTION REQUIRED: This is an ENEMY turn!\n`;
-        output += `   1. Narrate ${currentParticipant.name}'s action dramatically\n`;
-        output += `   2. Call execute_combat_action (attack/ability/move)\n`;
-        output += `   3. Call advance_turn to proceed\n`;
-        output += `   DO NOT ask permission - execute the enemy action NOW!\n`;
+        output += `⚡ ТРЕБУЕТСЯ ДЕЙСТВИЕ: сейчас ход врага!\n`;
+        output += `   1. Драматично опиши действие ${currentParticipant.name}\n`;
+        output += `   2. Вызови execute_combat_action (attack/ability/move)\n`;
+        output += `   3. Вызови advance_turn для продолжения\n`;
+        output += `   Не спрашивай разрешения — выполни действие врага сейчас!\n`;
     } else {
-        output += `⏳ PLAYER TURN: Present options and wait for player input.\n`;
-        output += `   After player chooses: execute_combat_action then advance_turn\n`;
+        output += `⏳ ХОД ИГРОКА: предложи варианты и дождись ввода игрока.\n`;
+        output += `   После выбора игрока: execute_combat_action, затем advance_turn\n`;
     }
 
     return output;
@@ -1417,26 +1672,26 @@ export function formatExecuteCombatAction(data: any): string {
     const actionType = data.actionType || data.action?.type || 'action';
     const success = data.success ?? data.hit ?? true;
     const damage = data.damage ?? data.totalDamage ?? 0;
-    const targetName = data.targetName || data.target?.name || 'target';
-    const attackerName = data.attackerName || data.attacker?.name || 'attacker';
+    const targetName = data.targetName || data.target?.name || 'цель';
+    const attackerName = data.attackerName || data.attacker?.name || 'атакующий';
 
     if (actionType === 'attack' || data.hit !== undefined) {
         if (success || data.hit) {
-            output += `🎯 HIT! ${attackerName} strikes ${targetName}!\n`;
+            output += `🎯 ПОПАДАНИЕ! ${attackerName} бьет ${targetName}!\n`;
             if (damage > 0) {
-                output += `💥 DAMAGE: ${damage} points\n`;
+                output += `💥 УРОН: ${damage} ед.\n`;
             }
         } else {
-            output += `❌ MISS! ${attackerName}'s attack fails to connect.\n`;
+            output += `❌ ПРОМАХ! Атака ${attackerName} не достигает цели.\n`;
         }
     } else if (actionType === 'heal' || data.healing) {
         const healing = data.healing || damage;
-        output += `✨ HEALED! ${targetName} recovers ${healing} HP!\n`;
+        output += `✨ ИСЦЕЛЕНИЕ! ${targetName} восстанавливает ${healing} ОЗ!\n`;
     } else if (actionType === 'ability' || actionType === 'spell') {
-        output += `🔮 ${attackerName} uses ${data.abilityName || 'an ability'}!\n`;
-        if (data.effect) output += `   Effect: ${data.effect}\n`;
+        output += `🔮 ${attackerName} использует ${data.abilityName || 'умение'}!\n`;
+        if (data.effect) output += `   Эффект: ${data.effect}\n`;
     } else {
-        output += `✅ Action completed: ${data.message || actionType}\n`;
+        output += `✅ Действие завершено: ${data.message || actionType}\n`;
     }
 
     // Show updated HP if available
@@ -1444,14 +1699,14 @@ export function formatExecuteCombatAction(data: any): string {
         const hp = data.target?.hp ?? data.targetHp;
         const maxHp = data.target?.maxHp ?? data.targetMaxHp ?? hp;
         const hpPercent = Math.round((hp / maxHp) * 100);
-        output += `   ${targetName} HP: ${hp}/${maxHp} (${hpPercent}%)\n`;
+        output += `   ${targetName} ОЗ: ${hp}/${maxHp} (${hpPercent}%)\n`;
 
         if (hp <= 0) {
-            output += `💀 ${targetName} is DEFEATED!\n`;
+            output += `💀 ${targetName} побежден!\n`;
         }
     }
 
-    output += `\n⚡ NEXT: Call advance_turn to proceed to next combatant.\n`;
+    output += `\n⚡ ДАЛЬШЕ: вызови advance_turn, чтобы перейти к следующему участнику.\n`;
 
     return output;
 }
@@ -1461,7 +1716,7 @@ export function formatExecuteCombatAction(data: any): string {
  */
 export function formatAdvanceTurn(data: any): string {
     const nextParticipant = data.nextParticipant || data.currentParticipant || {};
-    const nextName = nextParticipant.name || data.nextParticipantName || 'Unknown';
+    const nextName = nextParticipant.name || data.nextParticipantName || 'Неизвестно';
     const isEnemy = nextParticipant.isEnemy ?? nextParticipant.type === 'enemy' ?? false;
     const round = data.round || data.currentRound || 1;
     const newRound = data.newRound || data.roundAdvanced || false;
@@ -1469,29 +1724,29 @@ export function formatAdvanceTurn(data: any): string {
     let output = `\n`;
 
     if (newRound) {
-        output += `🔄 ═══ ROUND ${round} BEGINS ═══\n\n`;
+        output += `🔄 ═══ РАУНД ${round} НАЧИНАЕТСЯ ═══\n\n`;
     }
 
     const icon = isEnemy ? '👹' : '🧙';
-    output += `${icon} TURN ADVANCED → ${nextName.toUpperCase()}\n`;
+    output += `${icon} ХОД ПЕРЕДАН → ${nextName.toUpperCase()}\n`;
 
     if (nextParticipant.hp !== undefined) {
-        output += `   HP: ${nextParticipant.hp}/${nextParticipant.maxHp || nextParticipant.hp}`;
-        if (nextParticipant.ac) output += ` | AC: ${nextParticipant.ac}`;
+        output += `   ОЗ: ${nextParticipant.hp}/${nextParticipant.maxHp || nextParticipant.hp}`;
+        if (nextParticipant.ac) output += ` | КД: ${nextParticipant.ac}`;
         output += `\n`;
     }
 
     output += `\n`;
 
     if (isEnemy) {
-        output += `⚡ ENEMY TURN - ACT NOW!\n`;
-        output += `   1. Roleplay ${nextName}'s action with dramatic narration\n`;
-        output += `   2. Call execute_combat_action\n`;
-        output += `   3. Call advance_turn\n`;
-        output += `   DO NOT wait for permission!\n`;
+        output += `⚡ ХОД ВРАГА — ДЕЙСТВУЙ СЕЙЧАС!\n`;
+        output += `   1. Отыграй действие ${nextName} с драматичным описанием\n`;
+        output += `   2. Вызови execute_combat_action\n`;
+        output += `   3. Вызови advance_turn\n`;
+        output += `   Не жди разрешения!\n`;
     } else {
-        output += `⏳ PLAYER TURN\n`;
-        output += `   Present options to the player and wait for their decision.\n`;
+        output += `⏳ ХОД ИГРОКА\n`;
+        output += `   Предложи варианты игроку и дождись решения.\n`;
     }
 
     return output;
@@ -1502,31 +1757,31 @@ export function formatAdvanceTurn(data: any): string {
  */
 export function formatEndEncounter(data: any): string {
     let output = `\n`;
-    output += `⚔️ ═══ COMBAT ENDED ═══\n`;
+    output += `⚔️ ═══ БОЙ ЗАВЕРШЕН ═══\n`;
     output += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     if (data.victory || data.outcome === 'victory') {
-        output += `🏆 VICTORY!\n`;
+        output += `🏆 ПОБЕДА!\n`;
     } else if (data.defeat || data.outcome === 'defeat') {
-        output += `💀 DEFEAT...\n`;
+        output += `💀 ПОРАЖЕНИЕ...\n`;
     } else if (data.fled || data.outcome === 'fled') {
-        output += `🏃 FLED FROM BATTLE\n`;
+        output += `🏃 ОТСТУПЛЕНИЕ ИЗ БОЯ\n`;
     } else {
-        output += `✅ Combat concluded.\n`;
+        output += `✅ Бой завершен.\n`;
     }
 
     if (data.xpAwarded || data.experienceGained) {
-        output += `\n🌟 Experience gained: ${data.xpAwarded || data.experienceGained} XP\n`;
+        output += `\n🌟 Получено опыта: ${data.xpAwarded || data.experienceGained}\n`;
     }
 
     if (data.loot && data.loot.length > 0) {
-        output += `\n📦 Loot found:\n`;
+        output += `\n📦 Найдена добыча:\n`;
         data.loot.forEach((item: any) => {
-            output += `   - ${item.name || item}\n`;
+            output += `   - ${formatItemName(item)}\n`;
         });
     }
 
-    output += `\n🎭 Continue narrating the aftermath.\n`;
+    output += `\n🎭 Продолжай описывать последствия.\n`;
 
     return output;
 }
@@ -1558,7 +1813,7 @@ export function formatCombatToolResponse(toolName: string, response: any): strin
             // pass it through directly - don't try to reformat it
             if (textContent.includes('═══') || textContent.includes('⚔️') ||
                 textContent.includes('COMBAT') || textContent.includes('TURN')) {
-                return textContent;
+                return processFormattedCombatResponse(textContent);
             }
 
             // Try to parse as JSON for further processing
