@@ -862,18 +862,29 @@ export function formatWorldMapOverview(data: any): FormattedResponse {
     }
     markdown += `\n`;
 
-    // Biome distribution
-    if (data.biomeDistribution) {
-        markdown += `### 🌿 Распределение биомов\n\n`;
-        const sorted = Object.entries(data.biomeDistribution)
-            .sort(([, a], [, b]) => (b as number) - (a as number));
+    // Biome distribution. The value may arrive as raw tile COUNTS
+    // (world_manage generate) or already as PERCENTAGES (world_map overview).
+    // Normalize to percentages so the bars/card are correct either way and the
+    // repeat count can never go negative.
+    let normalizedBiomes: Record<string, number> | undefined;
+    if (data.biomeDistribution && typeof data.biomeDistribution === 'object') {
+        const entries = Object.entries(data.biomeDistribution) as [string, any][];
+        const total = entries.reduce((sum, [, v]) => sum + (Number(v) || 0), 0);
+        normalizedBiomes = {};
+        for (const [biome, v] of entries) {
+            normalizedBiomes[biome] = total > 0 ? (Number(v) / total) * 100 : 0;
+        }
 
+        markdown += `### 🌿 Распределение биомов\n\n`;
         markdown += `| Биом | Покрытие |\n`;
         markdown += `|-------|----------|\n`;
-        sorted.forEach(([biome, pct]) => {
-            const bar = '█'.repeat(Math.round((pct as number) / 5)) + '░'.repeat(20 - Math.round((pct as number) / 5));
-            markdown += `| ${formatKnownLabel(biome, BIOME_LABELS)} | ${bar} ${pct}% |\n`;
-        });
+        Object.entries(normalizedBiomes)
+            .sort(([, a], [, b]) => b - a)
+            .forEach(([biome, pct]) => {
+                const filled = Math.max(0, Math.min(20, Math.round(pct / 5)));
+                const bar = '█'.repeat(filled) + '░'.repeat(20 - filled);
+                markdown += `| ${formatKnownLabel(biome, BIOME_LABELS)} | ${bar} ${pct.toFixed(1)}% |\n`;
+            });
         markdown += `\n`;
     }
 
@@ -887,7 +898,7 @@ export function formatWorldMapOverview(data: any): FormattedResponse {
         markdown,
         visualization: {
             type: 'world_overview',
-            data
+            data: normalizedBiomes ? { ...data, biomeDistribution: normalizedBiomes } : data
         }
     };
 }
@@ -1069,6 +1080,30 @@ function getStructureIcon(type: string): string {
  * Auto-detect response type and format accordingly
  * Returns FormattedResponse with both markdown and optional visualization data
  */
+/**
+ * Consolidated tools (world_manage, world_map, strategy_manage, …) return rich
+ * markdown with an embedded `<!-- TAG_JSON … TAG_JSON -->` block instead of raw
+ * JSON. Pull the structured payload out of any such envelope so the existing
+ * shape-based routing can build a visualization for the new tools too.
+ */
+function extractEnvelopeJson(text: string): any | null {
+    const m = text.match(/<!--\s*([A-Z0-9_]+_JSON)\s*([\s\S]*?)\s*\1\s*-->/);
+    if (!m) return null;
+    try {
+        return JSON.parse(m[2]);
+    } catch {
+        return null;
+    }
+}
+
+/** Remove the embedded `<!-- TAG_JSON … TAG_JSON -->` envelope from display text. */
+function stripEnvelope(text: string): string {
+    return text
+        .replace(/<!--\s*([A-Z0-9_]+_JSON)\s*[\s\S]*?\1\s*-->/g, '')
+        .replace(/�/g, '=')
+        .trim();
+}
+
 export function formatToolResponseWithVisualization(toolName: string, response: any): FormattedResponse {
     try {
         // Parse if string
@@ -1076,16 +1111,24 @@ export function formatToolResponseWithVisualization(toolName: string, response: 
 
         // Extract from MCP wrapper if present
         let actualData = data;
+        // Markdown to show when no rich card matches (kept localized / envelope-free).
+        let fallbackMarkdown: string | undefined;
         if (data.content?.[0]?.text) {
             const textContent = data.content[0].text;
-            // Try to parse as JSON, but if it fails, treat as pre-formatted text
+            // Old tools: pure JSON payload.
             try {
                 actualData = JSON.parse(textContent);
             } catch {
-                // Text is already formatted (e.g., combat responses with emojis)
-                // Process any embedded STATE_JSON and strip it from display
-                const cleanedText = processFormattedCombatResponse(textContent);
-                return { markdown: cleanedText };
+                // Consolidated tools: rich markdown + embedded TAG_JSON envelope.
+                const embedded = extractEnvelopeJson(textContent);
+                if (embedded && typeof embedded === 'object') {
+                    actualData = embedded;
+                    fallbackMarkdown = stripEnvelope(textContent);
+                } else {
+                    // Genuinely pre-formatted text (e.g. combat responses with emojis).
+                    const cleanedText = processFormattedCombatResponse(textContent);
+                    return { markdown: cleanedText };
+                }
             }
         }
 
@@ -1103,7 +1146,7 @@ export function formatToolResponseWithVisualization(toolName: string, response: 
             return formatWorldMapOverview(actualData);
         }
 
-        if (toolName === 'get_region_map' || (actualData.region && actualData.tiles)) {
+        if (toolName === 'get_region_map' || (actualData.region && (actualData.tiles || actualData.structures))) {
             return formatRegion(actualData);
         }
 
@@ -1117,7 +1160,11 @@ export function formatToolResponseWithVisualization(toolName: string, response: 
             return formatStrategyState(actualData);
         }
 
-        // Fall back to existing formatters
+        // No rich card matched: show the envelope-stripped engine markdown if we had
+        // one (so the raw <!-- …_JSON --> comment is gone), else the text formatters.
+        if (fallbackMarkdown !== undefined) {
+            return { markdown: fallbackMarkdown };
+        }
         const markdown = formatToolResponse(toolName, response);
         return { markdown };
 
