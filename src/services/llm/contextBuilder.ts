@@ -13,6 +13,7 @@
 
 import { mcpManager } from '../mcpClient';
 import { parseMcpResponse } from '../../utils/mcpUtils';
+import { getWorldLoreSummaryForContext } from '../worldLore';
 
 // Default static prompts - loaded from markdown files at build time
 import layer1IdentityDefault from './context/layer1-identity.md?raw';
@@ -45,6 +46,7 @@ export interface ContextLayers {
   layer1_identity: string;      // Static (~400 tokens)
   layer2_rules: string;         // Static (~800 tokens)
   layer3_world: string;         // Dynamic (~600 tokens)
+  layer3b_world_lore: string;   // Local compact world backstory (~600 tokens)
   layer4_party: string;         // Dynamic (~1200 tokens)
   layer5_narrative: string;     // Rolling (~800 tokens)
   layer6_scene: string;         // Variable (~1000 tokens)
@@ -373,6 +375,7 @@ export async function buildSystemPrompt(options: ContextOptions): Promise<string
     fetchSceneContext(encounterId, activeNpcId, characterId, verbosity),
     fetchSecrets(worldId)
   ]);
+  const worldLoreSummary = getWorldLoreSummaryForContext(worldId);
   
   // Assemble with section markers
   const sections: string[] = [layer1];
@@ -386,6 +389,7 @@ export async function buildSystemPrompt(options: ContextOptions): Promise<string
   
   if (layer2) sections.push('---\n' + layer2);
   if (layer3) sections.push('---\n' + layer3);
+  if (worldLoreSummary) sections.push('---\n' + worldLoreSummary);
   if (layer4) sections.push('---\n' + layer4);
   if (layer5) sections.push('---\n' + layer5);
   if (layer6) sections.push('---\n' + layer6);

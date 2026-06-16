@@ -452,6 +452,19 @@ class LLMService {
         return finalContent;
     }
 
+    /**
+     * Send a one-off prompt without campaign context or tools.
+     * Use for meta tasks such as summarization where injecting active session
+     * state would pollute the result or waste context.
+     */
+    public async sendAdHocMessage(history: ChatMessage[]): Promise<string> {
+        const provider = this.getProvider();
+        const apiKey = this.getApiKey();
+        const model = useSettingsStore.getState().getSelectedModel();
+        const response = await provider.sendMessage(this.trimHistory(history), apiKey, model, []);
+        return response.content || '';
+    }
+
     // Streaming method with iterative loop and max-turn guard (matches sendMessage behavior)
     public async streamMessage(
         history: ChatMessage[],
