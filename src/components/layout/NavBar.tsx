@@ -4,6 +4,7 @@ import { useUIStore, ActiveTab } from '../../stores/uiStore';
 export const NavBar: React.FC = () => {
     const { activeTab, setActiveTab, setPendingCommand } = useUIStore();
     const [isExpanded, setIsExpanded] = useState(true);
+    const iconSlotClass = 'flex h-7 w-8 shrink-0 items-center justify-center';
 
     const navItems: Array<{ tab: ActiveTab; icon: string; label: string }> = [
         { tab: 'adventure', icon: '📜', label: 'Приключение' },
@@ -31,14 +32,14 @@ export const NavBar: React.FC = () => {
             onClick={() => setActiveTab(tab)}
             className={`
         w-full flex items-center py-2 transition-all duration-200
-        ${isExpanded ? 'justify-center gap-3 px-4 md:justify-start' : 'justify-center px-2'}
+        ${isExpanded ? 'justify-center gap-3 px-4 md:justify-start' : 'justify-start pl-4 pr-0'}
         ${activeTab === tab
                     ? 'bg-terminal-green/10 text-terminal-green border-r-2 border-terminal-green'
                     : 'text-terminal-green/60 hover:text-terminal-green hover:bg-terminal-green/5 border-r-2 border-transparent'}
       `}
             title={label}
         >
-            <span className="text-xl shrink-0">{icon}</span>
+            <span className={`${iconSlotClass} text-xl`}>{icon}</span>
             <span className={`font-mono text-sm uppercase tracking-wider ${isExpanded ? 'hidden md:block' : 'hidden'}`}>
                 {label}
             </span>
@@ -49,11 +50,11 @@ export const NavBar: React.FC = () => {
         <button
             onClick={() => setPendingCommand(command, true)}
             className={`w-full flex items-center py-1.5 text-terminal-green/50 hover:text-terminal-green hover:bg-terminal-green/10 transition-colors text-xs font-mono ${
-                isExpanded ? 'justify-center gap-2 px-3 md:justify-start' : 'justify-center px-2'
+                isExpanded ? 'justify-center gap-3 px-4 md:justify-start' : 'justify-start pl-4 pr-0'
             }`}
             title={`Выполнить: ${label}`}
         >
-            <span className="text-sm shrink-0">{icon}</span>
+            <span className={`${iconSlotClass} text-xl`}>{icon}</span>
             <span className={isExpanded ? 'hidden md:block' : 'hidden'}>{label}</span>
         </button>
     );
@@ -104,14 +105,14 @@ export const NavBar: React.FC = () => {
                 </div>
 
                 {/* Quick Command Buttons */}
-                <div className="flex flex-col gap-0.5 px-1 pb-2">
+                <div className="flex flex-col gap-0.5 pb-2">
                     {quickCommands.map((item) => (
                         <QuickCommand key={item.command} {...item} />
                     ))}
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="p-2 border-t border-terminal-green-dim">
+                <div className="py-2 border-t border-terminal-green-dim">
                     <NavItem tab="settings" icon="⚙️" label="Настройки" />
                 </div>
             </div>
