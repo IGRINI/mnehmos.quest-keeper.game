@@ -9,6 +9,7 @@ import { CharacterCreationModal } from '../party/CharacterCreationModal';
 import { PartyCreatorModal } from '../party/PartyCreatorModal';
 import { getClassLabel } from '../character/displayLabels';
 import { getPartyStatusLabel } from '../party/displayLabels';
+import { buildFallbackWorldLoreSummary, saveWorldLoreNotes } from '../../services/worldLore';
 
 // ============================================
 // Types
@@ -19,6 +20,8 @@ type WizardStep = 'selection' | 'details' | 'world' | 'party' | 'location' | 'la
 interface WizardState {
   campaignName: string;
   description: string;
+  worldLore: string;
+  worldLoreSummary: string;
   worldId: string | null;
   partyId: string | null;
   activeCharacterId: string | null;
@@ -52,6 +55,8 @@ export const CampaignSetupWizard: React.FC<CampaignSetupWizardProps> = ({
   const [wizardState, setWizardState] = useState<WizardState>({
     campaignName: '',
     description: '',
+    worldLore: '',
+    worldLoreSummary: '',
     worldId: null,
     partyId: null,
     activeCharacterId: null,
@@ -93,6 +98,8 @@ export const CampaignSetupWizard: React.FC<CampaignSetupWizardProps> = ({
       setWizardState({
         campaignName: '',
         description: '',
+        worldLore: '',
+        worldLoreSummary: '',
         worldId: worlds.length > 0 ? worlds[0].id : null,
         partyId: parties.length > 0 ? parties[0].id : null,
         activeCharacterId: null,
@@ -140,6 +147,20 @@ export const CampaignSetupWizard: React.FC<CampaignSetupWizardProps> = ({
 
   // Launch campaign
   const handleLaunch = () => {
+    const worldLoreSummary =
+      wizardState.worldLoreSummary.trim() ||
+      buildFallbackWorldLoreSummary(wizardState.worldLore);
+
+    if (wizardState.worldId && wizardState.worldLore.trim()) {
+      const selectedWorld = worlds.find((world: any) => world.id === wizardState.worldId);
+      saveWorldLoreNotes({
+        worldId: wizardState.worldId,
+        worldName: selectedWorld?.name || wizardState.campaignName || 'Campaign World',
+        sourceLore: wizardState.worldLore,
+        summary: worldLoreSummary,
+      });
+    }
+
     // Create the session
     const sessionId = createSession({
       name: wizardState.campaignName || 'Новая кампания',
@@ -152,11 +173,15 @@ export const CampaignSetupWizard: React.FC<CampaignSetupWizardProps> = ({
     // Build the initial prompt for the LLM
     const locationLabel = getLocationLabel(wizardState.startingLocationType);
     const locationName = wizardState.startingLocationName || locationLabel;
+    const loreSection = worldLoreSummary
+      ? `\nCanonical world lore summary (compact, authoritative):\n${worldLoreSummary}\n`
+      : '';
     
     const initialPrompt = `
 [CAMPAIGN START]
 The party begins their adventure in ${locationName}.
 Context: ${wizardState.startingContext}
+${loreSection}
 
 Think and keep durable memory/state in English. Write the player-facing opening scene in Russian.
 Generate an immersive opening scene in Russian. Describe the environment, atmosphere, and any immediate hooks or details that draw the party in. Set the tone for an epic adventure.
@@ -367,6 +392,30 @@ Generate an immersive opening scene in Russian. Describe the environment, atmosp
                     🌍 Создать
                   </button>
                 </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-terminal-green text-sm">
+                    Предыстория мира (необязательно)
+                  </label>
+                  <span className="text-terminal-green/40 text-xs">
+                    {wizardState.worldLore.length.toLocaleString()} символов
+                  </span>
+                </div>
+                <textarea
+                  value={wizardState.worldLore}
+                  onChange={(e) => {
+                    updateField('worldLore', e.target.value);
+                    updateField('worldLoreSummary', '');
+                  }}
+                  placeholder="Вставь сюда большой лор, историю эпох, пантеоны, конфликты, запреты и важные тайны мира..."
+                  rows={6}
+                  className="w-full bg-terminal-black border border-terminal-green rounded px-3 py-2 text-terminal-green text-sm focus:outline-none focus:border-terminal-green-bright resize-y min-h-32"
+                />
+                <p className="text-terminal-green/50 text-xs mt-1">
+                  Полный текст сохранится в заметках, а в память мастера попадет короткая каноническая выжимка.
+                </p>
               </div>
 
               {/* Existing Worlds */}
@@ -748,6 +797,10 @@ Be evocative and concise.`;
                   <div className="text-terminal-green">
                     {wizardState.startingLocationName || getLocationLabel(wizardState.startingLocationType)}
                   </div>
+                  <div className="text-terminal-green/70">Лор мира:</div>
+                  <div className="text-terminal-green">
+                    {wizardState.worldLore.trim() ? 'сохранен как канон' : 'не задан'}
+                  </div>
                 </div>
               </div>
               <p className="text-terminal-green/70 text-sm">
@@ -791,10 +844,12 @@ Be evocative and concise.`;
         isOpen={showWorldGenModal}
         seed={worldGenSeed}
         worldName={newWorldName}
-        onComplete={(newWorldId) => {
+        worldLore={wizardState.worldLore}
+        onComplete={(newWorldId, loreSummary) => {
           console.log('[CampaignWizard] World generation complete, ID:', newWorldId);
           setShowWorldGenModal(false);
           updateField('worldId', newWorldId);
+          updateField('worldLoreSummary', loreSummary || '');
           setNewWorldName('');
           setWorldGenSeed('');
           // Trigger state refresh to show new world in list

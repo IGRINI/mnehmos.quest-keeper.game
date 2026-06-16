@@ -3,6 +3,7 @@ import { mcpManager } from '../../services/mcpClient';
 import { extractEmbeddedJson } from '../../utils/mcpUtils';
 import { llmService } from '../../services/llm/LLMService';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { buildWorldLoreSummary, saveWorldLoreNotes } from '../../services/worldLore';
 
 // ============================================
 // Types
@@ -29,7 +30,8 @@ interface WorldGenerationModalProps {
   isOpen: boolean;
   seed?: string;
   worldName: string;
-  onComplete: (worldId: string) => void;
+  worldLore?: string;
+  onComplete: (worldId: string, loreSummary?: string) => void;
   onCancel: () => void;
 }
 
@@ -92,6 +94,7 @@ export const WorldGenerationModal: React.FC<WorldGenerationModalProps> = ({
   isOpen,
   seed,
   worldName,
+  worldLore = '',
   onComplete,
   onCancel,
 }) => {
@@ -180,6 +183,7 @@ Description: [one atmospheric sentence]`;
 
     const actualSeed = seed || `world-${Date.now()}`;
     let worldId: string | null = null;
+    let worldLoreSummary = '';
     let structures: GeneratedPOI[] = [];
     
     try {
@@ -269,6 +273,36 @@ Description: [one atmospheric sentence]`;
         throw new Error('Некорректный ответ generate_world');
       }
 
+      const trimmedWorldLore = worldLore.trim();
+      if (!abortRef.current && worldId && trimmedWorldLore) {
+        addLog('Сжимаю предысторию мира для памяти мастера...', 'lore');
+
+        const summaryResult = await buildWorldLoreSummary(
+          trimmedWorldLore,
+          worldName,
+          hasAiProvider ? (messages) => llmService.sendAdHocMessage(messages) : undefined
+        );
+        worldLoreSummary = summaryResult.summary;
+
+        saveWorldLoreNotes({
+          worldId,
+          worldName,
+          sourceLore: trimmedWorldLore,
+          summary: worldLoreSummary,
+        });
+
+        addLog(
+          summaryResult.usedAi
+            ? `Каноническая выжимка готова (${summaryResult.chunks} фрагм.)`
+            : 'Каноническая выжимка создана локально',
+          'success'
+        );
+
+        if (summaryResult.sampledSource) {
+          addLog('Полный лор сохранен в заметках, в контекст попадет только выжимка', 'info');
+        }
+      }
+
       // LLM Lore Generation Phase
       setCurrentPhase(9);
       setProgress(85);
@@ -276,7 +310,10 @@ Description: [one atmospheric sentence]`;
       if (!abortRef.current && structures.length > 0 && hasAiProvider) {
         addLog('Летописцы начинают записывать легенды...', 'lore');
         
-        const worldContext = `A newly formed world named "${worldName}" with diverse regions. Settlements favor rivers and coasts.`;
+        const worldContext = [
+          `A newly formed world named "${worldName}" with diverse regions. Settlements favor rivers and coasts.`,
+          worldLoreSummary ? `Canonical world backstory summary:\n${worldLoreSummary}` : '',
+        ].filter(Boolean).join('\n\n');
         const accumulatedLore: string[] = [];
         
         // Generate lore for top 5 POIs
@@ -324,7 +361,7 @@ Description: [one atmospheric sentence]`;
         console.log('[WorldGen] Completing with worldId:', worldId);
         setTimeout(() => {
           console.log('[WorldGen] Calling onComplete callback');
-          onComplete(worldId!);
+          onComplete(worldId!, worldLoreSummary || undefined);
         }, 1500);
       } else {
         throw new Error('Генерация мира завершилась, но идентификатор мира отсутствует');
@@ -338,7 +375,7 @@ Description: [one atmospheric sentence]`;
     } finally {
       setIsGenerating(false);
     }
-  }, [isOpen, isGenerating, seed, worldName, hasAiProvider, addLog, generatePOILore, onComplete]);
+  }, [isOpen, isGenerating, seed, worldName, worldLore, hasAiProvider, addLog, generatePOILore, onComplete]);
 
   // Start generation when modal opens
   useEffect(() => {
