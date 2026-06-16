@@ -17,19 +17,22 @@ export interface InventoryItem {
 }
 
 export interface EnvironmentState {
-  time_of_day?: string | any;
-  weather?: string | any;
-  temperature?: string | any;
-  season?: string | any;
-  date?: string | any;
-  moon_phase?: string | any;
-  lighting?: string | any;
-  sunrise?: string | any;
-  sunset?: string | any;
-  forecast?: string | any;
-  wind?: string | any;
-  visibility?: string | any;
-  atmospheric_pressure?: string | any;
+  time_of_day?: any;
+  timeOfDay?: any;
+  specific_time?: any;
+  weather?: any;
+  weatherConditions?: any;
+  temperature?: any;
+  season?: any;
+  date?: any;
+  moon_phase?: any;
+  lighting?: any;
+  sunrise?: any;
+  sunset?: any;
+  forecast?: any;
+  wind?: any;
+  visibility?: any;
+  atmospheric_pressure?: any;
   hazards?: string[];
   [key: string]: any;
 }
@@ -466,6 +469,44 @@ function parseQuestsFromResponse(questData: any): Quest[] {
   return quests;
 }
 
+function normalizeWorldDisplayValue(value: any): string | null {
+  if (value === null || value === undefined) return null;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.toLowerCase() === 'unknown' || trimmed.toLowerCase() === 'неизвестно') {
+      return null;
+    }
+    return trimmed;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  if (typeof value === 'object') {
+    return normalizeWorldDisplayValue(
+      value.full_date ??
+      value.condition ??
+      value.current ??
+      value.phase ??
+      value.overall ??
+      value.ambient ??
+      value.time
+    );
+  }
+
+  return null;
+}
+
+function firstKnownWorldDisplayValue(...values: any[]): string {
+  for (const value of values) {
+    const normalized = normalizeWorldDisplayValue(value);
+    if (normalized) return normalized;
+  }
+  return 'Unknown';
+}
+
 function parseWorldFromResponse(worldData: any): WorldState {
   if (!worldData) {
     return {
@@ -479,12 +520,25 @@ function parseWorldFromResponse(worldData: any): WorldState {
     };
   }
 
+  const env = worldData.environment || {};
+
   return {
     location: worldData.name || worldData.location || 'Unknown',
-    time: worldData.time || 'Unknown',
-    weather: worldData.weather || 'Unknown',
-    date: worldData.date || worldData.createdAt || 'Unknown',
-    environment: worldData.environment || {},
+    time: firstKnownWorldDisplayValue(
+      worldData.time,
+      env.timeOfDay,
+      env.time_of_day,
+      env.specific_time,
+      env.battlefield?.time_of_day
+    ),
+    weather: firstKnownWorldDisplayValue(
+      worldData.weather,
+      env.weatherConditions,
+      env.weather,
+      env.battlefield?.weather
+    ),
+    date: firstKnownWorldDisplayValue(worldData.date, env.date, worldData.createdAt),
+    environment: env,
     npcs: worldData.npcs || {},
     events: worldData.events || {},
     lastUpdated: worldData.updatedAt || new Date().toISOString()
